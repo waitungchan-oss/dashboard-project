@@ -9,13 +9,6 @@
       "description": "2026 年 5 月問卷匯總、出團長評、門市服務與綜合洞察"
     },
     {
-      "key": "202606",
-      "label": "2026年 06月",
-      "schema": "current",
-      "status": "ready",
-      "description": "2026 年 6 月初版資料，由 202605 current schema 複製，待替換為 6 月實際資料"
-    },
-    {
       "key": "202604",
       "label": "2026年 04月",
       "schema": "legacy",
