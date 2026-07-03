@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>旅遊業務分析儀表板 UI/UX Export</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="js-error-boundary" class="notice hidden">
+    <strong>系統提示</strong>
+    <p id="js-error-msg">部分圖表或資源加載緩慢，系統已自動修復並呈現可用數據。</p>
+  </div>
+
+  <div id="loadingOverlay" class="loading-reference">
+    <h2 id="loading-title">正在載入數據庫...</h2>
+    <p id="loading-desc">正在執行 API 數據提取與圖表重繪，請稍候...</p>
+  </div>
+
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Travel Business Intelligence</p>
+      <h1>旅遊業務分析儀表板</h1>
+      <p id="header-data-source">當前視圖：2026年 05月 | 數據源：問卷匯總</p>
+    </div>
+    <label class="month-control">
+      <span>月份</span>
+      <select id="globalMonthSelector">
+        <option value="202605" selected>2026年 05月</option>
+        <option value="202604">2026年 04月</option>
+      </select>
+    </label>
+  </header>
+
+  <main id="report-content" class="report-shell">
+    <nav id="tabFilterContainer" class="tab-strip" aria-label="Dashboard sections">
+      <button data-tab-id="dashboard" class="tab-btn active-tab">旅行團數據儀表板</button>
+      <button data-tab-id="sales_forecast" class="tab-btn">AI 銷售預測</button>
+      <button data-tab-id="nps_zone" class="tab-btn">推薦意願專區</button>
+      <button data-tab-id="tourleader" class="tab-btn">領隊表現專區</button>
+      <button data-tab-id="records" class="tab-btn">出團記錄分析</button>
+      <button data-tab-id="feedback_analysis" class="tab-btn">出團長評回饋</button>
+      <button data-tab-id="branch_feedback" class="tab-btn">門市服務意見</button>
+      <button data-tab-id="analysis" class="tab-btn">綜合意見</button>
+    </nav>
+    <div id="tabFilterMenu" class="hidden">
+      <div id="filterCheckboxes"></div>
+    </div>
+
+    <section id="dashboard" class="tab-content active ux-section">
+      <div class="section-heading">
+        <p class="eyebrow">Dashboard</p>
+        <h2>旅行團數據儀表板</h2>
+      </div>
+      <div class="kpi-grid">
+        <article class="kpi-card"><span>受訪總人數</span><strong id="kpi-total-respondents">155</strong></article>
+        <article class="kpi-card"><span>推廣信息同意</span><strong id="kpi-promo-consent">91 / 58.71%</strong></article>
+        <article class="kpi-card"><span>推薦意願</span><strong id="kpi-nps-score">89.03 分 / 推薦者 90.97%</strong></article>
+        <article class="kpi-card"><span>門店報名佔比</span><strong id="kpi-store-signup">132人 / 85.16%</strong></article>
+      </div>
+      <div class="panel-grid two">
+        <article class="panel">
+          <h3 id="profile-title">基礎客戶畫像 (N=155)</h3>
+          <div class="chart-row">
+            <canvas id="genderChart"></canvas>
+            <canvas id="ageChart"></canvas>
+          </div>
+        </article>
+        <article class="panel">
+          <h3>會員意願深度交叉分析</h3>
+          <p id="member-source-label">數據來源：問卷數據全量統計 (N=125)</p>
+          <canvas id="memberConsentCrossChart"></canvas>
+          <p id="member-insight-1">會員接收推廣意願較高，是後續精準行銷的核心客群。</p>
+          <p id="member-insight-2">非會員仍有較高抗拒，適合以低干擾內容建立首次互動。</p>
+        </article>
+      </div>
+      <div class="panel-grid two">
+        <article class="panel">
+          <h3 id="satisfaction-title">旅程體驗滿意度 (N=155)</h3>
+          <canvas id="satisfactionChart"></canvas>
+          <ul>
+            <li id="satisfaction-insight-1">領隊、導遊與交通服務是體驗優勢。</li>
+            <li id="satisfaction-insight-2">餐飲口味與部分地接服務仍有改善空間。</li>
+          </ul>
+        </article>
+        <article class="panel">
+          <h3>目的地 x 年齡層</h3>
+          <canvas id="destAgeCrossChart"></canvas>
+          <p id="dest-age-insight-1">韓國、雲南、北京與新西蘭呈現不同年齡層偏好。</p>
+          <p id="dest-age-insight-2">產品節奏應按目的地與年齡層重新分層。</p>
+        </article>
+      </div>
+      <div class="panel-grid two">
+        <article class="panel">
+          <h3>資訊來源</h3>
+          <span id="source-reply-label">總回覆 N=209</span>
+          <canvas id="sourceChart"></canvas>
+        </article>
+        <article class="panel">
+          <h3>報名渠道</h3>
+          <span id="channel-reply-label">總回覆 N=155</span>
+          <canvas id="channelChart"></canvas>
+        </article>
+      </div>
+      <article class="panel">
+        <h3>關鍵發現與結論</h3>
+        <h4 id="channel-insight-title-1">1. 線上獲取資訊，線下門店成交</h4>
+        <p id="channel-insight-text-1">網絡媒體影響決策初期，門店分社承擔最終信任與成交。</p>
+        <h4 id="channel-insight-title-2">2. 口碑行銷的力量</h4>
+        <p id="channel-insight-text-2">親友推薦是穩定客源轉化路徑。</p>
+        <h4 id="channel-insight-title-3">3. 轉換率結論</h4>
+        <p id="channel-insight-text-3">加強線上預約與線下門店聯動，有助提升轉化品質。</p>
+      </article>
+    </section>
+
+    <section id="sales_forecast" class="tab-content ux-section">
+      <div class="section-heading"><p class="eyebrow">Forecast</p><h2>AI 銷售預測</h2></div>
+      <div class="panel-grid two">
+        <article class="panel"><h3>銷售預測</h3><canvas id="salesForecastChart"></canvas></article>
+        <article class="panel"><h3>客戶價值分群</h3><canvas id="rfmChart"></canvas></article>
+      </div>
+    </section>
+
+    <section id="nps_zone" class="tab-content ux-section">
+      <div class="section-heading"><p class="eyebrow">NPS Zone</p><h2>推薦意願專區</h2></div>
+      <article class="panel highlight">
+        <p id="nps-zone-description">以影響力中位數 0.402 及滿意度中位數 4.61 分為十字虛線分界。</p>
+        <strong id="nps-zone-indicator">90.97% 願意推薦</strong>
+      </article>
+      <div class="panel-grid two">
+        <article class="panel"><h3>NPS 相關性</h3><canvas id="npsCorrelationChart"></canvas></article>
+        <article class="panel"><h3>未來旅遊偏好</h3><canvas id="futureDestChart"></canvas></article>
+      </div>
+      <div class="panel-grid two">
+        <article class="panel"><h3>未來需求表</h3><table><tbody id="future-dest-table-body"></tbody></table><ul id="future-product-guide-list"></ul></article>
+        <article class="panel"><h3>推薦分佈</h3><canvas id="npsDistChart"></canvas><canvas id="npsScoreChart"></canvas></article>
+      </div>
+      <article class="panel">
+        <h3>意見建議挖掘</h3>
+        <ul id="loyalty-recommendation-list"></ul>
+        <table><tbody id="nps-driver-table-body"></tbody></table>
+        <div id="opinion-keyword-grid" class="mini-grid"></div>
+        <p id="opinion-optimization-title">產品開發與服務優化方向：</p>
+        <ul id="opinion-optimization-list"></ul>
+      </article>
+    </section>
+
+    <section id="tourleader" class="tab-content ux-section">
+      <div class="section-heading"><p class="eyebrow">Tour Leaders</p><h2 id="leaderboard-title">2026年5月領隊服務評分排行榜</h2></div>
+      <p id="leaderboard-source-label">數據來源：2026年5月領隊服務評分排行榜</p>
+      <article class="panel">
+        <table>
+          <thead><tr><th>排名</th><th>領隊姓名</th><th>出團地點</th><th>平均評分</th><th>樣本數</th></tr></thead>
+          <tbody id="fullLeadersTable"></tbody>
+        </table>
+        <p id="leaderboard-footnote">* 數據來源：2026年5月份最新領隊服務評分全量數據。</p>
+      </article>
+    </section>
+
+    <section id="records" class="tab-content ux-section">
+      <div class="section-heading"><p class="eyebrow">Tours</p><h2>出團記錄分析</h2></div>
+      <div class="kpi-grid">
+        <article class="kpi-card"><span>最熱門目的地</span><strong id="records-top-destination">韓國</strong></article>
+        <article class="kpi-card"><span>平均旅程天數</span><strong id="records-average-days">5.35 天</strong></article>
+        <article class="kpi-card"><span>總樣本數</span><strong id="records-total-samples">155 份</strong></article>
+      </div>
+      <div class="panel-grid two">
+        <article class="panel"><h3>熱門目的地 Top 5</h3><canvas id="topDestChart"></canvas></article>
+        <article class="panel"><h3>旅程天數分佈</h3><canvas id="durationDistChart"></canvas><div id="duration-legend"></div></article>
+      </div>
+      <article class="panel"><h3>滿意度深度交叉分析</h3><p id="crossChartSubtitle">分析：不同年齡層在各目的地的平均滿意度得分</p><button id="resetBtn">重置篩選</button><canvas id="satisfactionCrossChart"></canvas><div id="records-cross-insights"></div></article>
+      <article class="panel"><h3>最新出團明細</h3><table><tbody id="tourDetailBody"></tbody></table></article>
+    </section>
+
+    <section id="feedback_analysis" class="tab-content ux-section">
+      <div class="section-heading"><p class="eyebrow">Feedback</p><h2>出團長評回饋</h2></div>
+      <div class="filter-row">
+        <select id="typeFilter"><option>所有類型</option></select>
+        <select id="destFilter"><option>所有目的地</option></select>
+        <select id="leaderFilter"><option>所有領隊</option></select>
+      </div>
+      <div id="sentimentStatusBar" class="status-bar"></div>
+      <article class="panel"><h3>AI 智能關鍵詞雲</h3><div id="wordCloudContainer" class="word-cloud-container"></div></article>
+      <div id="feedbackGrid" class="card-grid"></div>
+    </section>
+
+    <section id="branch_feedback" class="tab-content ux-section">
+      <div class="section-heading"><p class="eyebrow">Branches</p><h2>門市服務意見</h2></div>
+      <div class="panel-grid two">
+        <article class="panel dark-title"><h3 id="branch-leaderboard-heading">各分社滿意度排行榜</h3><span id="branch-leaderboard-total">N=135 (最新統計)</span><div id="branchLeaderboard"></div></article>
+        <article class="panel"><h3>門市長評</h3><span id="branch-feedback-total">共提取 18 條門市意見</span><div id="branchFeedbackGrid"></div></article>
+      </div>
+    </section>
+
+    <section id="analysis" class="tab-content ux-section">
+      <div class="section-heading"><p class="eyebrow">Strategy</p><h2>綜合意見</h2></div>
+      <div class="panel-grid three">
+        <article class="panel"><h3>優先解決的營運痛點</h3><p>餐飲口味、地接服務與年齡層體驗落差。</p></article>
+        <article class="panel"><h3>產品競爭力升級方向</h3><p>熱門目的地分層，短線與中長線並重。</p></article>
+        <article class="panel"><h3>核心護城河與增長引擎</h3><p>領隊導遊服務，以及線上獲客、門市成交模式。</p></article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

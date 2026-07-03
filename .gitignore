@@ -1,0 +1,60 @@
+# macOS / OS metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+
+# Logs
+*.log
+logs/
+
+# Python caches / test caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / frontend deps
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / IDE temp files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.tmp/
+tmp/
+.temp/
+temp/
+
+# Temporary validation artifacts, screenshots, PDFs, fixture output
+*.tmp
+*.temp
+*.bak
+*.orig
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+screenshots/
+screenshot-output/
+pdf-output/
+print-output/
+fixture-output/
+test-output/
+playwright-report/
+test-results/
+
+# Local runtime files
+.env
+.env.*

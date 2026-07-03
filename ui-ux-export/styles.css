@@ -1,0 +1,269 @@
+:root {
+  --bg: #f4f7fb;
+  --surface: #ffffff;
+  --surface-muted: #eef3f8;
+  --text: #172033;
+  --muted: #667085;
+  --line: #d9e2ec;
+  --brand: #2563eb;
+  --brand-dark: #1e3a8a;
+  --accent: #14b8a6;
+  --warning: #f97316;
+  --danger: #dc2626;
+  --radius: 8px;
+  --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, "Microsoft JhengHei", "PingFang TC", sans-serif;
+  line-height: 1.5;
+}
+
+.hidden {
+  display: none;
+}
+
+.notice,
+.loading-reference {
+  max-width: 1180px;
+  margin: 16px auto;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.loading-reference {
+  display: none;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 24px clamp(18px, 4vw, 56px);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.app-header h1 {
+  margin: 4px 0;
+  font-size: clamp(28px, 4vw, 42px);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.month-control {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+select,
+button {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+
+select {
+  padding: 0 12px;
+}
+
+.report-shell {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 3vw, 32px) 48px;
+}
+
+.tab-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px;
+  margin-bottom: 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.tab-btn {
+  flex: 0 0 auto;
+  padding: 0 14px;
+  font-weight: 700;
+}
+
+.active-tab {
+  background: var(--brand);
+  color: #ffffff;
+  border-color: var(--brand);
+}
+
+.ux-section {
+  display: block;
+  margin-bottom: 32px;
+}
+
+.section-heading {
+  margin-bottom: 16px;
+}
+
+.section-heading h2 {
+  margin: 4px 0 0;
+  font-size: 26px;
+}
+
+.kpi-grid,
+.panel-grid,
+.card-grid,
+.mini-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.kpi-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 16px;
+}
+
+.panel-grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.panel-grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.kpi-card,
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.kpi-card {
+  padding: 18px;
+}
+
+.kpi-card span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.kpi-card strong {
+  font-size: 25px;
+}
+
+.panel {
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.panel h3,
+.panel h4 {
+  margin-top: 0;
+}
+
+.highlight {
+  border-left: 5px solid var(--brand);
+}
+
+.chart-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  min-height: 220px;
+  border: 1px dashed #b7c5d4;
+  border-radius: var(--radius);
+  background:
+    linear-gradient(90deg, rgba(37, 99, 235, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px),
+    #fbfdff;
+  background-size: 24px 24px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+th {
+  color: #ffffff;
+  background: var(--brand-dark);
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.word-cloud-container,
+.status-bar,
+#feedbackGrid,
+#branchLeaderboard,
+#branchFeedbackGrid,
+#records-cross-insights,
+#duration-legend {
+  min-height: 96px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+}
+
+.dark-title h3,
+.dark-title span {
+  color: #ffffff;
+}
+
+.dark-title {
+  background: #111827;
+}
+
+@media (max-width: 900px) {
+  .app-header,
+  .panel-grid.two,
+  .panel-grid.three,
+  .kpi-grid,
+  .chart-row {
+    grid-template-columns: 1fr;
+  }
+
+  .app-header {
+    display: grid;
+  }
+}

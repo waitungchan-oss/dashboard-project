@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅遊業務分析儀表板 | Travel BI</title>
+    
+    <!-- 引入外部資源 (已徹底移除 PDF 引擎以保證效能穩定) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* 引入微軟標準字體 Segoe UI */
+        @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap');
+        
+        /* 基礎樣式 - 替換為 Power BI 風格 */
+        body { background-color: #eaeaea !important; color: #252423 !important; font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important; }
+        
+        /* 移除大圓角與強陰影，改為扁平化與細邊框 */
+        .rounded-xl, .rounded-lg, .rounded-full { border-radius: 2px !important; }
+        .shadow-sm, .shadow-lg, .shadow-xl { box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important; border: 1px solid #e1dfdd !important; }
+        
+        /* Header 模擬 Power BI 黑色頂部導航 */
+        header.bg-white { background-color: #0f141a !important; border-bottom: none !important; padding-top: 8px !important; padding-bottom: 8px !important; }
+        header h1, header p, header .text-gray-900, header .text-gray-500 { color: #ffffff !important; }
+        header p { opacity: 0.8; }
+        header .bg-blue-600 { background-color: #F2C80F !important; color: #252423 !important; padding: 6px 10px !important; border-radius: 2px !important; box-shadow: none !important; }
+        header .bg-blue-600 svg { stroke: #252423 !important; }
+        
+        /* 標籤導航 模擬 Power BI 頁面切換 */
+        .tab-btn-container { background-color: #ffffff !important; border: none !important; border-bottom: 1px solid #e1dfdd !important; box-shadow: none !important; padding: 0 20px !important; gap: 0 !important; }
+        .tab-btn { background-color: transparent !important; color: #605e5c !important; font-weight: 400 !important; border-radius: 0 !important; border-bottom: 3px solid transparent !important; padding: 12px 16px !important; margin-right: 4px !important; box-shadow: none !important; transition: background-color 0.2s; }
+        .tab-btn:hover { background-color: #f3f2f1 !important; color: #252423 !important; }
+        .tab-btn.active-tab { border-bottom: 3px solid #118DFF !important; color: #252423 !important; font-weight: 600 !important; background-color: #ffffff !important; }
+        
+        /* 通用排版 */
+        h2, h3, h4 { color: #252423 !important; font-weight: 600 !important; }
+        #branch-leaderboard-heading, #branch-leaderboard-total { color: #ffffff !important; }
+        .text-gray-500 { color: #605e5c !important; }
+        .bg-white { background-color: #ffffff !important; }
+        .bg-gray-50 { background-color: #faf9f8 !important; }
+        
+        /* KPI 卡片顏色覆蓋 */
+        .bg-blue-100 { background-color: #e6f3ff !important; color: #118DFF !important; }
+        .bg-green-100 { background-color: #e6f7f5 !important; color: #00B8AA !important; }
+        .bg-purple-100 { background-color: #f0e6f2 !important; color: #6B007B !important; }
+        .bg-orange-100 { background-color: #fcece5 !important; color: #E66C37 !important; }
+        .text-blue-600, .text-blue-700, .text-blue-800 { color: #118DFF !important; }
+        .text-green-600, .text-green-700 { color: #00B8AA !important; }
+        .text-purple-600 { color: #6B007B !important; }
+        .text-orange-600 { color: #E66C37 !important; }
+        
+        .tab-content { display: none; animation: fadeIn 0.4s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* 移除強烈懸浮動畫，改為微弱陰影 */
+        .card-hover { transition: border-color 0.2s ease, box-shadow 0.2s ease !important; transform: none !important; }
+        .card-hover:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important; border-color: #c8c6c4 !important; transform: none !important; }
+        
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f3f2f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #c8c6c4; border-radius: 2px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #a19f9d; }
+        
+        /* Table Styles */
+        .data-table th { background-color: #f3f2f1 !important; color: #252423 !important; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; border-bottom: 1px solid #e1dfdd; }
+        .data-table tr:nth-child(even) { background-color: #faf9f8 !important; }
+        .data-table tr:hover { background-color: #f3f2f1 !important; }
+
+        /* Review Card Styles */
+        .review-card { break-inside: avoid; margin-bottom: 1.5rem; }
+        .review-positive { border-left: 4px solid #00B8AA !important; }
+        .review-suggestion { border-left: 4px solid #F2C80F !important; }
+        .review-negative { border-left: 4px solid #FD625E !important; }
+
+        /* Leaderboard Styles */
+        .rank-1 { background: #ffffff !important; border-left: 4px solid #F2C80F !important; }
+        .rank-2 { background: #ffffff !important; border-left: 4px solid #c8c6c4 !important; }
+        .rank-3 { background: #ffffff !important; border-left: 4px solid #E66C37 !important; }
+        
+        /* Source Label Style */
+        .source-label { font-size: 0.7rem; color: #a19f9d; margin-top: 0.25rem; display: block; font-weight: normal; }
+
+        /* Word Cloud Styles */
+        .word-cloud-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 15px; padding: 20px; }
+        .word-tag { transition: all 0.3s; cursor: pointer; line-height: 1.2; padding: 4px 8px; border-radius: 2px; }
+        .word-tag:hover { transform: scale(1.05); background-color: #f3f2f1; text-shadow: none; }
+        .word-tag.active { background-color: #e6f3ff; border: 1px solid #118DFF; }
+
+        /* Loading Overlay Style */
+        #loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
+
+        /* =====================================================
+           Stitch / Terra BI Visual Layer
+           - Visual-only overrides.
+           - Keeps all existing ids, canvas hooks and app.js logic.
+           ===================================================== */
+        @import url('https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,600;7..72,700&family=Nunito+Sans:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700;800&display=swap');
+
+        :root {
+            --terra-bg: #f7f5ef;
+            --terra-panel: #ffffff;
+            --terra-panel-soft: #f1ede5;
+            --terra-sidebar: #f0ece4;
+            --terra-text: #27302c;
+            --terra-muted: #697169;
+            --terra-line: #ded8cc;
+            --terra-primary: #4a7c59;
+            --terra-primary-dark: #2f5f3e;
+            --terra-primary-soft: #dcebdd;
+            --terra-amber: #a6813b;
+            --terra-amber-soft: #f2e6c7;
+            --terra-danger: #b83230;
+            --terra-danger-soft: #f7dedb;
+            --terra-info: #3b6f9e;
+            --terra-radius: 18px;
+            --terra-radius-sm: 12px;
+            --terra-shadow: 0 14px 40px rgba(39, 48, 44, 0.08);
+            --terra-shadow-soft: 0 4px 18px rgba(39, 48, 44, 0.06);
+            --terra-sidebar-width: 268px;
+        }
+
+        html { background: var(--terra-bg) !important; }
+        body {
+            background: var(--terra-bg) !important;
+            color: var(--terra-text) !important;
+            font-family: "Nunito Sans", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, sans-serif !important;
+            letter-spacing: 0 !important;
+        }
+
+        h1, h2, h3, h4, h5 {
+            color: var(--terra-text) !important;
+            font-family: "Literata", "Noto Sans TC", "Microsoft JhengHei", serif !important;
+            letter-spacing: 0 !important;
+        }
+
+        p, li, td, th, span, select, button {
+            letter-spacing: 0 !important;
+        }
+
+        .rounded-xl, .rounded-lg, .rounded-full {
+            border-radius: var(--terra-radius-sm) !important;
+        }
+
+        .shadow-sm, .shadow-lg, .shadow-xl {
+            box-shadow: var(--terra-shadow-soft) !important;
+            border-color: rgba(222, 216, 204, 0.85) !important;
+        }
+
+        .bg-white {
+            background-color: var(--terra-panel) !important;
+        }
+
+        .bg-gray-50 {
+            background-color: #fbfaf6 !important;
+        }
+
+        .text-gray-500, .text-gray-400, .text-gray-600 {
+            color: var(--terra-muted) !important;
+        }
+
+        .text-blue-600, .text-blue-700, .text-blue-800,
+        .text-green-600, .text-green-700 {
+            color: var(--terra-primary) !important;
+        }
+
+        .bg-blue-100, .bg-green-100 {
+            background-color: var(--terra-primary-soft) !important;
+            color: var(--terra-primary-dark) !important;
+        }
+
+        .bg-purple-100, .bg-orange-100 {
+            background-color: var(--terra-amber-soft) !important;
+            color: var(--terra-amber) !important;
+        }
+
+        header.bg-white {
+            background-color: rgba(255, 255, 255, 0.92) !important;
+            border-bottom: 1px solid var(--terra-line) !important;
+            box-shadow: 0 1px 0 rgba(222, 216, 204, 0.8) !important;
+            backdrop-filter: blur(16px);
+        }
+
+        header.bg-white > div {
+            max-width: none !important;
+            padding-top: 12px !important;
+            padding-bottom: 12px !important;
+        }
+
+        header h1,
+        header p,
+        header .text-gray-900,
+        header .text-gray-500 {
+            color: var(--terra-text) !important;
+        }
+
+        header p {
+            opacity: 0.75;
+        }
+
+        header .bg-blue-600 {
+            background-color: var(--terra-primary) !important;
+            color: #ffffff !important;
+            border-radius: 14px !important;
+            box-shadow: 0 10px 24px rgba(74, 124, 89, 0.22) !important;
+        }
+
+        header .bg-blue-600 svg {
+            stroke: #ffffff !important;
+        }
+
+        #globalMonthSelector {
+            min-width: 180px;
+            background: #f1ede5 !important;
+            border: 1px solid var(--terra-line) !important;
+            color: var(--terra-text) !important;
+            border-radius: 999px !important;
+            box-shadow: none !important;
+        }
+
+        #globalMonthSelector:focus {
+            outline: 2px solid rgba(74, 124, 89, 0.28) !important;
+            border-color: var(--terra-primary) !important;
+        }
+
+        #report-content {
+            max-width: 1500px !important;
+        }
+
+        .tab-content {
+            animation: terraFade 0.32s ease-out;
+        }
+
+        @keyframes terraFade {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-btn-container {
+            background: var(--terra-panel) !important;
+            border: 1px solid var(--terra-line) !important;
+            box-shadow: var(--terra-shadow-soft) !important;
+        }
+
+        .tab-btn {
+            color: var(--terra-muted) !important;
+            border-radius: 12px !important;
+            border-bottom: 0 !important;
+            font-weight: 700 !important;
+            gap: 0.4rem;
+            min-width: 0;
+        }
+
+        .tab-btn i {
+            flex: 0 0 20px;
+            width: 20px;
+            height: 20px;
+            margin-right: 0.5rem !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: currentColor !important;
+            font-size: 0.92rem;
+            line-height: 1;
+        }
+
+        .tab-btn {
+            overflow: hidden;
+        }
+
+        .tab-btn .fas,
+        .tab-btn .fa-solid {
+            text-align: center;
+        }
+
+        .tab-btn:hover {
+            background-color: rgba(74, 124, 89, 0.08) !important;
+            color: var(--terra-primary-dark) !important;
+        }
+
+        .tab-btn.active-tab {
+            background-color: rgba(74, 124, 89, 0.88) !important;
+            color: #ffffff !important;
+            border-bottom: 0 !important;
+            box-shadow: 0 10px 24px rgba(74, 124, 89, 0.18) !important;
+        }
+
+        .card-hover,
+        .tab-content .bg-white.rounded-xl,
+        .tab-content .bg-white.rounded-\[2px\],
+        .tab-content .bg-white.rounded-sm {
+            border-radius: var(--terra-radius) !important;
+            border: 1px solid rgba(222, 216, 204, 0.88) !important;
+            box-shadow: var(--terra-shadow-soft) !important;
+            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease !important;
+        }
+
+        .card-hover:hover,
+        .tab-content .bg-white.rounded-xl:hover {
+            transform: translateY(-2px) !important;
+            border-color: rgba(74, 124, 89, 0.28) !important;
+            box-shadow: var(--terra-shadow) !important;
+        }
+
+        #dashboard > .grid:first-of-type > div,
+        #records > .grid:first-of-type > div {
+            position: relative;
+            overflow: hidden;
+            min-height: 126px;
+            border-radius: var(--terra-radius) !important;
+            background: linear-gradient(145deg, #ffffff 0%, #f8f6ef 100%) !important;
+        }
+
+        #dashboard > .grid:first-of-type > div::before,
+        #records > .grid:first-of-type > div::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: var(--terra-primary);
+            opacity: 0.9;
+        }
+
+        #dashboard > .grid:first-of-type p[id^="kpi"],
+        #records > .grid:first-of-type h3 {
+            color: var(--terra-text) !important;
+            font-family: "Nunito Sans", "Noto Sans TC", sans-serif !important;
+            font-weight: 800 !important;
+        }
+
+        .tab-content h3 .w-1,
+        .tab-content h2 + span {
+            border-radius: 999px !important;
+        }
+
+        .tab-content .border-l-4,
+        .tab-content .border-t-4,
+        #js-error-boundary.border-l-4,
+        #loadingOverlay .border-t-4 {
+            border-radius: var(--terra-radius-sm) !important;
+        }
+
+        .tab-content h2,
+        .tab-content h3,
+        .tab-content h4 {
+            min-width: 0;
+            gap: 0.45rem;
+            line-height: 1.35 !important;
+            overflow-wrap: anywhere;
+        }
+
+        .tab-content h2 > i,
+        .tab-content h3 > i,
+        .tab-content h4 > i,
+        .tab-content h5 > i {
+            flex: 0 0 24px;
+            width: 24px;
+            height: 24px;
+            margin-right: 0.45rem !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(74, 124, 89, 0.12);
+            color: var(--terra-primary-dark) !important;
+            font-size: 0.82rem !important;
+            line-height: 1;
+        }
+
+        .tab-content p,
+        .tab-content li,
+        .tab-content td,
+        .tab-content th,
+        .tab-content span {
+            overflow-wrap: anywhere;
+        }
+
+        .tab-content .bg-white,
+        .tab-content .bg-gray-50,
+        .tab-content .bg-blue-50,
+        .tab-content .bg-indigo-50,
+        .tab-content .bg-yellow-50,
+        .tab-content .bg-red-50,
+        .tab-content .bg-\[\#f3f2f1\],
+        .tab-content .bg-\[\#faf9f8\],
+        .tab-content .bg-\[\#fcece5\] {
+            max-width: 100%;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        #dashboard .border-l-4,
+        #nps_zone .border-l-4,
+        #records .border-t-4,
+        #records .border-l-4,
+        #feedback_analysis .border-l-4,
+        #branch_feedback .border-l-4,
+        #analysis .border-l-4 {
+            border-radius: var(--terra-radius-sm) !important;
+        }
+
+        #analysis > .bg-white {
+            overflow: hidden;
+        }
+
+        #analysis .bg-red-50,
+        #analysis .bg-yellow-50,
+        #analysis .bg-blue-50 {
+            background-color: #fffdf8 !important;
+            border: 1px solid rgba(222, 216, 204, 0.9) !important;
+            box-shadow: var(--terra-shadow-soft) !important;
+            border-radius: var(--terra-radius) !important;
+            position: relative;
+        }
+
+        #analysis .bg-red-50 {
+            border-left: 5px solid var(--terra-danger) !important;
+        }
+
+        #analysis .bg-yellow-50 {
+            border-left: 5px solid var(--terra-amber) !important;
+        }
+
+        #analysis .bg-blue-50 {
+            border-left: 5px solid var(--terra-info) !important;
+        }
+
+        #analysis .bg-red-50::before,
+        #analysis .bg-yellow-50::before,
+        #analysis .bg-blue-50::before {
+            content: none !important;
+        }
+
+        #analysis .bg-white.p-5 {
+            border-radius: var(--terra-radius-sm) !important;
+            overflow: hidden;
+        }
+
+        canvas {
+            max-width: 100% !important;
+        }
+
+        .data-table {
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+        }
+
+        .data-table th {
+            background-color: #f1ede5 !important;
+            color: var(--terra-text) !important;
+            border-bottom: 1px solid var(--terra-line) !important;
+            font-size: 0.72rem !important;
+            letter-spacing: 0 !important;
+        }
+
+        .data-table td {
+            border-bottom: 1px solid rgba(222, 216, 204, 0.72) !important;
+        }
+
+        .data-table tr:nth-child(even) {
+            background-color: rgba(247, 245, 239, 0.56) !important;
+        }
+
+        .data-table tr:hover {
+            background-color: rgba(74, 124, 89, 0.08) !important;
+        }
+
+        select {
+            border-radius: 999px !important;
+            border-color: var(--terra-line) !important;
+            background-color: #fffdf8 !important;
+        }
+
+        button {
+            border-radius: 12px !important;
+        }
+
+        #sentimentStatusBar {
+            background: #fffdf8;
+            border: 1px solid var(--terra-line);
+            border-radius: var(--terra-radius);
+            padding: 16px;
+            box-shadow: var(--terra-shadow-soft);
+        }
+
+        #wordCloudContainer {
+            min-height: 160px;
+            border-radius: var(--terra-radius) !important;
+            background: radial-gradient(circle at top left, rgba(74,124,89,0.12), transparent 36%), #fbfaf6 !important;
+            border-color: rgba(74, 124, 89, 0.16) !important;
+        }
+
+        .word-tag {
+            border-radius: 999px !important;
+            background: rgba(255,255,255,0.68);
+            border: 1px solid rgba(222, 216, 204, 0.9);
+        }
+
+        .word-tag:hover,
+        .word-tag.active {
+            background-color: var(--terra-primary-soft) !important;
+            border-color: var(--terra-primary) !important;
+            color: var(--terra-primary-dark) !important;
+        }
+
+        #feedbackGrid > div,
+        #branchFeedbackGrid > div {
+            border-radius: var(--terra-radius) !important;
+            background: #fffdf8 !important;
+            box-shadow: var(--terra-shadow-soft) !important;
+        }
+
+        #feedbackGrid > div p.italic {
+            font-style: normal !important;
+            font-size: 0.94rem !important;
+        }
+
+        #branch-leaderboard-heading,
+        #branch-leaderboard-total {
+            color: #ffffff !important;
+        }
+
+        #branchLeaderboard > div {
+            border-radius: 14px !important;
+            background-color: #fffdf8 !important;
+        }
+
+        .rank-1,
+        .rank-2,
+        .rank-3 {
+            background: #fffdf8 !important;
+        }
+
+        #tourDetailBody span {
+            border-radius: 999px !important;
+            background-color: var(--terra-primary-soft) !important;
+            color: var(--terra-primary-dark) !important;
+            border-color: rgba(74, 124, 89, 0.24) !important;
+        }
+
+        #resetBtn {
+            background-color: #f1ede5 !important;
+            color: var(--terra-text) !important;
+            border: 1px solid var(--terra-line);
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1ede5;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #b9c9b7;
+            border-radius: 999px;
+        }
+
+        @media (min-width: 1024px) {
+            header.bg-white {
+                margin-left: var(--terra-sidebar-width) !important;
+                width: calc(100% - var(--terra-sidebar-width)) !important;
+            }
+
+            header.bg-white > div {
+                padding-left: 28px !important;
+                padding-right: 28px !important;
+            }
+
+            #report-content {
+                margin-left: var(--terra-sidebar-width) !important;
+                margin-right: 0 !important;
+                width: calc(100% - var(--terra-sidebar-width)) !important;
+                max-width: none !important;
+                padding: 28px 32px 56px !important;
+            }
+
+            #tabFilterContainer {
+                position: fixed !important;
+                top: 0;
+                left: 0;
+                z-index: 40;
+                width: var(--terra-sidebar-width);
+                height: 100vh;
+                margin: 0 !important;
+                padding: 22px 16px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                justify-content: flex-start !important;
+                gap: 18px !important;
+                background: var(--terra-sidebar) !important;
+                border-right: 1px solid var(--terra-line);
+                box-shadow: 1px 0 0 rgba(222, 216, 204, 0.45);
+            }
+
+            #tabFilterContainer::before {
+                content: "Travel BI\A 旅遊業務分析";
+                white-space: pre;
+                display: block;
+                padding: 4px 8px 18px 8px;
+                color: var(--terra-primary-dark);
+                font-family: "Literata", "Noto Sans TC", serif;
+                font-size: 1.2rem;
+                font-weight: 700;
+                line-height: 1.15;
+                border-bottom: 1px solid rgba(222, 216, 204, 0.86);
+            }
+
+            #tabFilterContainer::after {
+                content: "Rooted in Data, Driven by Growth";
+                display: block;
+                margin-top: 8px;
+                padding: 0 8px;
+                color: var(--terra-muted);
+                font-size: 0.72rem;
+            }
+
+            #tabFilterContainer .tab-btn-container {
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 6px !important;
+                padding: 0 !important;
+                border: 0 !important;
+                box-shadow: none !important;
+                background: transparent !important;
+                overflow: visible !important;
+            }
+
+            #tabFilterContainer .tab-btn {
+                width: 100% !important;
+                justify-content: flex-start !important;
+                align-items: center !important;
+                margin: 0 !important;
+                padding: 12px 14px !important;
+                white-space: normal !important;
+                text-align: left !important;
+                line-height: 1.25 !important;
+            }
+
+            #tabFilterContainer .tab-btn i {
+                margin-top: 1px;
+            }
+
+            #tabFilterContainer > .relative.group {
+                width: 100%;
+                margin-top: auto;
+            }
+
+            #tabFilterContainer > .relative.group > button {
+                width: 100%;
+                justify-content: center;
+                border-radius: 16px !important;
+                border: 0 !important;
+                background: var(--terra-primary) !important;
+                color: #ffffff !important;
+                box-shadow: 0 12px 26px rgba(74, 124, 89, 0.24) !important;
+            }
+
+            #tabFilterMenu {
+                right: auto !important;
+                left: calc(100% + 8px) !important;
+                bottom: 56px !important;
+                top: auto !important;
+                margin-top: 0 !important;
+                border-radius: var(--terra-radius) !important;
+            }
+        }
+
+        @media (max-width: 1023px) {
+            header.bg-white > div {
+                gap: 14px;
+                align-items: flex-start !important;
+                flex-direction: column;
+            }
+
+            header.bg-white .flex.items-center.space-x-3 {
+                width: 100%;
+            }
+
+            #globalMonthSelector {
+                width: 100%;
+            }
+
+            #tabFilterContainer {
+                position: sticky;
+                top: 76px;
+                z-index: 25;
+                background: rgba(247,245,239,0.92);
+                backdrop-filter: blur(12px);
+                padding: 10px 0;
+            }
+
+            .tab-btn-container {
+                overflow-x: auto !important;
+                border-radius: 16px !important;
+                padding: 8px !important;
+            }
+
+            .tab-btn {
+                white-space: nowrap !important;
+            }
+
+            #dashboard > .grid:first-of-type > div,
+            #records > .grid:first-of-type > div {
+                min-height: 112px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                overflow-x: hidden !important;
+            }
+
+            #report-content {
+                width: 100% !important;
+                max-width: 100vw !important;
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+                overflow-x: hidden !important;
+                box-sizing: border-box !important;
+            }
+
+            .tab-content,
+            .tab-content > div {
+                max-width: 100% !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+            }
+
+            .tab-content > *,
+            .tab-content .grid,
+            .tab-content .flex,
+            .tab-content .bg-white,
+            .tab-content .bg-gray-50,
+            .tab-content .bg-blue-50,
+            .tab-content .bg-indigo-50,
+            .tab-content .bg-yellow-50,
+            .tab-content .bg-red-50 {
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+            }
+
+            .tab-content > .flex.justify-end {
+                justify-content: flex-start !important;
+            }
+
+            .tab-content .flex.justify-between.items-center,
+            .tab-content .flex.justify-between.items-start {
+                flex-wrap: wrap !important;
+                gap: 12px !important;
+            }
+
+            .tab-content .flex.justify-between.items-center > span,
+            .tab-content .flex.justify-between.items-center > button,
+            .tab-content .flex.justify-between.items-start > span,
+            .tab-content .flex.justify-between.items-start > button {
+                max-width: 100% !important;
+                white-space: normal !important;
+            }
+
+            .tab-content .bg-white,
+            .tab-content .bg-gray-50,
+            .tab-content .bg-blue-50,
+            .tab-content .bg-indigo-50,
+            .tab-content .bg-yellow-50,
+            .tab-content .bg-red-50 {
+                min-width: 0 !important;
+            }
+
+            .tab-content h2,
+            .tab-content h3 {
+                line-height: 1.35 !important;
+                align-items: flex-start !important;
+                overflow-wrap: anywhere !important;
+            }
+
+            .tab-content h2 > i,
+            .tab-content h3 > i,
+            .tab-content h4 > i {
+                margin-top: 0.08rem;
+            }
+
+            .tab-content table {
+                min-width: 560px;
+            }
+
+            #tabFilterContainer,
+            #tabFilterContainer .tab-btn-container {
+                width: 100% !important;
+                max-width: calc(100vw - 32px) !important;
+                min-width: 0 !important;
+            }
+
+            #tabFilterContainer .tab-btn-container {
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+            }
+
+            #tabFilterContainer .tab-btn {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                min-width: max-content !important;
+            }
+
+            #dashboard > .grid,
+            #records > .grid {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+            }
+
+            #dashboard > .grid:first-of-type,
+            #records > .grid:first-of-type {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 16px !important;
+            }
+
+            #dashboard > .grid:first-of-type > div,
+            #records > .grid:first-of-type > div {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            #records .flex.justify-between.items-center.mb-6 {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+            }
+
+            #records .text-xs.bg-blue-100,
+            #records .text-xs.bg-\[\#e6f3ff\] {
+                display: inline-flex !important;
+                align-items: center;
+                justify-content: flex-start;
+                width: auto !important;
+                max-width: 100% !important;
+                white-space: normal !important;
+            }
+
+            #feedback_analysis .flex.space-x-3,
+            #feedback_analysis .flex.space-x-4,
+            #branch_feedback .flex.justify-between.items-center {
+                width: 100%;
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+
+            #feedback_analysis select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 防錯錯誤顯示區塊 (隱藏) -->
+    <div id="js-error-boundary" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 m-4 rounded shadow-sm z-50">
+        <p class="font-bold"><i class="fas fa-exclamation-triangle mr-2"></i> 系統通知</p>
+        <p id="js-error-msg" class="text-sm">部分圖表或資源加載緩慢，系統已自動修復並呈現可用數據。</p>
+    </div>
+
+    <!-- 輕量級載入動畫 -->
+    <div id="loadingOverlay">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
+        <h2 id="loading-title" class="text-xl font-bold text-gray-800">正在載入數據庫...</h2>
+        <p id="loading-desc" class="text-sm text-gray-500">正在執行 API 數據提取與圖表重繪，請稍候...</p>
+    </div>
+
+    <header class="bg-white shadow-sm sticky top-0 z-30 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <div class="bg-blue-600 p-2 rounded-lg shadow-lg">
+                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900 tracking-tight">旅遊業務分析儀表板</h1>
+                    <p class="text-xs text-gray-500" id="header-data-source">當前視圖：2026年 05月 | 數據源：問卷匯總</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <!-- 全局年月篩選器 -->
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <i class="fas fa-calendar-alt text-blue-600"></i>
+                    </div>
+                    <select id="globalMonthSelector" onchange="DashboardApp.changeMonth(this.value)" class="bg-blue-50 border border-blue-200 text-blue-800 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 py-2 cursor-pointer hover:bg-blue-100 transition-colors font-bold appearance-none pr-8 outline-none">
+                        <option value="2026年 05月" selected>2026年 05月</option>
+                        <option value="2026年 04月">2026年 04月</option>
+                        <option value="2026年 03月">2026年 03月 (歷史數據)</option>
+                        <option value="2026年 02月">2026年 02月 (歷史數據)</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-blue-600">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" id="report-content">
+        
+        <!-- Navigation Wrapper -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4" id="tabFilterContainer">
+            <div class="tab-btn-container flex space-x-2 bg-white p-1.5 rounded-xl shadow-sm border border-gray-200 w-full md:w-auto overflow-x-auto custom-scroll">
+                <button data-tab-id="dashboard" onclick="DashboardApp.switchTab('dashboard', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-chart-pie mr-2"></i>旅行團數據儀表板</button>
+                <button data-tab-id="sales_forecast" onclick="DashboardApp.switchTab('sales_forecast', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-brain mr-2"></i>AI 銷售預測</button>
+                <button data-tab-id="nps_zone" onclick="DashboardApp.switchTab('nps_zone', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-heart mr-2"></i>推薦意願專區</button>
+                <button data-tab-id="tourleader" onclick="DashboardApp.switchTab('tourleader', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-user-tie mr-2"></i>領隊表現專區</button>
+                <button data-tab-id="records" onclick="DashboardApp.switchTab('records', this)" class="tab-btn active-tab flex items-center px-4 py-2.5 rounded-lg text-sm font-semibold bg-blue-50 text-blue-700 shadow-sm whitespace-nowrap transition-all"><i class="fas fa-map-marked-alt mr-2"></i>出團記錄分析</button>
+                <button data-tab-id="feedback_analysis" onclick="DashboardApp.switchTab('feedback_analysis', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-comment-dots mr-2"></i>出團長評回饋</button>
+                <button data-tab-id="branch_feedback" onclick="DashboardApp.switchTab('branch_feedback', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-store mr-2"></i>門市服務意見</button>
+                <button data-tab-id="analysis" onclick="DashboardApp.switchTab('analysis', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-lightbulb mr-2"></i>綜合意見</button>
+            </div>
+
+            <!-- Filter Button & Menu -->
+            <div class="relative group">
+                <button onclick="DashboardApp.toggleFilterMenu()" class="flex items-center px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-all whitespace-nowrap">
+                    <i class="fas fa-sliders-h mr-2 text-gray-500"></i> 自訂顯示
+                </button>
+                <div id="tabFilterMenu" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 z-50 p-1 transform origin-top-right transition-all">
+                    <div class="text-xs font-bold text-gray-400 uppercase px-3 py-2 border-b border-gray-100">勾選以顯示分頁</div>
+                    <div class="p-1 space-y-1 max-h-[300px] overflow-y-auto custom-scroll" id="filterCheckboxes"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             1. Dashboard Tab
+             ========================================== -->
+        <div id="dashboard" class="tab-content space-y-6">
+            <div class="flex justify-end"><span class="text-xs text-gray-400 italic">數據來源：香港中旅社旅行團服務意見</span></div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center justify-between card-hover">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">總受訪人數</p>
+                        <div class="flex items-baseline mt-2">
+                            <p class="text-3xl font-bold text-gray-900" id="kpi-total-respondents">223</p>
+                            <span class="text-xs font-bold text-gray-400 ml-2 bg-gray-100 px-1.5 py-0.5 rounded">—</span>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600"><i class="fas fa-users text-xl"></i></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center justify-between card-hover">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">推廣信息同意人數</p>
+                        <div class="flex items-baseline mt-2">
+                            <p class="text-3xl font-bold text-green-600" id="kpi-promo-consent">70 <span class="text-sm font-normal text-gray-400">/ 31.4%</span></p>
+                            <span class="text-xs font-bold text-gray-400 ml-2 bg-gray-100 px-1.5 py-0.5 rounded">—</span>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-full bg-green-100 text-green-600"><i class="fas fa-check-circle text-xl"></i></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center justify-between card-hover">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">推薦意願 (NPS)</p>
+                        <div class="flex items-baseline mt-2">
+                            <p class="text-3xl font-bold text-gray-900" id="kpi-nps-score">80 分 <span class="text-sm font-normal text-gray-400">/ 推薦者 83.9%</span></p>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600"><i class="fas fa-thumbs-up text-xl"></i></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center justify-between card-hover">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">門店報名佔比</p>
+                        <div class="flex items-baseline mt-2">
+                            <p class="text-3xl font-bold text-gray-900" id="kpi-store-signup">194<span class="text-sm font-normal text-gray-400">人 / 87.0%</span></p>
+                            <span class="text-xs font-bold text-gray-400 ml-2 bg-gray-100 px-1.5 py-0.5 rounded">—</span>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-full bg-orange-100 text-orange-600"><i class="fas fa-store-alt text-xl"></i></div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold text-gray-800 mb-6 flex flex-col"><span class="flex items-center"><span class="w-1 h-6 bg-blue-600 rounded mr-3"></span><span id="profile-title">基礎客戶畫像 (N=223)</span></span><span class="text-xs text-gray-400 font-normal mt-1">單位：人數 (人)</span></h3>
+                <div class="flex flex-col md:flex-row gap-8 items-center justify-center">
+                    <div class="w-full md:w-1/3 h-64"><canvas id="genderChart"></canvas></div>
+                    <div class="w-full md:w-2/3 h-64"><canvas id="ageChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800 flex items-center"><span class="w-1 h-6 bg-purple-600 rounded mr-3"></span>會員深度交叉分析：推廣訊息接收意願</h3>
+                        <p class="text-sm text-gray-500 mt-1" id="member-source-label">數據來源：問卷數據全量統計 (N=223)</p>
+                    </div>
+                </div>
+                <div class="flex flex-col md:flex-row gap-6 items-center">
+                    <div class="w-full md:w-2/3 h-72"><canvas id="memberConsentCrossChart"></canvas></div>
+                    <div class="w-full md:w-1/3 bg-gray-50 p-5 rounded-xl border-l-4 border-indigo-500 flex flex-col justify-center">
+                        <h4 class="text-sm font-bold text-indigo-800 mb-3"><i class="fas fa-lightbulb mr-1"></i> 洞察註解：</h4>
+                        <p class="text-sm text-gray-700 leading-relaxed mb-2" id="member-insight-1"><strong>1. 會員的價值差異：</strong>星賞會會員對接收推廣訊息的意願（68.8%）遠高於非會員（29.0%）。這突顯了會員身份在提升客戶參與度和行銷訊息到達率方面的顯著價值。公司應持續優化會員權益和溝通策略，將會員作為重點行銷對象。</p>
+                        <p class="text-sm text-gray-700 leading-relaxed" id="member-insight-2"><strong>2. 非會員的抗拒性：</strong>超過七成（71.0%）的非會員選擇不同意接收推廣訊息。這表明對於潛在客戶，需要更具吸引力、非侵入性或更有針對性的首次接觸方式，而不是直接要求同意接收大量訊息。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center"><span class="w-1 h-6 bg-green-500 rounded mr-3"></span><span id="satisfaction-title">旅程體驗滿意度 (N=223)</span></h3>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-3 relative h-96 w-full"><canvas id="satisfactionChart"></canvas></div>
+                    <div class="lg:col-span-1 bg-yellow-50 p-5 rounded-xl border-l-4 border-yellow-500 flex flex-col justify-center">
+                        <h4 class="text-sm font-bold text-yellow-800 mb-3"><i class="fas fa-exclamation-circle mr-1"></i> 改善與優勢洞察：</h4>
+                        <ul class="text-sm text-gray-700 space-y-2 list-disc pl-4">
+                            <li id="satisfaction-insight-1"><strong>高分表現項目：</strong>旅車司機、隨團領隊和交通的滿意度極高，均超過 97%，其中旅車司機滿意度高達99.6%，顯示人員服務和基礎設施運營非常出色。</li>
+                            <li id="satisfaction-insight-2"><strong>改善空間項目：</strong>餐廳及膳食的'普通'評價比例最高（17.4%）。雖然沒有不滿意，但這表明餐飲體驗有最大的提升空間。購物安排和自費活動安排的'普通'比例也較高（15.7%和16.7%），是導致未能達到'非常滿意'的次要因素。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center"><span class="w-1 h-6 bg-red-500 rounded mr-3"></span>主要旅遊目的地 vs. 年齡層 (人數交叉分析)</h3>
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-3 relative h-96 w-full"><canvas id="destAgeCrossChart"></canvas></div>
+                    <div class="lg:col-span-1 bg-blue-50 p-5 rounded-xl border-l-4 border-blue-500 flex flex-col justify-center">
+                        <h4 class="text-sm font-bold text-blue-800 mb-3"><i class="fas fa-flag mr-1"></i> 市場偏好註解：</h4>
+                        <p class="text-sm text-gray-700 leading-relaxed mb-2" id="dest-age-insight-1">
+                            <strong>• 中年/中老年市場主導 (46歲及以上)：</strong>張家界 (40人)、桂林 (32人) 和雲南 (24人) 的主要客群集中在 46-65歲。顯示長線旅遊吸引了較成熟客群。特別是張家界，56-65歲的客群 (17人) 明顯最高。
+                        </p>
+                        <p class="text-sm text-gray-700 leading-relaxed" id="dest-age-insight-2">
+                            <strong>• 青年/中年市場 (26-45歲) 偏好：</strong>韓國 (54人) 是最熱門目的地，且在 36-45歲 (10人) 和 46-55歲 (11人) 分佈較高且均勻，顯示對較廣泛的中青年客群具吸引力。
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-12 pt-10 border-t border-[#e1dfdd]">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-[#252423] flex items-center"><i class="fas fa-project-diagram text-[#118DFF] mr-3"></i> 資訊來源與報名渠道關聯分析 (Acquisition & Channels)</h2>
+                    <span class="text-xs bg-[#e6f3ff] text-[#118DFF] px-3 py-1 rounded-sm font-semibold border border-[#118DFF]/20">第 2 頁 (Page 2)</span>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white p-6 rounded-[2px] shadow-sm border border-[#e1dfdd] lg:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-[#252423] flex items-center"><span class="w-1 h-6 bg-[#118DFF] mr-3"></span>資訊來源 (宣傳方式)</h3>
+                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded" id="source-reply-label">總回覆 N=223</span>
+                        </div>
+                        <div class="relative h-72 w-full"><canvas id="sourceChart"></canvas></div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-[2px] shadow-sm border border-[#e1dfdd] lg:col-span-1">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-[#252423] flex items-center"><span class="w-1 h-6 bg-[#00B8AA] mr-3"></span>報名渠道佔比</h3>
+                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded" id="channel-reply-label">總回覆 N=223</span>
+                        </div>
+                        <div class="relative h-64 w-full flex justify-center"><canvas id="channelChart"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="bg-[#f3f2f1] p-6 rounded-[2px] border-l-4 border-l-[#118DFF] shadow-sm mb-4">
+                    <h4 class="text-md font-bold text-[#252423] mb-4 flex items-center"><i class="fas fa-lightbulb text-[#F2C80F] mr-2 text-xl"></i> 關鍵發現與結論 (Key Insights)</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-5 rounded-[2px] border border-[#e1dfdd] shadow-sm">
+                            <h5 class="font-bold text-[#118DFF] mb-2 border-b border-[#e1dfdd] pb-2" id="channel-insight-title-1">1. 門店主導的強大線下轉換能力</h5>
+                            <p class="text-sm text-[#605e5c] leading-relaxed" id="channel-insight-text-1"><strong>報名渠道集中度極高：</strong>87.00% 的受訪者透過「門店分社」報名。無論客戶從何種資訊來源獲悉，絕大多數最終仍選擇前往門店，門店在銷售漏斗中扮演關鍵的終端轉換角色。</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-[2px] border border-[#e1dfdd] shadow-sm">
+                            <h5 class="font-bold text-[#00B8AA] mb-2 border-b border-[#e1dfdd] pb-2" id="channel-insight-title-2">2. 數位渠道的轉換率挑戰與潛力</h5>
+                            <p class="text-sm text-[#605e5c] leading-relaxed" id="channel-insight-text-2"><strong>資訊依賴數位，轉換依賴線下：</strong>在將網絡媒體視為資訊來源的 88 人中，僅有 15 位 (17.05%) 透過中旅網報名。大部分 (73人) 在線上獲取資訊後轉至門店。應優化線上報名體驗以提升網站直接轉換率。</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-[2px] border border-[#e1dfdd] shadow-sm">
+                            <h5 class="font-bold text-[#E66C37] mb-2 border-b border-[#e1dfdd] pb-2" id="channel-insight-title-3">3. 口碑與傳統媒體的穩固作用</h5>
+                            <p class="text-sm text-[#605e5c] leading-relaxed" id="channel-insight-text-3"><strong>親友推薦 (23.77%) </strong>是第二大資訊來源，證明口碑傳播的重要性。傳統媒體（報章雜誌 17.49%、電視 10.76%）對於年齡層偏高的客群而言，仍具有穩定且不容忽視的有效覆蓋率。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==========================================
+             2. Sales Forecast
+             ========================================== -->
+        <div id="sales_forecast" class="tab-content">
+             <div class="flex justify-end mb-4"><span class="text-xs text-gray-400 italic">數據來源：後台票務銷售系統 (模擬數據)</span></div>
+             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
+                    <div class="flex justify-between items-center mb-6">
+                        <div><h3 class="text-lg font-bold text-gray-800 flex items-center"><i class="fas fa-search-dollar text-green-600 mr-2"></i> 2026年 Q1 銷售趨勢預測</h3><p class="text-xs text-gray-500 mt-1">Python ARIMA 時間序列模型分析結果</p></div>
+                        <div class="flex items-center space-x-2 text-xs"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded">2025 實際</span><span class="px-2 py-1 bg-green-100 text-green-800 rounded border border-green-200">2026 預測 (含預測區間)</span></div>
+                    </div>
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-2 mb-4"><p class="text-xs text-yellow-700"><i class="fas fa-info-circle mr-1"></i> <strong>注意：</strong> 2025-12 數據 (2.5萬) 顯著偏低，主因是該月數據統計週期尚未結束，並非業績下滑。</p></div>
+                    <div class="relative h-80 w-full"><canvas id="salesForecastChart"></canvas></div>
+                 </div>
+                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100"><h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center"><i class="fas fa-users-cog text-purple-600 mr-2"></i> 客戶價值分群 (基於新舊客)</h3><div class="relative h-64 w-full"><canvas id="rfmChart"></canvas></div><div class="mt-4 text-xs text-gray-500"><p class="mb-1"><span class="font-bold text-green-600">回頭客 (42.9%):</span> 滿意度高，是營收主力。</p><p><span class="font-bold text-blue-500">新客戶 (57.1%):</span> 首次參加，需重點轉化。</p></div></div>
+             </div>
+             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center"><i class="fas fa-shopping-basket text-orange-500 mr-2"></i> 產品關聯推薦引擎 (AI Association Rules)</h3>
+                <p class="text-sm text-gray-500 mb-4">基於歷史訂單挖掘的強關聯組合 (Lift > 1)，建議用於門市推廣或網站加購推薦。</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="flex items-center p-4 bg-orange-50 rounded-lg border border-orange-100"><div class="text-2xl mr-3">🏯</div><div><p class="text-xs text-gray-500 font-bold uppercase">購買了</p><p class="font-bold text-gray-800">日本大阪京都5天團</p><div class="flex items-center mt-1"><i class="fas fa-arrow-right text-orange-400 mx-2"></i><div><p class="text-xs text-gray-500 font-bold uppercase">有 83.3% 機率感興趣</p><p class="font-bold text-blue-600">韓國首爾滑雪5天團</p></div></div></div></div>
+                    <div class="flex items-center p-4 bg-blue-50 rounded-lg border border-blue-100"><div class="text-2xl mr-3">🚅</div><div><p class="text-xs text-gray-500 font-bold uppercase">購買了</p><p class="font-bold text-gray-800">北京深度遊5天團</p><div class="flex items-center mt-1"><i class="fas fa-arrow-right text-blue-400 mx-2"></i><div><p class="text-xs text-gray-500 font-bold uppercase">有 75% 機率購買</p><p class="font-bold text-blue-600">中國雲南8天純玩團</p></div></div></div></div>
+                </div>
+             </div>
+        </div>
+
+        <!-- ==========================================
+             3. NPS Zone
+             ========================================== -->
+        <div id="nps_zone" class="tab-content">
+            <div class="flex justify-end mb-4"><span class="text-xs text-gray-400 italic">數據來源：香港中旅社旅行團服務意見</span></div>
+            <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-start mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-bullseye text-red-600 mr-3"></i> 推薦意願驅動因素分析 (Key Driver Analysis)</h2>
+                        <p class="text-sm text-gray-500 mt-2 max-w-3xl" id="nps-zone-description">此散點圖分析了各個服務環節對「客戶推薦意願 (NPS)」的影響力。以影響力中位數(0.380)及滿意度中位數(4.45分)為十字虛線分界。<br><span class="font-bold text-gray-700">解讀方法：</span>右下角區域 (High Impact, Low Satisfaction) 是我們的<span class="text-red-600 font-bold">「急需改善區」</span>，改善這些項目能最有效地提升整體滿意度與推薦意願。</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 bg-blue-50 p-3 rounded-lg border border-blue-100"><p class="text-xs text-blue-800 font-bold uppercase">NPS 總指標</p><p class="text-3xl font-bold text-blue-600" id="nps-zone-indicator">83.9% <span class="text-sm font-normal text-gray-500">願意推薦</span></p></div>
+                </div>
+                <div class="relative h-[500px] w-full bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <div class="absolute top-4 right-4 text-green-600 font-bold text-xs bg-green-100 px-2 py-1 rounded opacity-70 z-10">優勢區 (維持)</div>
+                    <div class="absolute bottom-4 right-4 text-red-600 font-bold text-xs bg-red-100 px-2 py-1 rounded opacity-70 z-10">急需改善區 (優先處理)</div>
+                    <div class="absolute top-4 left-4 text-blue-600 font-bold text-xs bg-blue-100 px-2 py-1 rounded opacity-70 z-10">維持現狀區</div>
+                    <div class="absolute bottom-4 left-4 text-gray-500 font-bold text-xs bg-gray-200 px-2 py-1 rounded opacity-70 z-10">低優先級區</div>
+                    <canvas id="npsCorrelationChart"></canvas>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-red-500">
+                    <h3 class="font-bold text-red-700 mb-2">🚨 急需改善區：購物安排和餐廳及膳食</h3>
+                    <ul class="text-sm text-gray-600 leading-relaxed list-disc pl-4 space-y-1">
+                        <li>雖然客戶對這兩項的滿意度最低，但它們對總分的影響力卻很高。改進購物安排的透明度和體驗，以及提升餐飲質量，將能最有效地提升客戶的整體滿意度。</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-green-500">
+                    <h3 class="font-bold text-green-700 mb-2">✅ 核心優勢：交通</h3>
+                    <ul class="text-sm text-gray-600 leading-relaxed list-disc pl-4 space-y-1">
+                        <li>該環節服務表現極佳，客戶評價高，可視為標準服務的優勢，但不需要將其作為提升總分的首要資源投入點。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-12 pt-10 border-t border-[#e1dfdd]">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-[#252423] flex items-center"><i class="fas fa-compass text-[#118DFF] mr-3"></i> 潛在需求預測與深度挖掘 (Future Trends & Insights)</h2>
+                    <span class="text-xs bg-[#e6f3ff] text-[#118DFF] px-3 py-1 rounded-sm font-semibold border border-[#118DFF]/20">第 2 頁 (Page 2)</span>
+                </div>
+
+                <!-- 模塊 1: 潛在需求預測 -->
+                <div class="bg-white p-6 rounded-[2px] shadow-sm border border-[#e1dfdd] mb-6">
+                    <h3 class="text-lg font-bold text-[#252423] mb-4 flex items-center"><span class="w-1 h-6 bg-[#00B8AA] mr-3"></span>1. 潛在需求預測：未來熱門目的地趨勢分析</h3>
+                    <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+                        <div class="xl:col-span-2 relative h-[450px] w-full"><canvas id="futureDestChart"></canvas></div>
+                        <div class="xl:col-span-3">
+                            <div class="overflow-x-auto mb-4">
+                                <table class="w-full text-left text-[#605e5c] data-table text-xs rounded-sm overflow-hidden">
+                                    <thead class="bg-[#f3f2f1] text-[#252423] font-bold">
+                                        <tr>
+                                            <th class="px-4 py-2">地區</th>
+                                            <th class="px-4 py-2 text-right">提及次數</th>
+                                            <th class="px-4 py-2 text-right">佔總提及次數百分比</th>
+                                            <th class="px-4 py-2">產品規劃意義</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-[#e1dfdd]" id="future-dest-table-body">
+                                        <tr class="bg-white hover:bg-[#f3f2f1]"><td class="px-4 py-2 font-bold text-[#118DFF]">北京</td><td class="px-4 py-2 text-right font-bold">31</td><td class="px-4 py-2 text-right">10.76%</td><td class="px-4 py-2"><span class="font-bold text-[#118DFF]">國內文化深度遊</span>：應持續提供高質量的文化主題行程。</td></tr>
+                                        <tr class="bg-[#faf9f8] hover:bg-[#f3f2f1]"><td class="px-4 py-2 font-bold text-[#00B8AA]">雲南</td><td class="px-4 py-2 text-right font-bold">27</td><td class="px-4 py-2 text-right">9.38%</td><td class="px-4 py-2"><span class="font-bold text-[#00B8AA]">國內自然風光遊</span>：主打自然與少數民族，可開發攝影/輕奢團。</td></tr>
+                                        <tr class="bg-white hover:bg-[#f3f2f1]"><td class="px-4 py-2 font-bold text-[#118DFF]">長江三峽</td><td class="px-4 py-2 text-right font-bold">25</td><td class="px-4 py-2 text-right">8.68%</td><td class="px-4 py-2"><span class="font-bold text-[#118DFF]">郵輪/休閒慢旅</span>：優化岸上觀光體驗，推廣更長的航線。</td></tr>
+                                        <tr class="bg-[#faf9f8] hover:bg-[#f3f2f1]"><td class="px-4 py-2 font-bold text-[#00B8AA]">韓國</td><td class="px-4 py-2 text-right font-bold">22</td><td class="px-4 py-2 text-right">7.64%</td><td class="px-4 py-2"><span class="font-bold text-[#00B8AA]">亞洲主題旅遊</span>：針對年輕客群設計美食、購物等主題團。</td></tr>
+                                        <tr class="bg-white hover:bg-[#f3f2f1]"><td class="px-4 py-2 font-bold text-[#605e5c]">澳洲</td><td class="px-4 py-2 text-right">20</td><td class="px-4 py-2 text-right">6.94%</td><td class="px-4 py-2"><span class="font-bold">長線高品質體驗</span>：主打生態、酒莊，規劃半自由行。</td></tr>
+                                        <tr class="bg-[#faf9f8] hover:bg-[#f3f2f1]"><td class="px-4 py-2 font-bold text-[#605e5c]">新西蘭</td><td class="px-4 py-2 text-right">19</td><td class="px-4 py-2 text-right">6.60%</td><td class="px-4 py-2"><span class="font-bold">長線深度自然遊</span>：結合戶外與極限運動滿足深度體驗。</td></tr>
+                                        <tr class="bg-white hover:bg-[#f3f2f1]"><td class="px-4 py-2 font-bold text-[#605e5c]">中國其他</td><td class="px-4 py-2 text-right">19</td><td class="px-4 py-2 text-right">6.60%</td><td class="px-4 py-2"><span class="font-bold">新興國內路線</span>：需不斷發掘西北、東北等新興目的地。</td></tr>
+                                        <tr class="bg-[#faf9f8] hover:bg-[#f3f2f1]"><td class="px-4 py-2 font-bold text-[#605e5c]">台灣</td><td class="px-4 py-2 text-right">17</td><td class="px-4 py-2 text-right">5.90%</td><td class="px-4 py-2"><span class="font-bold">亞洲短線美食/文創</span>：專注特色美食與環島深度體驗。</td></tr>
+                                        <tr class="bg-white hover:bg-[#f3f2f1]"><td class="px-4 py-2 font-bold text-[#605e5c]">日本</td><td class="px-4 py-2 text-right">16</td><td class="px-4 py-2 text-right">5.56%</td><td class="px-4 py-2"><span class="font-bold">亞洲高端/節慶遊</span>：開發季節性產品並增加私人訂製選項。</td></tr>
+                                        <tr class="bg-[#faf9f8] hover:bg-[#f3f2f1]"><td class="px-4 py-2 font-bold text-[#605e5c]">加拿大</td><td class="px-4 py-2 text-right">16</td><td class="px-4 py-2 text-right">5.56%</td><td class="px-4 py-2"><span class="font-bold">長線自然/自駕遊</span>：重點推廣國家公園、極光等主題。</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="bg-[#f3f2f1] p-4 rounded-[2px] border-l-4 border-l-[#00B8AA]">
+                                <p class="text-sm font-bold text-[#00B8AA] mb-1">產品開發指引 (未來應採取雙軸策略)：</p>
+                                <ul class="text-xs text-[#605e5c] space-y-1.5 list-disc pl-4" id="future-product-guide-list">
+                                    <li><strong>國內長線升級：</strong>針對穩定且熱門的國內長線（北京、雲南、三峽等），應在行程中加入更深入的文化體驗、高品質餐飲或特色住宿，從觀光升級為深度體驗。</li>
+                                    <li><strong>長線主題細分：</strong>對於提及次數靠前的長線目的地（澳洲、新西蘭等），應根據其自然和文化特性，推出如「澳洲生態攝影團」等針對性主題旅行，並提供半自由行選項。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- 模塊 2: 客戶忠誠度與推薦意願分析 -->
+                    <div class="bg-white p-6 rounded-[2px] shadow-sm border border-[#e1dfdd]">
+                        <h3 class="text-lg font-bold text-[#252423] mb-4 flex items-center"><span class="w-1 h-6 bg-[#118DFF] mr-3"></span>2. 客戶忠誠度與推薦意願 (NPS 代理指標)</h3>
+                        <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                            <div class="w-full sm:w-1/2 relative h-48"><canvas id="npsDistChart"></canvas></div>
+                            <div class="w-full sm:w-1/2 relative h-48"><canvas id="npsScoreChart"></canvas></div>
+                        </div>
+                        <div class="bg-[#f3f2f1] p-4 rounded-[2px] border-l-4 border-l-[#118DFF]">
+                            <p class="text-sm font-bold text-[#118DFF] mb-1">洞察建議：</p>
+                            <ul class="text-xs text-[#605e5c] space-y-1.5 list-disc pl-4" id="loyalty-recommendation-list">
+                                <li><strong>實施推廣者激勵計畫：</strong>鑑於極高的推薦意願和滿意度，建議將這批高分客戶視為品牌最寶貴的資產。</li>
+                                <li><strong>具體措施：</strong>為給予 9/10 分的客戶提供獨家推薦獎勵（如下次折扣加碼），邀請他們參與新行程優先體驗，轉化為品牌宣傳大使。</li>
+                            </ul>
+                            
+                            <table class="w-full text-left mt-3 text-xs border-t border-[#e1dfdd] pt-2">
+                                <thead class="text-[#252423]"><tr><th class="py-1">推薦驅動因素</th><th class="py-1 text-right">整體平均分 (5分制)</th><th class="py-1 pl-3">推薦動機 / 產品重點</th></tr></thead>
+                                <tbody id="nps-driver-table-body">
+                                    <tr><td class="py-1 font-bold text-[#118DFF]">旅車司機</td><td class="py-1 text-right">4.78</td><td class="py-1 pl-3"><span class="font-bold text-[#252423]">安全與舒適：</span>(核心優勢) 專業駕駛為行程加分。</td></tr>
+                                    <tr><td class="py-1 font-bold text-[#118DFF]">當地導遊</td><td class="py-1 text-right">4.71</td><td class="py-1 pl-3"><span class="font-bold text-[#252423]">專業與知識：</span>(核心優勢) 專業講解提升文化體驗。</td></tr>
+                                    <tr><td class="py-1 font-bold text-[#118DFF]">隨團領隊</td><td class="py-1 text-right">4.67</td><td class="py-1 pl-3"><span class="font-bold text-[#252423]">管理與關懷：</span>(核心優勢) 對團員照顧是信賴基礎。</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 模塊 3: 意見建議挖掘 -->
+                    <div class="bg-white p-6 rounded-[2px] shadow-sm border border-[#e1dfdd]">
+                        <h3 class="text-lg font-bold text-[#252423] mb-4 flex items-center"><span class="w-1 h-6 bg-[#E66C37] mr-3"></span>3. 意見建議挖掘</h3>
+                        <p class="text-xs text-[#605e5c] mb-4">開放性文字欄位是找出未滿足隱性需求的關鍵，分析結果如下：</p>
+                        
+                        <!-- 意見挖掘卡片網格 -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 max-h-[300px] overflow-y-auto custom-scroll pr-2" id="opinion-keyword-grid">
+                            <div class="border border-[#e1dfdd] rounded-[2px] p-3 shadow-sm border-l-4 border-l-[#F2C80F] bg-[#faf9f8]">
+                                <p class="font-bold text-[#252423] text-sm mb-1">「趕時間/太快」</p>
+                                <p class="text-xs text-[#605e5c]">需要更寬鬆、彈性的行程節奏，特別是考慮到老年團友的需求。<strong>(重點：時間分配)</strong></p>
+                            </div>
+                            <div class="border border-[#e1dfdd] rounded-[2px] p-3 shadow-sm border-l-4 border-l-[#F2C80F] bg-[#faf9f8]">
+                                <p class="font-bold text-[#252423] text-sm mb-1">「停留時間不夠」</p>
+                                <p class="text-xs text-[#605e5c]">對於喜歡的景點，希望能有更多自由活動時間，以進行深度遊覽或購物。</p>
+                            </div>
+                            <div class="border border-[#e1dfdd] rounded-[2px] p-3 shadow-sm border-l-4 border-l-[#118DFF] bg-[#faf9f8]">
+                                <p class="font-bold text-[#252423] text-sm mb-1">「下雨/避雨」</p>
+                                <p class="text-xs text-[#605e5c]">對於惡劣天氣，旅行社應有預備方案，安排有遮蓋或室內備用景點。<strong>(重點：緊急應變)</strong></p>
+                            </div>
+                            <div class="border border-[#e1dfdd] rounded-[2px] p-3 shadow-sm border-l-4 border-l-[#FD625E] bg-[#faf9f8]">
+                                <p class="font-bold text-[#252423] text-sm mb-1">「酒店舊/無冷氣/偏遠」</p>
+                                <p class="text-xs text-[#605e5c]">對住宿的基本舒適度有硬性要求，不能因為成本犧牲基本品質。</p>
+                            </div>
+                            <div class="border border-[#e1dfdd] rounded-[2px] p-3 shadow-sm border-l-4 border-l-[#E66C37] bg-[#faf9f8]">
+                                <p class="font-bold text-[#252423] text-sm mb-1">「口味不合適/變化少」</p>
+                                <p class="text-xs text-[#605e5c]">需要更多元化的餐飲選擇，或增加地方特色餐的比例，避免單調。</p>
+                            </div>
+                            <div class="border border-[#e1dfdd] rounded-[2px] p-3 shadow-sm border-l-4 border-l-[#FD625E] bg-[#faf9f8]">
+                                <p class="font-bold text-[#252423] text-sm mb-1">「強迫購物/自費貴」</p>
+                                <p class="text-xs text-[#605e5c]">對於購物和自費活動，要求更高的自主選擇權和實際價值。<strong>(重點：價值導向)</strong></p>
+                            </div>
+                            <div class="border border-[#e1dfdd] rounded-[2px] p-3 shadow-sm border-l-4 border-l-[#118DFF] bg-[#faf9f8]">
+                                <p class="font-bold text-[#252423] text-sm mb-1">「解釋不足/僵化」</p>
+                                <p class="text-xs text-[#605e5c]">導遊需加強主動溝通，並更靈活變通，理解團友需求。<strong>(溝通與同理心)</strong></p>
+                            </div>
+                            <div class="border border-[#e1dfdd] rounded-[2px] p-3 shadow-sm border-l-4 border-l-[#118DFF] bg-[#faf9f8]">
+                                <p class="font-bold text-[#252423] text-sm mb-1">「聯絡司機沒解釋」</p>
+                                <p class="text-xs text-[#605e5c]">即使是內部協調，也應向團友簡單解釋，避免團友無所適從。</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#fcece5] p-4 rounded-[2px] border-l-4 border-l-[#E66C37]">
+                            <p class="text-sm font-bold text-[#E66C37] mb-1" id="opinion-optimization-title">產品開發與服務優化方向：</p>
+                            <ul class="text-xs text-[#605e5c] space-y-1.5 list-decimal pl-4" id="opinion-optimization-list">
+                                <li><strong>行程彈性化：</strong>實施「彈性停留時間」機制，允許團員在熱門景點有一定自主性。</li>
+                                <li><strong>價值重塑：</strong>嚴格審視和精簡購物及低性價比自費活動，將資源重投於餐飲與酒店，提供「物超所值」的感受。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             4. Tour Leader
+             ========================================== -->
+        <div id="tourleader" class="tab-content">
+            <div class="flex justify-end mb-4"><span id="leaderboard-source-label" class="text-xs text-gray-400 italic">數據來源：2026年5月領隊服務評分排行榜</span></div>
+            <div class="grid grid-cols-1 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-blue-600">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 id="leaderboard-title" class="text-xl font-bold text-gray-800 flex items-center"><i class="fas fa-trophy text-yellow-500 mr-2"></i> 2026年5月領隊服務評分排行榜</h3>
+                        <button onclick="DashboardApp.exportLeadersCSV()" class="text-xs bg-[#f3f2f1] hover:bg-[#e1dfdd] text-[#252423] font-semibold px-3 py-1.5 rounded shadow-sm border border-[#c8c6c4] transition-colors"><i class="fas fa-file-csv mr-1 text-[#118DFF]"></i> 匯出 CSV</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-gray-600 data-table rounded-lg overflow-hidden">
+                            <thead class="bg-gray-100 text-gray-700 font-bold">
+                                <tr>
+                                    <th class="px-6 py-4 w-16">排名</th>
+                                    <th class="px-6 py-4">領隊姓名</th>
+                                    <th class="px-6 py-4">出團地點</th>
+                                    <th class="px-6 py-4 text-right">平均評分</th>
+                                    <th class="px-6 py-4 text-right">樣本數 (N)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullLeadersTable" class="divide-y divide-gray-100">
+                            </tbody>
+                        </table>
+                    </div>
+                    <p id="leaderboard-footnote" class="text-xs text-gray-400 mt-4">* 數據來源：2026年5月份最新領隊服務評分全量數據。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             5. Records (4月份數據更新)
+             ========================================== -->
+        <div id="records" class="tab-content active">
+            <div class="flex justify-end mb-4"><span class="text-xs text-gray-400 italic">數據來源：問卷數據</span></div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white card-hover"><div class="flex justify-between items-start"><div><p class="text-blue-100 text-sm font-medium mb-1">最熱門目的地 (No.1)</p><h3 class="text-3xl font-bold" id="records-top-destination">韓國</h3><p class="text-blue-200 text-xs mt-2">出團量最高</p></div><div class="bg-white/20 p-3 rounded-lg"><i class="fas fa-mountain text-2xl"></i></div></div></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover"><div class="flex justify-between items-start"><div><p class="text-gray-500 text-sm font-medium mb-1">平均旅程天數</p><h3 class="text-3xl font-bold text-gray-800" id="records-average-days">5.81 <span class="text-sm text-gray-400 font-normal">天</span></h3></div><div class="bg-orange-100 p-3 rounded-lg text-orange-600"><i class="fas fa-clock text-xl"></i></div></div></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover"><div class="flex justify-between items-start"><div><p class="text-gray-500 text-sm font-medium mb-1">總樣本數</p><h3 class="text-3xl font-bold text-gray-800" id="records-total-samples">223 <span class="text-sm text-gray-400 font-normal">份</span></h3><p class="text-gray-400 text-xs mt-2">問卷回收</p></div><div class="bg-indigo-100 p-3 rounded-lg text-indigo-600"><i class="fas fa-flag text-xl"></i></div></div></div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2"><div class="flex justify-between items-center mb-6"><h3 class="text-lg font-bold text-gray-800 flex items-center"><i class="fas fa-map-marker-alt text-red-500 mr-2"></i> 熱門目的地 Top 5 </h3><span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold cursor-pointer hover:bg-blue-200"><i class="fas fa-mouse-pointer mr-1"></i> 點擊圖表長條可篩選下方數據</span></div><div class="relative h-80 w-full"><canvas id="topDestChart"></canvas></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100"><h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center"><i class="fas fa-calendar-alt text-blue-500 mr-2"></i> 旅程天數分佈 </h3><div class="relative h-64 w-full flex justify-center"><canvas id="durationDistChart"></canvas></div><div class="mt-6 space-y-3" id="duration-legend"></div></div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 border-t-4 border-t-purple-500"><div class="flex justify-between items-center mb-6"><div><h3 class="text-lg font-bold text-gray-800 flex items-center"><i class="fas fa-chart-bar text-purple-600 mr-2"></i> 滿意度深度交叉分析</h3><p class="text-xs text-gray-500 mt-1" id="crossChartSubtitle">分析：不同年齡層在各目的地的平均滿意度得分 (Score: 0-10)</p></div><button onclick="DashboardApp.resetDrillDown()" id="resetBtn" class="text-xs bg-gray-200 text-gray-600 px-3 py-1 rounded-full font-bold hover:bg-gray-300 hidden"><i class="fas fa-undo mr-1"></i> 重置篩選</button></div><div class="relative h-[450px] w-full"><canvas id="satisfactionCrossChart"></canvas></div></div>
+
+            <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-8 shadow-sm">
+                <h4 class="text-sm font-bold text-indigo-800 mb-4 flex items-center"><i class="fas fa-lightbulb text-yellow-500 mr-2 text-lg"></i> 洞察註解</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="records-cross-insights">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-indigo-50">
+                        <p class="text-sm text-gray-700 leading-relaxed"><span class="font-bold text-indigo-700">異常偏低的警示信號：</span><br>• 56-65歲在峴港滿意度偏低 (5.00分)，暗示需求未達標，需要進行專門的服務品質審核。<br>• 26-35歲在台北僅 4.00分，是強烈的警示信號，應追蹤該團的具體意見。</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-indigo-50">
+                        <p class="text-sm text-gray-700 leading-relaxed"><span class="font-bold text-indigo-700">高分集中地與穩定服務：</span><br>• 中國大陸（張家界、桂林、雲南、重慶等）以及韓國、馬來西亞普遍獲得9分以上。<br>• 顯示中港澳及東南亞短線服務品質較為穩定可靠。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800 flex items-center"><i class="fas fa-list-ul text-blue-600 mr-2"></i> 最新出團明細 (Latest Tour Details)</h3>
+                        <span class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-medium inline-block mt-2">按目的地分組 (Grouped)</span>
+                    </div>
+                    <button onclick="DashboardApp.exportToursCSV()" class="text-xs bg-[#f3f2f1] hover:bg-[#e1dfdd] text-[#252423] font-semibold px-3 py-1.5 rounded shadow-sm border border-[#c8c6c4] transition-colors"><i class="fas fa-file-csv mr-1 text-[#118DFF]"></i> 匯出 CSV</button>
+                </div>
+                <div class="overflow-x-auto max-h-[500px] custom-scroll"><table class="w-full text-sm text-left text-gray-600 data-table"><thead class="sticky top-0 z-10"><tr><th class="px-6 py-4 w-1/4">旅遊目的地 (Destination)</th><th class="px-6 py-4">負責領隊與總天數 (Leaders & Days)</th></tr></thead><tbody id="tourDetailBody" class="divide-y divide-gray-100"></tbody></table></div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             6. Feedback Analysis
+             ========================================== -->
+        <div id="feedback_analysis" class="tab-content">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-screen">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4">
+                    <div><h2 class="text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-comment-alt text-teal-600 mr-3"></i> 客戶長評回饋分析</h2><span class="source-label">數據來源：旅行團服務問卷 (長評提取)</span></div>
+                    <div class="flex space-x-3 mt-4 md:mt-0">
+                        <select id="typeFilter" class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" onchange="DashboardApp.filterFeedback()">
+                            <option value="all">所有評論</option>
+                            <option value="positive">表揚 (Positive)</option>
+                            <option value="suggestion">建議 (Suggestion)</option>
+                            <option value="negative">投訴 (Negative)</option>
+                        </select>
+                        <select id="destFilter" class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" onchange="DashboardApp.filterFeedback()">
+                            <option value="all">所有目的地</option>
+                            <option value="韓國">韓國</option>
+                            <option value="張家界">張家界</option>
+                            <option value="桂林">桂林</option>
+                            <option value="西藏">西藏</option>
+                            <option value="雲南">雲南</option>
+                            <option value="台灣">台灣</option>
+                            <option value="峴港">峴港</option>
+                            <option value="華東">華東</option>
+                            <option value="長江三峽">長江三峽</option>
+                            <option value="北京">北京</option>
+                            <option value="四川九寨溝">四川九寨溝</option>
+                            <option value="河南">河南</option>
+                            <option value="新西蘭">新西蘭</option>
+                            <option value="馬來西亞">馬來西亞</option>
+                        </select>
+                        <select id="leaderFilter" class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" onchange="DashboardApp.filterFeedback()">
+                            <option value="all">所有領隊</option>
+                            <option value="譚泳康">譚泳康</option>
+                            <option value="李國亮">李國亮</option>
+                            <option value="朱寶光">朱寶光</option>
+                            <option value="馬揚">馬揚</option>
+                            <option value="周薑嫄">周薑嫄</option>
+                            <option value="葉碧芬">葉碧芬</option>
+                            <option value="梁銘賢">梁銘賢</option>
+                            <option value="朱建玲">朱建玲</option>
+                            <option value="曾敏儀">曾敏儀</option>
+                            <option value="劉惠娟">劉惠娟</option>
+                            <option value="曾錦材">曾錦材</option>
+                            <option value="盧漢權">盧漢權</option>
+                            <option value="李美怡">李美怡</option>
+                            <option value="李英傑">李英傑</option>
+                            <option value="王建平">王建平</option>
+                            <option value="周漢威">周漢威</option>
+                            <option value="廖明貞">廖明貞</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 全局情緒佔比統計棒 -->
+                <div id="sentimentStatusBar" class="mb-6"></div>
+
+                <div class="mb-8"><h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center"><i class="fas fa-cloud text-indigo-500 mr-2"></i> AI 智能關鍵詞雲 (High Frequency Keywords)</h3><div class="bg-indigo-50 rounded-xl p-6 border border-indigo-100 word-cloud-container" id="wordCloudContainer"></div></div>
+                <div id="feedbackGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             7. Branch Feedback
+             ========================================== -->
+        <div id="branch_feedback" class="tab-content">
+             <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 min-h-screen">
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 class="text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-comments mr-2 text-blue-600"></i> 門市服務意見匯總</h2>
+                    <button onclick="DashboardApp.exportBranchesCSV()" class="text-xs bg-[#f3f2f1] hover:bg-[#e1dfdd] text-[#252423] font-semibold px-3 py-2 rounded shadow-sm border border-[#c8c6c4] transition-colors"><i class="fas fa-file-csv mr-1 text-[#118DFF]"></i> 匯出排行榜 CSV</button>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- 左側：門市排行榜 -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-fit sticky top-24">
+                            <div class="p-4 bg-gray-800 text-white flex justify-between items-center"><h3 id="branch-leaderboard-heading" class="font-bold flex items-center text-white"><i class="fas fa-crown text-yellow-400 mr-2"></i> 各分社滿意度排行榜</h3><span id="branch-leaderboard-total" class="text-xs text-white bg-gray-700 px-2 py-1 rounded">N=135 (最新統計)</span></div>
+                            <div class="p-2 bg-gray-50 border-b border-gray-200 text-center"><span class="source-label">數據來源：各分社平均服務態度評分 (5分制) 與 樣本數</span></div>
+                            <div class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto custom-scroll" id="branchLeaderboard"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 右側：門市長評模塊 -->
+                    <div class="lg:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-gray-800 flex items-center"><i class="fas fa-comment-dots text-indigo-500 mr-2"></i> 門市客戶具體長評 (Qualitative Feedback)</h3>
+                            <span id="branch-feedback-total" class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">共提取 18 條門市意見</span>
+                        </div>
+                        <!-- 長評卡片網格 -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="branchFeedbackGrid">
+                        </div>
+                    </div>
+                </div>
+             </div>
+        </div>
+
+        <!-- ==========================================
+             8. Analysis Tab
+             ========================================== -->
+        <div id="analysis" class="tab-content">
+            <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-2xl font-bold mb-6 text-gray-900 border-b pb-4 flex items-center"><i class="fas fa-chess-knight text-blue-600 mr-3"></i> 綜合戰略分析與建議 (Strategic Executive Summary)</h2>
+                <p class="text-sm text-gray-500 mb-6">基於 2026 年 5 月份的問卷數據、出團記錄、長評語意分析及門市服務反饋，總結出以下三大戰略維度的行動建議：</p>
+                
+                <div class="grid grid-cols-1 gap-6">
+                    <!-- 維度一：優先解決的營運痛點 -->
+                    <div class="bg-red-50 p-6 rounded-[2px] border-l-4 border-l-red-500 shadow-sm">
+                        <h3 class="font-bold text-lg text-red-800 mb-4 flex items-center"><i class="fas fa-fire-extinguisher mr-2"></i> 1. 優先解決的營運痛點 (Immediate Operational Fixes)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white p-5 rounded-sm border border-red-100 shadow-sm">
+                                <h4 class="font-bold text-red-600 mb-2 border-b border-red-50 pb-2">餐飲口味與地接服務波動</h4>
+                                <p class="text-sm text-gray-700 leading-relaxed mb-3"><strong>痛點：</strong>5 月長評中，負面與建議集中在餐飲口味、花椒/辣椒、膳食安排及個別地接服務態度。即使整體推薦率高達 90.97%，餐飲與地接仍是最容易拉低體驗的細節。</p>
+                                <p class="text-sm text-gray-600 leading-relaxed"><strong>行動方案：</strong>為日韓、越南、長江三峽等線路建立「香港客口味檢核表」，要求地接社提交餐單與替代方案；針對被投訴地接建立月度追蹤與扣分機制。</p>
+                            </div>
+                            <div class="bg-white p-5 rounded-sm border border-red-100 shadow-sm">
+                                <h4 class="font-bold text-red-600 mb-2 border-b border-red-50 pb-2">年輕客群與特定年齡層滿意度落差</h4>
+                                <p class="text-sm text-gray-700 leading-relaxed mb-3"><strong>痛點：</strong>韓國 19-25 歲滿意度偏低，北京 36-45 歲亦出現明顯落差，反映部分產品對不同年齡層的購物、觀光節奏與景點偏好匹配不足。</p>
+                                <p class="text-sm text-gray-600 leading-relaxed"><strong>行動方案：</strong>熱門線路需標示「購物比例、觀光節奏、自由活動時間」；韓國線增加商場與自由購物時間，北京線針對中壯年客群檢視餐飲、交通與行程密度。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 維度二：產品競爭力升級方向 -->
+                    <div class="bg-yellow-50 p-6 rounded-[2px] border-l-4 border-l-yellow-500 shadow-sm">
+                        <h3 class="font-bold text-lg text-yellow-800 mb-4 flex items-center"><i class="fas fa-tools mr-2"></i> 2. 產品競爭力升級方向 (Product Upgrades)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white p-5 rounded-sm border border-yellow-100 shadow-sm">
+                                <h4 class="font-bold text-yellow-600 mb-2 border-b border-yellow-50 pb-2">以熱門目的地做產品分層</h4>
+                                <p class="text-sm text-gray-700 leading-relaxed mb-3"><strong>痛點：</strong>5 月出團集中於韓國 35、雲南 33、北京 18、新西蘭 15，需求明顯但客群偏好不同，不能用同一套節奏服務所有客人。</p>
+                                <p class="text-sm text-gray-600 leading-relaxed"><strong>行動方案：</strong>韓國主打購物與年輕化體驗，雲南/北京主打文化與舒適節奏，新西蘭主打高品質長線與安全照顧；用目的地分層設計賣點與行程節奏。</p>
+                            </div>
+                            <div class="bg-white p-5 rounded-sm border border-yellow-100 shadow-sm">
+                                <h4 class="font-bold text-yellow-600 mb-2 border-b border-yellow-50 pb-2">短線與中長線產品並重</h4>
+                                <p class="text-sm text-gray-700 leading-relaxed mb-3"><strong>痛點：</strong>5 月短線 1-4 天佔 46.67%，中長線 5-7 天佔 43.33%，兩者幾乎並重；產品設計若只偏向單一旅程長度，會錯失主力需求。</p>
+                                <p class="text-sm text-gray-600 leading-relaxed"><strong>行動方案：</strong>短線產品強化便利、快速成行與高性價比；中長線產品強化住宿、餐飲與細節照顧；長線產品則突出安全、專業領隊與高品質體驗。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 維度三：核心護城河與增長引擎 -->
+                    <div class="bg-blue-50 p-6 rounded-[2px] border-l-4 border-l-blue-500 shadow-sm">
+                        <h3 class="font-bold text-lg text-blue-800 mb-4 flex items-center"><i class="fas fa-rocket mr-2"></i> 3. 核心護城河與增長引擎 (Core Moat & Growth)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white p-5 rounded-sm border border-blue-100 shadow-sm">
+                                <h4 class="font-bold text-blue-600 mb-2 border-b border-blue-50 pb-2">領隊與導遊服務是品牌護城河</h4>
+                                <p class="text-sm text-gray-700 leading-relaxed mb-3"><strong>亮點：</strong>5 月長評詞雲中「導遊」「領隊」「滿意」「專業」「細心」高頻出現，整體情緒高度正面；客戶忠誠度主要由一線服務團隊支撐。</p>
+                                <p class="text-sm text-gray-600 leading-relaxed"><strong>行動方案：</strong>建立「星級領隊/導遊」標籤，把高分服務人員納入銷售話術與行程頁面；將優秀服務案例沉澱為培訓素材，複製到更多路線。</p>
+                            </div>
+                            <div class="bg-white p-5 rounded-sm border border-blue-100 shadow-sm">
+                                <h4 class="font-bold text-blue-600 mb-2 border-b border-blue-50 pb-2">線上獲客、門市成交的轉化模式</h4>
+                                <p class="text-sm text-gray-700 leading-relaxed mb-3"><strong>亮點：</strong>網絡媒體是重要資訊來源，但門店分社報名佔 85.16%，說明客戶前期受數位行銷影響，最終仍依賴門市完成信任與成交。</p>
+                                <p class="text-sm text-gray-600 leading-relaxed"><strong>行動方案：</strong>加強線上內容與門市顧問銜接，例如線上預約門市、熱門線路 FAQ、顧問跟進清單；以門市服務評分與長評作為成交品質管理指標。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Data Store & JS -->
+    <script src="app.js"></script>
+</body>
+</html>
