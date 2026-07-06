@@ -663,382 +663,326 @@
   },
   "rawFeedbacks": [
     {
-      "dest": "韓國",
-      "leader": "李美怡",
-      "tourNo": "VKGS",
-      "type": "suggestion",
-      "content": "少啲觀光公園，多啲商場購物。"
-    },
-    {
-      "dest": "長江三峽",
-      "leader": "葉景蘇",
-      "tourNo": "CTBC",
-      "type": "positive",
-      "content": "領隊和導遊都好熱心幫忙, 態度好,相對以往參加過的旅行團我個人給優良 平分, 謝謝中旅員工."
-    },
-    {
-      "dest": "長江三峽",
-      "leader": "葉景蘇",
-      "tourNo": "CTBC",
-      "type": "suggestion",
-      "content": "可否指定饍食無咁多花辣椒及多些香港人味道"
-    },
-    {
-      "dest": "韓國",
-      "leader": "馬揚",
-      "tourNo": "VKAC",
-      "type": "positive",
-      "content": "韓國導遊是非常專業及細心，照顧團友十分週到，非常捧。是近年來遇到海外導遊中之十分滿意。"
-    },
-    {
-      "dest": "韓國",
-      "leader": "盧漢權",
-      "tourNo": "VKAC",
-      "type": "positive",
-      "content": "玩得很開心👍🙏"
-    },
-    {
-      "dest": "西安",
-      "leader": "葉碧芬",
-      "tourNo": "CSEC",
-      "type": "positive",
-      "content": "安全、安全、安全。非常滿意＇陳"
-    },
-    {
-      "dest": "新西蘭",
-      "leader": "朱建玲",
-      "tourNo": "VAUC",
-      "type": "suggestion",
-      "content": "整體行程0K,酒店都好,美中不足,太多中餐我不好吃,冇特色餐安排,"
-    },
-    {
-      "dest": "新西蘭",
-      "leader": "朱建玲",
-      "tourNo": "VAUC",
-      "type": "positive",
-      "content": "食 住 行 都安排的很滿意，性價比高。"
-    },
-    {
-      "dest": "北京",
-      "leader": "周漢威",
-      "tourNo": "CBLC",
-      "type": "positive",
-      "content": "符合自己心中的要求。"
-    },
-    {
-      "dest": "韓國",
-      "leader": "曾錦材",
-      "tourNo": "VKQC",
-      "type": "positive",
-      "content": "領隊非常細心，全程跟到我哋非常足，非常滿意。"
-    },
-    {
-      "dest": "韓國",
-      "leader": "曾錦材",
-      "tourNo": "VKQC",
-      "type": "positive",
-      "content": "領隊服務態度非常好.對我們很幫忙尤其最後一天介紹我哋去吃豬手.抵讚."
-    },
-    {
-      "dest": "韓國",
-      "leader": "曾錦材",
-      "tourNo": "VKQC",
-      "type": "positive",
-      "content": "領隊服務態度一流.扺讚"
-    },
-    {
-      "dest": "雲南",
+      "dest": "馬來西亞",
       "leader": "王建平",
-      "tourNo": "CYDC",
+      "tourNo": "VMZS",
       "type": "positive",
-      "content": "沒有自費及沒有購物"
+      "content": "細心，勤力幫助團友！"
     },
     {
-      "dest": "山東",
-      "leader": "朱寶光",
-      "tourNo": "CQBC",
-      "type": "negative",
-      "content": "在青島住的酒店，離開巿區太遠，出入都要1小時車程。浪費時間，酒店亦一般，完全無冷氣，毛巾不清潔"
-    },
-    {
-      "dest": "山東",
-      "leader": "朱寶光",
-      "tourNo": "CQBC",
-      "type": "positive",
-      "content": "領隊有禮貌,有知識,服務非常好,非常專業"
-    },
-    {
-      "dest": "雲南",
+      "dest": "馬來西亞",
       "leader": "王建平",
-      "tourNo": "CYDC",
-      "type": "suggestion",
-      "content": "本人對膳食希望有所改善。今次膳食真是一般，菜滾菜湯，菜炒菜，好簡單。嗰間藏族私房菜真係唔好食。"
+      "tourNo": "VMZS",
+      "type": "positive",
+      "content": "專業，細心勤奮"
     },
     {
-      "dest": "山東",
-      "leader": "朱寶光",
-      "tourNo": "CQBC",
+      "dest": "馬來西亞",
+      "leader": "王建平",
+      "tourNo": "VMZS",
       "type": "positive",
-      "content": "領隊朱寶光先生：知識廣博,風趣幽默,行事正直,工作非常專業,有禮貌,對年長的客人非常細心及照顧,今次的旅程本人給予100分,司機導遊亦非常好,希望下次參加貴公司的團隊繼續有朱領隊的帶領."
+      "content": "整體行程 玩得開心 領隊導遊司機 服務一流 阿Joe搞笑. 三位也很專業"
+    },
+    {
+      "dest": "馬來西亞",
+      "leader": "王建平",
+      "tourNo": "VMZS",
+      "type": "positive",
+      "content": "大家都玩得好開心"
+    },
+    {
+      "dest": "韓國_濟州",
+      "leader": "葉浩",
+      "tourNo": "VKEC",
+      "type": "positive",
+      "content": "行程安排妥當，特別是安排了一晚五星級酒店，地點位置十分方便，酒店對面有超市。"
+    },
+    {
+      "dest": "韓國_濟州",
+      "leader": "葉浩",
+      "tourNo": "VKEC",
+      "type": "positive",
+      "content": "旅遊景點安排時間充足， 每餐食品多樣化，酒店清潔。"
+    },
+    {
+      "dest": "韓國_濟州",
+      "leader": "葉浩",
+      "tourNo": "VKEC",
+      "type": "positive",
+      "content": "非常滿意領隊及導遊，十分專業"
     },
     {
       "dest": "張家界",
-      "leader": "盧文彪",
-      "tourNo": "CLHC",
-      "type": "suggestion",
-      "content": "下次禮物可否改送雨傘？謝謝"
+      "leader": "葉景蘇",
+      "tourNo": "CLDC",
+      "type": "positive",
+      "content": "領隊十分好，細心，有 效率"
     },
     {
       "dest": "張家界",
-      "leader": "盧文彪",
-      "tourNo": "CLHC",
+      "leader": "葉景蘇",
+      "tourNo": "CLDC",
       "type": "positive",
-      "content": "行程安排詳盡，領隊導遊服務細心，照顧週到"
-    },
-    {
-      "dest": "華東",
-      "leader": "彭倩芳",
-      "tourNo": "CNES",
-      "type": "negative",
-      "content": "太多購物店"
-    },
-    {
-      "dest": "華東",
-      "leader": "彭倩芳",
-      "tourNo": "CNES",
-      "type": "negative",
-      "content": "太多購物店，留意當地導遊的服務態度"
-    },
-    {
-      "dest": "韓國",
-      "leader": "李姚姚",
-      "tourNo": "VKAC",
-      "type": "positive",
-      "content": "當地導遊十分好，盡全力照顧每一位團友，又懂得因時制宜，為人幽默，給了我們一個難忘的回憶，是位100分的當地導遊。"
-    },
-    {
-      "dest": "北京",
-      "leader": "周薑嫄",
-      "tourNo": "CBAC",
-      "type": "positive",
-      "content": "沒有強制購物，沒有自費。領隊專業盡責。導遊經驗豐富，講解清晰，有趣。"
-    },
-    {
-      "dest": "北京",
-      "leader": "周薑嫄",
-      "tourNo": "CBAC",
-      "type": "suggestion",
-      "content": "餐改變下"
-    },
-    {
-      "dest": "韓國",
-      "leader": "盧漢權",
-      "tourNo": "VKAC",
-      "type": "suggestion",
-      "content": "不錯，可以減少自由活動時間"
-    },
-    {
-      "dest": "韓國",
-      "leader": "盧漢權",
-      "tourNo": "VKAC",
-      "type": "positive",
-      "content": "這次旅行體驗感直接拉滿！從前期諮詢到行程結束，客服都超耐心。導遊/領隊[香港導遊盧漢權及韓國導遊Max Lam]超專業，講解生動有趣，還會貼心提醒注意事項。行程安排張弛有度，既不錯過精華景點，也不會太累。住宿和餐飲都遠超預期，全程無強制消費，享受旅行，必須五星好評！"
-    },
-    {
-      "dest": "峴港",
-      "leader": "曾敏儀",
-      "tourNo": "VNED",
-      "type": "suggestion",
-      "content": "如餐飲可以再改善更加好！"
-    },
-    {
-      "dest": "峴港",
-      "leader": "曾敏儀",
-      "tourNo": "VNED",
-      "type": "positive",
-      "content": "領隊和導遊都十分專業、尤其導遊jason風趣幽默令整個旅途十分愉快、行程安排得很好、領隊熱情可愛、令我們整個行程在開心、放心的過程中完成這個美好的旅程"
-    },
-    {
-      "dest": "峴港",
-      "leader": "曾敏儀",
-      "tourNo": "VNED",
-      "type": "positive",
-      "content": "五天行程——我們同行四位都非常滿意，行程安排，非常好,非常愉快💖\n領隊、導遊、司機，也十分照顧同行長者，，因為媽媽行動比較慢，他們也很大幫忙，令到我們一家也順利很多，真的十分感激🤗\n當地導遊 Jason 講解有趣，帶動氣氛十分滿意😊\n領導(曾敏儀）爽朗性格，跟（敏儀）相處，令人感覺愉快，積極，而且十分細心，非常照顧團友們👍🏻👍🏻👍🏻\n期待下次旅程，再有機會遇上他們三位💯💯💯讚讚讚👍🏻👍🏻👍🏻"
-    },
-    {
-      "dest": "雲南",
-      "leader": "馬揚",
-      "tourNo": "CYKC",
-      "type": "suggestion",
-      "content": "花園希爾頓酒店，冷氣不夠"
-    },
-    {
-      "dest": "雲南",
-      "leader": "馬揚",
-      "tourNo": "CYKC",
-      "type": "suggestion",
-      "content": "印象麗江自費項目較為失望，建議取消\n第四日行程較為單一和趕，可以改為其他地方參觀，例如蝴蝶泉\n第五日膳食較一般，需要改善，如可增加以一餐茹類為主的火鍋則更佳"
-    },
-    {
-      "dest": "江西景德鎮",
-      "leader": "阮健寧",
-      "tourNo": "CJEC",
-      "type": "suggestion",
-      "content": "時間安排適合，物有所值，值得推薦。惟行程不適合夏天氣候。太熱。"
-    },
-    {
-      "dest": "湖南郡陽",
-      "leader": "彭倩芳",
-      "tourNo": "CLFC",
-      "type": "suggestion",
-      "content": "行山風景唔錯 但酒店質素5理想, 膳食基本餐餐如是, 豪無新意, 望改進"
-    },
-    {
-      "dest": "湖南郡陽",
-      "leader": "彭倩芳",
-      "tourNo": "CLFC",
-      "type": "positive",
-      "content": "整體滿意貴司行程安排。"
-    },
-    {
-      "dest": "湖南郡陽",
-      "leader": "彭倩芳",
-      "tourNo": "CLFC",
-      "type": "suggestion",
-      "content": "講解詳細一些"
+      "content": "Amy 领隊笑容很好，對團友十分細心,照顧無微不至，"
     },
     {
       "dest": "張家界",
-      "leader": "梁銘賢",
-      "tourNo": "CLHC",
+      "leader": "葉景蘇",
+      "tourNo": "CLDC",
       "type": "positive",
-      "content": "領隊,當地導遊及司機十分專業."
+      "content": "領隊很專業，對待旅客和藹可親，貼心盡責，十分欣賞。"
     },
     {
       "dest": "張家界",
-      "leader": "梁銘賢",
-      "tourNo": "CLHC",
-      "type": "negative",
-      "content": "本次參加該旅行團的整體體驗尚算可接受，惟在若干安排上存在明顯不足，有需要進一步改善。首先，導遊語言安排欠妥。全程大部分時間以普通話講解，而未能使用廣東話進行充分溝通，對於以廣東話為主要語言的團員而言，理解上存在一定困難，影響行程體驗及資訊吸收。建議旅行社在安排導遊時，應優先考慮團員語言需求，確保講解清晰到位。\n\n其次，自費活動「七十二奇樓」的時間安排與行程表不符。行程紙標示有1.5小時自由活動時間，實際上僅約1小時，存在差異，影響遊覽體驗。這種時間縮減未有事先說明，對團員期望造成落差，建議日後應嚴格按照行程執行或提前作出合理解釋。\n\n另外，在「土司城」的行程中，導遊於講解後主要集中推銷朱沙產品，並未安排自由活動時間便草草結束，有欠均衡，令人感覺行程偏向商業推銷而非觀光體驗。建議相關景點安排應避免過度銷售，並保留基本參觀時間。\n\n總括而言，其他行程安排尚可接受，具一定觀賞價值。然而，若能改善語言溝通、時間管理及商業推銷比例，整體服務質素將更臻完善。"
-    },
-    {
-      "dest": "張家界",
-      "leader": "梁銘賢",
-      "tourNo": "CLHC",
+      "leader": "葉景蘇",
+      "tourNo": "CLDC",
       "type": "positive",
-      "content": "行程安排緊湊。\n導遊(特別是當地導遊）十分體貼，照顧周到。\n讓大家節省很多排隊時間。\n司機也非常小心。"
+      "content": "領隊十分好，十分關心團友，有問必答，詳細講解"
     },
     {
       "dest": "張家界",
-      "leader": "梁銘賢",
-      "tourNo": "CLHC",
+      "leader": "葉景蘇",
+      "tourNo": "CLDC",
       "type": "suggestion",
-      "content": "第三天去天門山，玩得很好，但也倦。晚上自費活動去72奇樓，也是要行的(動態活動)，如有靜態活動，e,g看表演便好一點。\n其他的特別領隊和導遊都全專，不錯。"
-    },
-    {
-      "dest": "張家界",
-      "leader": "梁銘賢",
-      "tourNo": "CLHC",
-      "type": "suggestion",
-      "content": "＞安排行程時間滿意\n＞客人不吃豬肉，而膳食也稍作安排，但能在膳食上多以雞，牛，魚，豬分散餐會更好些。"
-    },
-    {
-      "dest": "張家界",
-      "leader": "梁銘賢",
-      "tourNo": "CLHC",
-      "type": "suggestion",
-      "content": "對這次旅程安排非常滿意，領隊 導遊及司機都非常專業，行程非常開心有趣，唯是食物有點不習慣，並不是不好食，可能是不適合我們香港口味，如果連這點都改良好，那就原美了。"
-    },
-    {
-      "dest": "雲南",
-      "leader": "鍾金成",
-      "tourNo": "CYDC",
-      "type": "positive",
-      "content": "不過不失，大至好評"
-    },
-    {
-      "dest": "雲南",
-      "leader": "鍾金成",
-      "tourNo": "CYDC",
-      "type": "positive",
-      "content": "一切安排暢順歡快/"
-    },
-    {
-      "dest": "雲南",
-      "leader": "鍾金成",
-      "tourNo": "CYDC",
-      "type": "suggestion",
-      "content": "滿意，大理的酒店稍差，要升級！"
-    },
-    {
-      "dest": "雲南",
-      "leader": "鍾金成",
-      "tourNo": "CYDC",
-      "type": "suggestion",
-      "content": "Toilets needs to be updated 免得旅客屎急馬行田."
+      "content": "吐司城及72期樓可以免,"
     },
     {
       "dest": "內蒙古",
-      "leader": "李國亮",
+      "leader": "譚泳康",
       "tourNo": "CMAC",
-      "type": "suggestion",
-      "content": "見意茶會每人比1支水,行程非常滿,不過有間酒店,根河泰加林需要更換,電梯1部太細,沖涼去水慢,容易塞,其他安排非常滿意,當地導遊李芝芝,司機張生。"
+      "type": "positive",
+      "content": "如果許何景点可延長些時間，較為理想_\n本人想讚許女導游，娜娜，每程講解去的景点詳细及車上安排一些遊戲大家參與。態度親切，照顧有加，司机更好，行車舒適，辛苦他搬行李上落。\n另外香港領隊譚泳康先生，每次輪流和团員影相，照顧飲食，有問有答，態度親切，如：下机後，等所有团員領回行李後，才離開，好有責任感。\n哀心感激，導遊，司机和領隊的安排，這次旅游是我最滿意的旅程。🙏🙏"
     },
     {
-      "dest": "韓國",
-      "leader": "周漢威",
+      "dest": "張家界",
+      "leader": "葉景蘇",
+      "tourNo": "CLDC",
+      "type": "negative",
+      "content": "金鞭溪步道全長7.5km，行程編排為進入後，原路返回起步點。2:20p起步，4p集合離開。時間太短了。遲到至4:20p才回到集合點也只能最遠到達千里相會景點。即只能走了少於步道的一半。"
+    },
+    {
+      "dest": "張家界",
+      "leader": "朱寶光",
+      "tourNo": "CLBL",
+      "type": "negative",
+      "content": "行程規劃十分好，雖鳯凰古城的交通安排有點困難，步行大久及公共巴士欠妥！對老人家來說比較困難。"
+    },
+    {
+      "dest": "韓國_首爾",
+      "leader": "朱建玲",
+      "tourNo": "VKAC",
+      "type": "positive",
+      "content": "沒有意見很滿意"
+    },
+    {
+      "dest": "韓國_首爾",
+      "leader": "朱建玲",
       "tourNo": "VKAC",
       "type": "negative",
-      "content": "第一天行程不是很滿意，由於太早到韓國，很多店舖還未開門"
+      "content": "酒店早餐水準不太好，房間一般般。\n李領隊表現稱職，細心滿意。當地導遊李小姐工作用心，非常滿意。"
     },
     {
-      "dest": "內蒙古",
-      "leader": "李國亮",
-      "tourNo": "CMAC",
-      "type": "positive",
-      "content": "行程安排暢順，影點值得參觀，景色美麗，參觀時間足夠。\n午、晚餐份量足夠，味道是香港人可以接受，但早餐就比較差，食物選擇少，味道免強接受（尤其是蒙古包的早餐最差，每人只可分配一隻雞旦，而且其他食物極少和差)。希望可以改善木古包的情況。\n酒店整體可以，但蒙古包就比想像中差，未能接受，我入住的那一間蒙古包房間，因為整個門鎖有點鬆，要很大力才可關門，又多次開不到門，要用鎖匙轉左轉右，撞手神才可開門。厠所門又不能關上，厠所馬桶板又破裂，而且當晚亦沒有提供篝火晚會。根河加泰林酒店只得一部升降機，所以搬運行李非常困難，要花很長時間。\n旅遊車內都比較舊，有些座位的安全帶很難拉出，有些就不能縮回，這個情況必須要改善，確保乘客安全最重要。\n香港領隊 李先生，是一位很專業、勤力能耐和經驗豐富的領隊。態度友善親切，個性開朗。對每一位團友都非常照顧，又瞭解各團友的需要，例如 會幫助我們搬運行李，主動幫每個團友拍照留念，當團友遇上困難時，他會即時主動幫助解決問題，毎日都會清楚通知我們明天的行程安排，非常細心。他是我跟團旅遊經驗中其中一位最值得讚賞的領隊。\n當地導遊亦是經驗豐富，對景點、當地文化和習俗都會詳細解釋，對團友也非常照顧。\n司機駕駛態度謹慎安全，長車程也駕駛穩定。"
-    },
-    {
-      "dest": "韓國",
-      "leader": "周漢威",
+      "dest": "韓國_首爾",
+      "leader": "朱建玲",
       "tourNo": "VKAC",
+      "type": "suggestion",
+      "content": "導遊非常專業，對韓國的文化十分熟悉，很耐心及主動幫忙。\n唯香港領隊稍為緩慢，每天提示信息有錯別字，但也可接受。"
+    },
+    {
+      "dest": "韓國_首爾",
+      "leader": "朱建玲",
+      "tourNo": "VKAC",
+      "type": "suggestion",
+      "content": "香港领隊，看來是個人性格問題，待人處事有進步空間。\n南韓導遊，是整團的靈魂，介紹當地風土人情很貼切，願意化多些心思和耐性處理團友的意見或問題。\n南韓年青司機，禮貌周周，駕駛技術令人安心。"
+    },
+    {
+      "dest": "韓國_釜山",
+      "leader": "李國亮",
+      "tourNo": "VKUC",
       "type": "positive",
-      "content": "隨團領隊及當地導遊都非常專業，他們的專業知識及服務態度與貼心照顧令行程多加一分暖心👍！必定香港中旅社沒有他選！"
+      "content": "领隊和導遊十分專業，行程安排有彈性及迎合天氣變化。對中旅的韓國團旅程十分滿意。"
+    },
+    {
+      "dest": "韓國_首爾",
+      "leader": "李英傑",
+      "tourNo": "VKAC",
+      "type": "suggestion",
+      "content": "多点歷史性的"
+    },
+    {
+      "dest": "韓國_首爾",
+      "leader": "李英傑",
+      "tourNo": "VKAC",
+      "type": "suggestion",
+      "content": "部分膳食有待改善，自行購物時間安排長一些"
+    },
+    {
+      "dest": "韓國_首爾",
+      "leader": "李英傑",
+      "tourNo": "VKAC",
+      "type": "negative",
+      "content": "今次膳食安排不滿意的是：部隊鍋\n可去多一些自行購物的景點"
+    },
+    {
+      "dest": "貴陽",
+      "leader": "盧漢權",
+      "tourNo": "CKBC",
+      "type": "suggestion",
+      "content": "食物份量不足，應改善。"
     },
     {
       "dest": "北京",
-      "leader": "劉惠娟",
+      "leader": "梁銘賢",
+      "tourNo": "CBLC",
+      "type": "positive",
+      "content": "隨團領隊和當地導遊服務非常滿意，安排妥當，司機開車穩定，玩得開心。"
+    },
+    {
+      "dest": "北京",
+      "leader": "梁銘賢",
+      "tourNo": "CBLC",
+      "type": "positive",
+      "content": "領隊和導遊服務和安排滿意。司機很好，技術穩定。"
+    },
+    {
+      "dest": "北京",
+      "leader": "梁銘賢",
+      "tourNo": "CBLC",
+      "type": "positive",
+      "content": "整體行程滿意＇隨團領隊和當地導遊安排很好，玩得非常開心"
+    },
+    {
+      "dest": "北京",
+      "leader": "梁銘賢",
+      "tourNo": "CBLC",
+      "type": "positive",
+      "content": "全部都滿意安排妥當"
+    },
+    {
+      "dest": "北京",
+      "leader": "梁銘賢",
+      "tourNo": "CBLC",
+      "type": "positive",
+      "content": "領隊和導遊非常盡責，安排妥當。非常好。"
+    },
+    {
+      "dest": "北京",
+      "leader": "梁銘賢",
       "tourNo": "CBLC",
       "type": "suggestion",
-      "content": "應增設自由時間，建議有時間逛本地市場、超市，以及當地文化地點。\n另外，當地導遊靠歷史和老本去介紹，始終會被淘汰，既未能展示出老北京的美，也未能表達國家首都對科技及國際之強。\n領隊點人數該細心一點，上心一點，另外預備一個可以隨時聯絡的電話是基本條件，她的電話收不到訊號，經常不能聯絡。試問團友還有其他聯絡手段嗎？\n旅遊應以人為本，而非以「完成景點」為目的，切忌本末倒置。"
+      "content": "全部都很好。 最好在車上班有圾垃岱"
     },
     {
-      "dest": "馬來西亞",
-      "leader": "葉碧芬",
-      "tourNo": "VMPS",
-      "type": "suggestion",
-      "content": "基本滿意如果在酒店的游泳時間安排長些更好"
-    },
-    {
-      "dest": "馬來西亞",
-      "leader": "葉碧芬",
-      "tourNo": "VMPS",
-      "type": "suggestion",
-      "content": "膳食要改善，行程太密自由活動時間小！"
-    },
-    {
-      "dest": "馬來西亞",
-      "leader": "葉碧芬",
-      "tourNo": "VMPS",
-      "type": "positive",
-      "content": "導遊溫和經驗成熟領隊盡責司機駕駛非常態度非常之好"
-    },
-    {
-      "dest": "韓國",
+      "dest": "內蒙古",
       "leader": "周漢威",
-      "tourNo": "VKAC",
+      "tourNo": "CMHC",
       "type": "positive",
-      "content": "這次韓國之旅，我們三人已經是第二次參加同一個團隊，是感覺不一樣，這次明顯比第一次參加的時候好玩好多，應該是當地導遊的問題，第一次導遊是很悶的，而今次的導遊非常好玩，帶給我們不少歡樂，安排給我們參觀旅遊景點的時間恰當好處，參觀景點時間的前後安排亦很好，而隨團的領隊亦非常之細心，無時無刻都會留意團友有什麼須要，他會即時解決問題，所以這次韓國旅遊多得有兩位這麼好的領隊及當地導遊，才會有一個這麼好的旅程，今次旅程非常愉快，期待下次旅程再有這樣的領隊及導遊👍👍👍"
+      "content": "領隊Sam對每個客人都細心照顧，帶團經驗豐富"
+    },
+    {
+      "dest": "內蒙古",
+      "leader": "周漢威",
+      "tourNo": "CMHC",
+      "type": "suggestion",
+      "content": "或可增加旅遊日期多一兩天，因為這個旅行團的最大吸引力是直飛呼和浩特，結果沒有直航，首尾兩天都花在路途上。幸好領隊和導遊幫忙我們搬行李上落高鐵，才不致太狼狽。"
+    },
+    {
+      "dest": "湖北",
+      "leader": "盧文彪",
+      "tourNo": "CWCE",
+      "type": "suggestion",
+      "content": "最後一日行程較為緊迫，如可以的話有改善空間"
+    },
+    {
+      "dest": "張家界",
+      "leader": "鍾金成",
+      "tourNo": "CLHC",
+      "type": "suggestion",
+      "content": "自費項目要改善"
+    },
+    {
+      "dest": "張家界",
+      "leader": "鍾金成",
+      "tourNo": "CLHC",
+      "type": "suggestion",
+      "content": "應該加多幾多個行程？"
+    },
+    {
+      "dest": "張家界",
+      "leader": "鍾金成",
+      "tourNo": "CLHC",
+      "type": "suggestion",
+      "content": "提議旅行社張家界嗰72樓啊不要叫客人自費由佢唔值得欣賞"
+    },
+    {
+      "dest": "張家界",
+      "leader": "鍾金成",
+      "tourNo": "CLHC",
+      "type": "positive",
+      "content": "行程規劃除了去張家界國家森林公園那天非常適合長者；食用算不錯；領隊和當地導遊盡心盡力為我們，為團友的特別需求服務，領隊有求必應，導遊聲線甜美，笑容可掬，盡力講解，內容充實，看著舒服，司機積極幫忙，例如主動搬行李及會在團友上車前幾分鐘開冷氣等，這團的職員安排令人很滿意，除了部分團友的行為令人十分困擾外，也都慶幸過了一個愉快的旅程。"
+    },
+    {
+      "dest": "桂林",
+      "leader": "周薑嫄",
+      "tourNo": "CRDL",
+      "type": "positive",
+      "content": "周小姐親切友善，細心周到"
+    },
+    {
+      "dest": "桂林",
+      "leader": "周薑嫄",
+      "tourNo": "CRDL",
+      "type": "suggestion",
+      "content": "因天氣關係、 有一個行程要改地方、 下次會注意季節去旅行"
+    },
+    {
+      "dest": "內蒙古東北",
+      "leader": "王建平",
+      "tourNo": "CMAC",
+      "type": "negative",
+      "content": "九曲十八灣廁所不文明, 營地洒店非常差"
+    },
+    {
+      "dest": "貴州",
+      "leader": "曾錦材",
+      "tourNo": "CKDC",
+      "type": "positive",
+      "content": "領隊非常細心，安排蛋糕給我太太做生日，感激。"
+    },
+    {
+      "dest": "貴州",
+      "leader": "曾錦材",
+      "tourNo": "CKDC",
+      "type": "positive",
+      "content": "領隊很照顧我們4人，真係好多謝曾先生，非常專業。"
+    },
+    {
+      "dest": "貴州",
+      "leader": "曾錦材",
+      "tourNo": "CKDC",
+      "type": "positive",
+      "content": "十分滿意.领隊安排很好.十分專業.我和太太也很滿意佢"
+    },
+    {
+      "dest": "貴州",
+      "leader": "曾錦材",
+      "tourNo": "CKDC",
+      "type": "positive",
+      "content": "领隊很有责人任，很细心。非常滿意領隊服務，值得表扬。"
+    },
+    {
+      "dest": "貴州",
+      "leader": "曾錦材",
+      "tourNo": "CKDC",
+      "type": "positive",
+      "content": "服務周全、細心、友善、安排暢順，滿足我的需求。"
+    },
+    {
+      "dest": "貴州",
+      "leader": "曾錦材",
+      "tourNo": "CKDC",
+      "type": "positive",
+      "content": "領隊專業！"
     }
   ],
   "uniqueTours": [
@@ -1720,88 +1664,94 @@
   },
   "feedbackKeywordCloud": [
     {
-      "text": "導遊",
+      "text": "領隊",
       "weight": 50,
       "color": "text-[#00B8AA]",
-      "count": 34
+      "count": 21
     },
     {
-      "text": "領隊",
-      "weight": 48,
-      "color": "text-[#00B8AA]",
-      "count": 30
-    },
-    {
-      "text": "行程",
+      "text": "安排",
       "weight": 46,
       "color": "text-[#118DFF]",
-      "count": 28
-    },
-    {
-      "text": "滿意",
-      "weight": 42,
-      "color": "text-[#00B8AA]",
       "count": 18
     },
     {
-      "text": "專業",
-      "weight": 39,
+      "text": "滿意",
+      "weight": 41,
       "color": "text-[#00B8AA]",
       "count": 15
     },
     {
-      "text": "服務",
-      "weight": 37,
-      "color": "text-[#118DFF]",
+      "text": "導遊",
+      "weight": 40,
+      "color": "text-[#00B8AA]",
       "count": 14
     },
     {
-      "text": "細心",
-      "weight": 35,
-      "color": "text-[#00B8AA]",
-      "count": 12
-    },
-    {
-      "text": "安全",
+      "text": "行程",
       "weight": 34,
-      "color": "text-[#00B8AA]",
-      "count": 11
-    },
-    {
-      "text": "購物時間",
-      "weight": 31,
-      "color": "text-[#F2C80F]",
-      "count": 9
-    },
-    {
-      "text": "餐飲口味",
-      "weight": 30,
-      "color": "text-[#E66C37]",
-      "count": 9
-    },
-    {
-      "text": "地接服務",
-      "weight": 29,
-      "color": "text-[#FD625E]",
-      "count": 8
-    },
-    {
-      "text": "門店",
-      "weight": 28,
       "color": "text-[#118DFF]",
-      "count": 7
+      "count": 10
     },
     {
-      "text": "會員",
-      "weight": 26,
-      "color": "text-[#6B007B]",
+      "text": "專業",
+      "weight": 33,
+      "color": "text-[#00B8AA]",
+      "count": 9
+    },
+    {
+      "text": "細心",
+      "weight": 33,
+      "color": "text-[#00B8AA]",
+      "count": 9
+    },
+    {
+      "text": "服務",
+      "weight": 29,
+      "color": "text-[#118DFF]",
       "count": 6
     },
     {
-      "text": "推薦",
-      "weight": 24,
-      "color": "text-[#118DFF]",
+      "text": "司機",
+      "weight": 27,
+      "color": "text-[#00B8AA]",
       "count": 5
+    },
+    {
+      "text": "時間",
+      "weight": 26,
+      "color": "text-[#118DFF]",
+      "count": 4
+    },
+    {
+      "text": "行李",
+      "weight": 26,
+      "color": "text-[#118DFF]",
+      "count": 4
+    },
+    {
+      "text": "酒店",
+      "weight": 26,
+      "color": "text-[#118DFF]",
+      "count": 4
+    },
+    {
+      "text": "講解",
+      "weight": 24,
+      "color": "text-[#00B8AA]",
+      "count": 3
+    },
+    {
+      "text": "膳食",
+      "weight": 23,
+      "color": "text-[#E66C37]",
+      "count": 2
+    },
+    {
+      "text": "購物",
+      "weight": 23,
+      "color": "text-[#F2C80F]",
+      "count": 2
     }
   ]
 }
