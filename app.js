@@ -182,6 +182,75 @@ const DashboardApp = (function() {
         }
     };
 
+    const strategicThemeMap = {
+        red: {
+            section: 'bg-red-50 border-l-red-500',
+            title: 'text-red-800',
+            cardBorder: 'border-red-100',
+            cardTitle: 'text-red-600 border-red-50'
+        },
+        yellow: {
+            section: 'bg-yellow-50 border-l-yellow-500',
+            title: 'text-yellow-800',
+            cardBorder: 'border-yellow-100',
+            cardTitle: 'text-yellow-600 border-yellow-50'
+        },
+        blue: {
+            section: 'bg-blue-50 border-l-blue-500',
+            title: 'text-blue-800',
+            cardBorder: 'border-blue-100',
+            cardTitle: 'text-blue-600 border-blue-50'
+        },
+        green: {
+            section: 'bg-emerald-50 border-l-emerald-500',
+            title: 'text-emerald-800',
+            cardBorder: 'border-emerald-100',
+            cardTitle: 'text-emerald-700 border-emerald-50'
+        }
+    };
+
+    const renderStrategicSummary = () => {
+        const summary = DataStore.strategicSummary;
+        if (!summary) return;
+
+        setText('strategic-summary-intro', summary.intro);
+        if (!Array.isArray(summary.sections)) return;
+
+        const sectionsHTML = summary.sections.map((section) => {
+            const theme = strategicThemeMap[section.theme] || strategicThemeMap.blue;
+            const cards = Array.isArray(section.cards) ? section.cards : [];
+            return `
+                <div class="${theme.section} p-6 rounded-[2px] border-l-4 shadow-sm">
+                    <h3 class="font-bold text-lg ${theme.title} mb-4 flex items-center">
+                        <i class="${escapeHTML(section.icon || 'fas fa-lightbulb')} mr-2"></i>${escapeHTML(section.title)}
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        ${cards.map(card => `
+                            <div class="bg-white p-5 rounded-sm border ${theme.cardBorder} shadow-sm">
+                                <h4 class="font-bold ${theme.cardTitle} mb-2 border-b pb-2">${escapeHTML(card.title)}</h4>
+                                ${(Array.isArray(card.items) ? card.items : []).map(item => `
+                                    <p class="text-sm text-gray-700 leading-relaxed mb-3">
+                                        <strong>${escapeHTML(item.label)}：</strong>${escapeHTML(item.text)}
+                                    </p>
+                                `).join('')}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+        }).join('');
+
+        const final = summary.finalRecommendation;
+        const finalHTML = final ? `
+            <div class="bg-emerald-50 p-6 rounded-[2px] border-l-4 border-l-emerald-500 shadow-sm">
+                <h3 class="font-bold text-lg text-emerald-800 mb-3 flex items-center">
+                    <i class="${escapeHTML(final.icon || 'fas fa-clipboard-check')} mr-2"></i>${escapeHTML(final.title)}
+                </h3>
+                <p class="text-sm text-gray-700 leading-relaxed">${escapeHTML(final.text)}</p>
+            </div>` : '';
+
+        setHTML('strategic-summary-sections', sectionsHTML + finalHTML);
+    };
+
     const stripDuplicateIds = (root) => {
         root.querySelectorAll('[id]').forEach((node) => {
             node.dataset.sourceId = node.id;
@@ -606,6 +675,7 @@ const DashboardApp = (function() {
             const branchFeedbackTotal = Array.isArray(DataStore.branchRawFeedbacks) ? DataStore.branchRawFeedbacks.length : null;
             if (branchTotal !== null) setText('branch-leaderboard-total', `N=${branchTotal} (最新統計)`);
             if (branchFeedbackTotal !== null) setText('branch-feedback-total', `共提取 ${branchFeedbackTotal} 條門市意見`);
+            renderStrategicSummary();
 
             if (summary) {
                 setHTML('kpi-total-respondents', escapeHTML(summary.totalRespondents));
