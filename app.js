@@ -598,7 +598,9 @@ const DashboardApp = (function() {
             setText('leaderboard-source-label', `數據來源：${monthLabel}領隊服務評分排行榜`);
             setHTML('leaderboard-title', `<i class="fas fa-trophy text-yellow-500 mr-2"></i> ${escapeHTML(monthLabel)}領隊服務評分排行榜`);
             setText('leaderboard-footnote', `* 數據來源：${monthLabel}份最新領隊服務評分全量數據。`);
-            const branchTotal = Array.isArray(DataStore.branchLeaderboardData)
+            const branchTotal = Number.isFinite(DataStore.branchLeaderboardTotal)
+                ? DataStore.branchLeaderboardTotal
+                : Array.isArray(DataStore.branchLeaderboardData)
                 ? DataStore.branchLeaderboardData.reduce((sum, branch) => sum + (Number(branch.n) || 0), 0)
                 : null;
             const branchFeedbackTotal = Array.isArray(DataStore.branchRawFeedbacks) ? DataStore.branchRawFeedbacks.length : null;
