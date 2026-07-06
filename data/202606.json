@@ -721,6 +721,13 @@
       "dest": "韓國_首爾",
       "leader": "朱建玲",
       "tourNo": "VKAC",
+      "type": "negative",
+      "content": "四晚酒店的浴室設計非常不方便使用"
+    },
+    {
+      "dest": "韓國_首爾",
+      "leader": "朱建玲",
+      "tourNo": "VKAC",
       "type": "suggestion",
       "content": "導遊非常專業，對韓國的文化十分熟悉，很耐心及主動幫忙。\n唯香港領隊稍為緩慢，每天提示信息有錯別字，但也可接受。"
     },
@@ -1815,9 +1822,9 @@
     },
     {
       "text": "酒店",
-      "weight": 26,
+      "weight": 27,
       "color": "text-[#118DFF]",
-      "count": 4
+      "count": 5
     },
     {
       "text": "講解",
@@ -1836,6 +1843,12 @@
       "weight": 23,
       "color": "text-[#F2C80F]",
       "count": 2
+    },
+    {
+      "text": "浴室設計",
+      "weight": 22,
+      "color": "text-[#FD625E]",
+      "count": 1
     }
   ]
 }
