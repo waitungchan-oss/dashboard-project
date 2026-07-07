@@ -122,6 +122,7 @@ scripts/hermes_dashboard_check.py
 | `data/YYYYMM.json` | 每月 dashboard 純資料 | 不放 function、Chart.js config、event handler |
 | `serve.py` | 本地 HTTP server、port fallback、no-store cache header | 不處理資料轉換 |
 | `scripts/validate_dashboard.py` | manifest / monthly JSON 驗證 | 不取代 HTTP / UI 驗收 |
+| `scripts/check_month_consistency.py` | 單月或 manifest 全月份可計算欄位一致性檢查 | 不修改 JSON、不取代資料來源判讀 |
 | `scripts/hermes_dashboard_check.py` | Hermes read-only post-change validation | 不修改 production 檔案 |
 
 ## 7. 標準驗證命令
@@ -132,6 +133,7 @@ scripts/hermes_dashboard_check.py
 
 ```sh
 python3 scripts/validate_dashboard.py
+python3 scripts/check_month_consistency.py --all --strict-warnings
 python3 scripts/check_print_report_static.py
 python3 scripts/check_screen_layout_static.py
 node --check app.js

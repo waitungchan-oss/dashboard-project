@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check calculated-field consistency for one dashboard month JSON file."""
+"""Check calculated-field consistency for dashboard month JSON files."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from typing import Any, Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
+MANIFEST_PATH = DATA_DIR / "months.json"
 MONTH_KEY_RE = re.compile(r"^20\d{4}$")
 VALID_FEEDBACK_TYPES = {"positive", "suggestion", "negative"}
 SENTIMENT_ORDER = ("positive", "suggestion", "negative")
@@ -56,6 +57,26 @@ class ConsistencyReport:
             print("Result: PASS")
 
 
+class AggregateReport:
+    def __init__(self, reports: list[ConsistencyReport]) -> None:
+        self.reports = reports
+
+    @property
+    def errors(self) -> int:
+        return sum(len(report.errors) for report in self.reports)
+
+    @property
+    def warnings(self) -> int:
+        return sum(len(report.warnings) for report in self.reports)
+
+    def print(self) -> None:
+        print("")
+        print("Manifest month consistency summary")
+        print(f"Months checked: {', '.join(report.month for report in self.reports) or '(none)'}")
+        print(f"Errors: {self.errors}")
+        print(f"Warnings: {self.warnings}")
+
+
 def is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
@@ -87,6 +108,38 @@ def load_month(month: str, report: ConsistencyReport) -> dict[str, Any]:
         report.error(f"{path_label(path)} must contain a JSON object")
         return {}
     return value
+
+
+def load_manifest_months(report: ConsistencyReport) -> list[str]:
+    try:
+        manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001 - CLI should show the exact parse failure.
+        report.error(f"{path_label(MANIFEST_PATH)} cannot be parsed as JSON: {exc}")
+        return []
+    if not isinstance(manifest, dict):
+        report.error(f"{path_label(MANIFEST_PATH)} must contain a JSON object")
+        return []
+    months = manifest.get("months")
+    if not isinstance(months, list):
+        report.error("data/months.json months must be an array")
+        return []
+
+    month_keys: list[str] = []
+    seen: set[str] = set()
+    for index, item in enumerate(months):
+        if not isinstance(item, dict):
+            report.error(f"data/months.json months[{index}] must be an object")
+            continue
+        key = item.get("key")
+        if not isinstance(key, str) or not MONTH_KEY_RE.match(key):
+            report.error(f"data/months.json months[{index}].key must be YYYYMM")
+            continue
+        if key in seen:
+            report.error(f"data/months.json has duplicated month key: {key}")
+            continue
+        seen.add(key)
+        month_keys.append(key)
+    return month_keys
 
 
 def collect_sentiments(items: Any, field_name: str, report: ConsistencyReport) -> Counter[str]:
@@ -344,9 +397,14 @@ def check_month(month: str) -> ConsistencyReport:
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Check one dashboard month JSON file for calculated-field consistency."
+        description="Check dashboard month JSON files for calculated-field consistency."
     )
-    parser.add_argument("month", help="Month key in YYYYMM format, for example 202606")
+    parser.add_argument("month", nargs="?", help="Month key in YYYYMM format, for example 202606")
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Check every month listed in data/months.json.",
+    )
     parser.add_argument(
         "--strict-warnings",
         action="store_true",
@@ -357,6 +415,28 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
+
+    if args.all:
+        manifest_report = ConsistencyReport("manifest")
+        months = load_manifest_months(manifest_report)
+        reports = []
+        if manifest_report.errors or manifest_report.warnings:
+            reports.append(manifest_report)
+        reports.extend(check_month(month) for month in months)
+        for report in reports:
+            report.print()
+        aggregate = AggregateReport(reports)
+        aggregate.print()
+        if aggregate.errors:
+            return 1
+        if args.strict_warnings and aggregate.warnings:
+            return 1
+        return 0
+
+    if not args.month:
+        print("ERROR: provide a month key or use --all", file=sys.stderr)
+        return 2
+
     report = check_month(args.month)
     report.print()
     if report.errors:

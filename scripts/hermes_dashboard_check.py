@@ -30,25 +30,22 @@ MONTH_KEY_RE = re.compile(r"^\d{6}$")
 FORBIDDEN_TOKENS = ("function", "formatter", "onClick", "=>")
 VALID_SCHEMAS = {"current", "legacy"}
 
-COMMAND_CHECKS: list[tuple[str, list[str], bool]] = [
+BASE_COMMAND_CHECKS: list[tuple[str, list[str], bool]] = [
     ("validate_dashboard", ["python3", "scripts/validate_dashboard.py"], False),
+    ("check_month_consistency_all", ["python3", "scripts/check_month_consistency.py", "--all", "--strict-warnings"], False),
     ("check_print_report_static", ["python3", "scripts/check_print_report_static.py"], False),
     ("check_screen_layout_static", ["python3", "scripts/check_screen_layout_static.py"], False),
     ("node_check_app_js", ["node", "--check", "app.js"], True),
     ("json_tool_months", ["python3", "-m", "json.tool", "data/months.json"], False),
-    ("json_tool_202604", ["python3", "-m", "json.tool", "data/202604.json"], False),
-    ("json_tool_202605", ["python3", "-m", "json.tool", "data/202605.json"], False),
 ]
 
-HTTP_PATHS = [
+BASE_HTTP_PATHS = [
     "/index.html",
     "/app.js",
     "/js/dom-utils.js",
     "/js/csv-export.js",
     "/js/dashboard-utils.js",
     "/data/months.json",
-    "/data/202604.json",
-    "/data/202605.json",
 ]
 
 REQUIRED_INDEX_IDS = [
@@ -192,8 +189,36 @@ def collect_git(report: Report) -> None:
     report.add_check(Check("git_state", "pass" if root.returncode == 0 else "fail", report.git["statusShortBranch"]))
 
 
-def run_command_checks(report: Report) -> None:
-    for name, cmd, node_optional in COMMAND_CHECKS:
+def manifest_month_keys(manifest: dict[str, Any] | None) -> list[str]:
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("months"), list):
+        return []
+    keys: list[str] = []
+    seen: set[str] = set()
+    for item in manifest["months"]:
+        if not isinstance(item, dict):
+            continue
+        key = item.get("key")
+        if isinstance(key, str) and MONTH_KEY_RE.match(key) and key not in seen:
+            seen.add(key)
+            keys.append(key)
+    return keys
+
+
+def build_command_checks(manifest: dict[str, Any] | None) -> list[tuple[str, list[str], bool]]:
+    commands = list(BASE_COMMAND_CHECKS)
+    for month_key in manifest_month_keys(manifest):
+        commands.append((f"json_tool_{month_key}", ["python3", "-m", "json.tool", f"data/{month_key}.json"], False))
+    return commands
+
+
+def build_http_paths(manifest: dict[str, Any] | None) -> list[str]:
+    paths = list(BASE_HTTP_PATHS)
+    paths.extend(f"/data/{month_key}.json" for month_key in manifest_month_keys(manifest))
+    return paths
+
+
+def run_command_checks(report: Report, manifest: dict[str, Any] | None) -> None:
+    for name, cmd, node_optional in build_command_checks(manifest):
         command_str = " ".join(cmd)
         if node_optional and shutil.which(cmd[0]) is None:
             detail = "node command not found; node --check app.js was not executed"
@@ -351,7 +376,7 @@ def check_frontend_contract(report: Report) -> None:
         report.finding("FAIL", failure)
 
 
-def start_server_and_check_http(report: Report) -> None:
+def start_server_and_check_http(report: Report, manifest: dict[str, Any] | None) -> None:
     env = os.environ.copy()
     env["DASHBOARD_NO_BROWSER"] = "1"
     env["PYTHONUNBUFFERED"] = "1"
@@ -393,7 +418,8 @@ def start_server_and_check_http(report: Report) -> None:
         report.add_check(Check("http_server_start", "pass", url))
 
         failures: list[str] = []
-        for path in HTTP_PATHS:
+        http_paths = build_http_paths(manifest)
+        for path in http_paths:
             target = base + path
             item: dict[str, Any] = {"path": path, "url": target}
             try:
@@ -419,7 +445,7 @@ def start_server_and_check_http(report: Report) -> None:
             report.http["checks"].append(item)
 
         status = "fail" if failures else "pass"
-        report.add_check(Check("http_resource_checks", status, "; ".join(failures) if failures else f"checked {len(HTTP_PATHS)} resources"))
+        report.add_check(Check("http_resource_checks", status, "; ".join(failures) if failures else f"checked {len(http_paths)} resources"))
         for failure in failures:
             report.finding("FAIL", failure)
     finally:
@@ -496,12 +522,12 @@ def main() -> int:
 
     report = Report()
     collect_git(report)
-    run_command_checks(report)
     manifest = load_manifest(report)
+    run_command_checks(report, manifest)
     check_json_purity(report, manifest)
     check_manifest_contract(report, manifest)
     check_frontend_contract(report)
-    start_server_and_check_http(report)
+    start_server_and_check_http(report, manifest)
     report.finalize()
 
     payload = {
