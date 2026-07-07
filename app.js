@@ -211,7 +211,11 @@ const DashboardApp = (function() {
 
     const renderStrategicSummary = () => {
         const summary = DataStore.strategicSummary;
-        if (!summary) return;
+        if (!summary) {
+            restoreFallback('strategic-summary-intro');
+            restoreFallback('strategic-summary-sections');
+            return;
+        }
 
         setText('strategic-summary-intro', summary.intro);
         if (!Array.isArray(summary.sections)) return;
@@ -663,7 +667,7 @@ const DashboardApp = (function() {
             const labels = DataStore.dashboardTextLabels || {};
             const insights = DataStore.dashboardInsights || {};
             const monthLabel = `${currentMonthKey.slice(0, 4)}年${Number(currentMonthKey.slice(4, 6))}月`;
-            ['duration-legend', 'records-cross-insights', 'records-average-days', 'records-total-samples', 'records-top-destination'].forEach(rememberFallback);
+            ['duration-legend', 'records-cross-insights', 'records-average-days', 'records-total-samples', 'records-top-destination', 'strategic-summary-intro', 'strategic-summary-sections'].forEach(rememberFallback);
             setText('leaderboard-source-label', `數據來源：${monthLabel}領隊服務評分排行榜`);
             setHTML('leaderboard-title', `<i class="fas fa-trophy text-yellow-500 mr-2"></i> ${escapeHTML(monthLabel)}領隊服務評分排行榜`);
             setText('leaderboard-footnote', `* 數據來源：${monthLabel}份最新領隊服務評分全量數據。`);
