@@ -229,11 +229,17 @@ def check_branch_leaderboard_total(data: dict[str, Any], report: ConsistencyRepo
         report.error("branchLeaderboardTotal must be an integer-valued number")
         return
     declared_total_int = int(declared_total)
-    if declared_total_int != sum_n:
+    if declared_total_int < sum_n:
         report.warn(
-            "branchLeaderboardTotal differs from sum(branchLeaderboardData.n): "
+            "branchLeaderboardTotal is lower than sum(branchLeaderboardData.n): "
             f"branchLeaderboardTotal={declared_total_int}, sum={sum_n}. "
-            "Confirm whether total N means all survey responses while branch n sums only scored branch samples."
+            "This suggests the displayed total is smaller than scored branch samples."
+        )
+    elif declared_total_int > sum_n:
+        report.info(
+            "branchLeaderboardTotal is a broader total than sum(branchLeaderboardData.n): "
+            f"branchLeaderboardTotal={declared_total_int}, sum={sum_n}. "
+            "Treat branchLeaderboardTotal as total survey N and branch n as scored branch sample counts."
         )
     else:
         report.info(f"branchLeaderboardTotal matches sum(branchLeaderboardData.n)={sum_n}")
