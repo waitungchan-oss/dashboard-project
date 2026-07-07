@@ -18,6 +18,7 @@ window.DataStore = DataStore;
 
 const DATA_PATH = './data/';
 const DEFAULT_MONTH = '202605';
+const STATIC_STRATEGIC_SUMMARY_MONTH = '202605';
 let currentMonthKey = DEFAULT_MONTH;
 let MonthCatalog = {
     defaultMonth: DEFAULT_MONTH,
@@ -209,11 +210,29 @@ const DashboardApp = (function() {
         }
     };
 
+    const renderStrategicSummaryUnavailable = () => {
+        const monthLabel = formatMonthLabel(currentMonthKey);
+        const notice = `${monthLabel}未提供綜合戰略分析與建議資料；此區已清空，避免沿用其他月份分析。`;
+        setText('strategic-summary-intro', notice);
+        setHTML('strategic-summary-sections', `
+            <div class="bg-gray-50 p-6 rounded-[2px] border border-gray-100 shadow-sm">
+                <h3 class="font-bold text-lg text-gray-700 mb-3 flex items-center">
+                    <i class="fas fa-info-circle mr-2"></i>${escapeHTML(monthLabel)}綜合意見待補充
+                </h3>
+                <p class="text-sm text-gray-600 leading-relaxed">${escapeHTML(notice)}</p>
+            </div>
+        `);
+    };
+
     const renderStrategicSummary = () => {
         const summary = DataStore.strategicSummary;
         if (!summary) {
-            restoreFallback('strategic-summary-intro');
-            restoreFallback('strategic-summary-sections');
+            if (currentMonthKey === STATIC_STRATEGIC_SUMMARY_MONTH) {
+                restoreFallback('strategic-summary-intro');
+                restoreFallback('strategic-summary-sections');
+                return;
+            }
+            renderStrategicSummaryUnavailable();
             return;
         }
 
