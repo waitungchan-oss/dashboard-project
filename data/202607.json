@@ -119,9 +119,9 @@
   },
   "destAgeCrossData": {
     "labels": [
-      "韓國_首爾",
-      "內蒙+山西",
-      "韓國_釜山",
+      "韓國首爾",
+      "內蒙古",
+      "韓國釜山",
       "峴港",
       "澳洲"
     ],
@@ -1229,19 +1229,31 @@
     "nps": {
       "score": 96.2,
       "promoterCount": 103,
-      "promoterPct": "98.10%"
+      "promoterPct": "98.10%",
+      "detractorCount": 2,
+      "detractorPct": "1.90%",
+      "npsPct": "+96.20%"
+    },
+    "scoreSummary": {
+      "average": 131.82,
+      "median": 136,
+      "min": 97,
+      "max": 150,
+      "perfectCount": 13
     },
     "storeSignup": {
       "count": 83,
-      "pct": "79.05%"
+      "pct": "79.05%",
+      "pureCount": 81,
+      "purePct": "77.14%"
     }
   },
   "dashboardTextLabels": {
     "profileTitle": "基礎客戶畫像 (N=105)",
     "memberSource": "數據來源：會員狀態 × 推廣接受意願交叉統計 (N=105)",
     "satisfactionTitle": "旅程體驗滿意度 (N=105)",
-    "sourceReply": "總提及 N=140",
-    "channelReply": "總回覆 N=109"
+    "sourceReply": "總填答 N=105｜多選總提及 N=140",
+    "channelReply": "總填答 N=105｜多選總回覆 N=109"
   },
   "dashboardInsights": {
     "member": [
@@ -1258,8 +1270,16 @@
     ],
     "channels": [
       {
-        "title": "線上引流、線下成交",
-        "text": "網絡媒體是主要資訊來源，但門店分社仍是最主要報名渠道。"
+        "title": "1. 典型 O2O：線上引流、線下成交",
+        "text": "網絡媒體是最高觸及資訊來源（47 人／44.76%），但門店分社是最主要報名渠道（83 人／79.05%），顯示線上宣傳有效建立認知，實體門店仍是最終轉化核心。"
+      },
+      {
+        "title": "2. 口碑背書帶動高轉換",
+        "text": "親友推薦共有 27 人（25.71%），與高達 98.10% 的推薦意願相互呼應；口碑與人際信任是穩定帶動報名的重要來源。"
+      },
+      {
+        "title": "3. 線上直接轉換仍有提升空間",
+        "text": "中旅網直客報名 9 人（8.57%），明顯低於網絡媒體觸及 47 人（44.76%）；建議簡化官網預訂與支付流程，並測試線上報名專屬優惠。"
       }
     ],
     "nps": {
