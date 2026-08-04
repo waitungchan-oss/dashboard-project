@@ -720,16 +720,13 @@ const DashboardApp = (function() {
             setText('channel-reply-label', labels.channelReply);
 
             if (Array.isArray(insights.member)) {
-                setHTML('member-insight-1', insights.member[0]);
-                setHTML('member-insight-2', insights.member[1]);
+                insights.member.slice(0, 3).forEach((text, index) => setHTML(`member-insight-${index + 1}`, text));
             }
             if (Array.isArray(insights.satisfaction)) {
-                setHTML('satisfaction-insight-1', insights.satisfaction[0]);
-                setHTML('satisfaction-insight-2', insights.satisfaction[1]);
+                insights.satisfaction.slice(0, 2).forEach((text, index) => setHTML(`satisfaction-insight-${index + 1}`, text));
             }
             if (Array.isArray(insights.destAge)) {
-                setHTML('dest-age-insight-1', insights.destAge[0]);
-                setHTML('dest-age-insight-2', insights.destAge[1]);
+                insights.destAge.slice(0, 3).forEach((text, index) => setHTML(`dest-age-insight-${index + 1}`, text));
             }
             if (Array.isArray(insights.channels)) {
                 insights.channels.slice(0, 3).forEach((item, index) => {
