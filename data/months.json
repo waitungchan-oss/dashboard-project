@@ -9,6 +9,13 @@
       "description": "2026 年 5 月問卷匯總、出團長評、門市服務與綜合洞察"
     },
     {
+      "key": "202607",
+      "label": "2026年 07月",
+      "schema": "current",
+      "status": "ready",
+      "description": "2026 年 7 月問卷匯總、推薦意願、領隊表現、出團記錄、長評、門市服務與綜合洞察"
+    },
+    {
       "key": "202606",
       "label": "2026年 06月",
       "schema": "current",
