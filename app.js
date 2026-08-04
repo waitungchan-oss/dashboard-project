@@ -1060,7 +1060,11 @@ const DashboardApp = (function() {
                 const keywords = Array.isArray(DataStore.feedbackKeywordCloud) && DataStore.feedbackKeywordCloud.length
                     ? DataStore.feedbackKeywordCloud
                     : fallbackKeywords;
-                wc.innerHTML = keywords.map(k => `<span class="word-tag ${k.color}" style="font-size: ${k.weight}px; font-weight: bold;">${escapeHTML(k.text)}</span>`).join('');
+                wc.innerHTML = keywords.map(k => {
+                    const color = typeof k.color === 'string' && /^#[0-9a-f]{6}$/i.test(k.color) ? k.color : '';
+                    const colorStyle = color ? ` color: ${color};` : '';
+                    return `<span class="word-tag" style="font-size: ${Number(k.weight) || 16}px; font-weight: bold;${colorStyle}" title="${escapeHTML(k.group || '關鍵詞')}">${escapeHTML(k.text)}</span>`;
+                }).join('');
             }
         },
 

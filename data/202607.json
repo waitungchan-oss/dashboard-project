@@ -1564,107 +1564,31 @@
     ]
   },
   "feedbackKeywordCloud": [
-    {
-      "text": "領隊",
-      "weight": 38,
-      "color": "#00B8AA",
-      "count": 21
-    },
-    {
-      "text": "導遊",
-      "weight": 50,
-      "color": "#00B8AA",
-      "count": 36
-    },
-    {
-      "text": "行程",
-      "weight": 32,
-      "color": "#118DFF",
-      "count": 15
-    },
-    {
-      "text": "滿意",
-      "weight": 28,
-      "color": "#00B8AA",
-      "count": 10
-    },
-    {
-      "text": "專業",
-      "weight": 30,
-      "color": "#00B8AA",
-      "count": 12
-    },
-    {
-      "text": "細心",
-      "weight": 28,
-      "color": "#00B8AA",
-      "count": 9
-    },
-    {
-      "text": "服務",
-      "weight": 27,
-      "color": "#118DFF",
-      "count": 8
-    },
-    {
-      "text": "時間",
-      "weight": 29,
-      "color": "#E66C37",
-      "count": 11
-    },
-    {
-      "text": "酒店",
-      "weight": 28,
-      "color": "#118DFF",
-      "count": 9
-    },
-    {
-      "text": "餐飲",
-      "weight": 21,
-      "color": "#E66C37",
-      "count": 1
-    },
-    {
-      "text": "購物",
-      "weight": 22,
-      "color": "#F2C80F",
-      "count": 2
-    },
-    {
-      "text": "司機",
-      "weight": 27,
-      "color": "#00B8AA",
-      "count": 8
-    },
-    {
-      "text": "景點",
-      "weight": 24,
-      "color": "#118DFF",
-      "count": 5
-    },
-    {
-      "text": "照顧",
-      "weight": 32,
-      "color": "#00B8AA",
-      "count": 14
-    },
-    {
-      "text": "自費",
-      "weight": 21,
-      "color": "#E66C37",
-      "count": 1
-    },
-    {
-      "text": "廣東話",
-      "weight": 25,
-      "color": "#118DFF",
-      "count": 6
-    },
-    {
-      "text": "長者",
-      "weight": 22,
-      "color": "#00B8AA",
-      "count": 2
-    }
+    { "text": "專業", "weight": 52, "color": "#00B8AA", "count": 12, "group": "品牌護城河｜正向高頻" },
+    { "text": "細心", "weight": 50, "color": "#00B8AA", "count": 9, "group": "品牌護城河｜正向高頻" },
+    { "text": "照顧週到", "weight": 48, "color": "#00B8AA", "count": 2, "group": "品牌護城河｜正向高頻" },
+    { "text": "態度良好", "weight": 42, "color": "#00B8AA", "count": 1, "group": "品牌護城河｜正向高頻" },
+    { "text": "熱情友善", "weight": 42, "color": "#00B8AA", "count": 1, "group": "品牌護城河｜正向高頻" },
+    { "text": "安全", "weight": 40, "color": "#00B8AA", "count": 5, "group": "品牌護城河｜正向高頻" },
+    { "text": "風趣幽默", "weight": 34, "color": "#00B8AA", "count": 1, "group": "品牌護城河｜正向高頻" },
+    { "text": "氣氛好", "weight": 34, "color": "#00B8AA", "count": 0, "group": "品牌護城河｜正向高頻" },
+    { "text": "安排妥善", "weight": 32, "color": "#00B8AA", "count": 1, "group": "品牌護城河｜正向高頻" },
+    { "text": "打點細緻", "weight": 32, "color": "#00B8AA", "count": 1, "group": "品牌護城河｜正向高頻" },
+    { "text": "購物", "weight": 52, "color": "#FD625E", "count": 2, "group": "營運痛點｜負向高頻" },
+    { "text": "Outlet", "weight": 48, "color": "#FD625E", "count": 1, "group": "營運痛點｜負向高頻" },
+    { "text": "倉卒", "weight": 48, "color": "#FD625E", "count": 1, "group": "營運痛點｜負向高頻" },
+    { "text": "趕", "weight": 44, "color": "#FD625E", "count": 0, "group": "營運痛點｜負向高頻" },
+    { "text": "強迫", "weight": 44, "color": "#FD625E", "count": 1, "group": "營運痛點｜負向高頻" },
+    { "text": "精神虐待", "weight": 44, "color": "#FD625E", "count": 1, "group": "營運痛點｜負向高頻" },
+    { "text": "酒店", "weight": 44, "color": "#FD625E", "count": 9, "group": "營運痛點｜負向高頻" },
+    { "text": "房間太細", "weight": 40, "color": "#FD625E", "count": 0, "group": "營運痛點｜負向高頻" },
+    { "text": "隔音差", "weight": 40, "color": "#FD625E", "count": 1, "group": "營運痛點｜負向高頻" },
+    { "text": "廣東話", "weight": 36, "color": "#FD625E", "count": 6, "group": "營運痛點｜負向高頻" },
+    { "text": "溝通問題", "weight": 36, "color": "#FD625E", "count": 1, "group": "營運痛點｜負向高頻" },
+    { "text": "敏感", "weight": 34, "color": "#FD625E", "count": 2, "group": "營運痛點｜負向高頻" },
+    { "text": "處理不當", "weight": 34, "color": "#FD625E", "count": 0, "group": "營運痛點｜負向高頻" },
+    { "text": "香港領隊", "weight": 46, "color": "#118DFF", "count": 2, "group": "核心關注實體｜高討論度對象" },
+    { "text": "當地導遊", "weight": 44, "color": "#118DFF", "count": 4, "group": "核心關注實體｜高討論度對象" },
+    { "text": "旅遊車司機", "weight": 40, "color": "#118DFF", "count": 0, "group": "核心關注實體｜高討論度對象" }
   ]
 }
