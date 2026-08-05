@@ -279,16 +279,27 @@ const DashboardApp = (function() {
                     class="nps-driver-row w-full border-l-4 px-4 py-3 text-left transition-colors ${point.zoneMeta.itemClass} ${isActive ? 'bg-blue-50/70' : 'bg-white hover:bg-gray-50'}"
                     data-driver-name="${escapeHTML(point.item)}"
                     aria-pressed="${isActive ? 'true' : 'false'}">
-                    <span class="grid grid-cols-[3rem_minmax(0,1.6fr)_4.5rem_4.5rem_5rem] gap-2 items-center">
+                    <span class="grid gap-3 md:grid-cols-[3rem_minmax(0,1.6fr)_4.5rem_4.5rem_5rem] md:items-center">
                         <span class="inline-flex items-center gap-2 text-xs font-semibold text-gray-600">
                             <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gray-800 text-white">${point.rank}</span>
                         </span>
                         <span class="min-w-0">
                             <span class="block truncate font-semibold text-gray-800">${escapeHTML(point.item)}</span>
                         </span>
-                        <span class="text-right text-sm font-semibold text-gray-700">${formatNpsMetric(point.y, 2)}</span>
-                        <span class="text-right text-sm font-semibold text-gray-700">${formatNpsMetric(point.x, 3)}</span>
-                        <span class="text-right text-[11px] font-semibold ${point.zoneMeta.chipClass} px-2 py-1 rounded">${point.zoneMeta.label}</span>
+                        <span class="grid grid-cols-2 gap-2 text-xs text-gray-600 md:contents">
+                            <span class="rounded bg-gray-50 px-3 py-2 md:rounded-none md:bg-transparent md:px-0 md:py-0 md:text-right md:text-sm md:font-semibold md:text-gray-700">
+                                <span class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-gray-500 md:hidden">滿意度</span>
+                                ${formatNpsMetric(point.y, 2)}
+                            </span>
+                            <span class="rounded bg-gray-50 px-3 py-2 md:rounded-none md:bg-transparent md:px-0 md:py-0 md:text-right md:text-sm md:font-semibold md:text-gray-700">
+                                <span class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-gray-500 md:hidden">影響力</span>
+                                ${formatNpsMetric(point.x, 3)}
+                            </span>
+                            <span class="col-span-2 inline-flex items-center justify-between gap-2 rounded bg-gray-50 px-3 py-2 md:col-span-1 md:justify-end md:rounded-none md:bg-transparent md:px-0 md:py-0">
+                                <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500 md:hidden">區域</span>
+                                <span class="text-[11px] font-semibold ${point.zoneMeta.chipClass} px-2 py-1 rounded">${point.zoneMeta.label}</span>
+                            </span>
+                        </span>
                     </span>
                 </button>
             `;

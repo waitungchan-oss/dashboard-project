@@ -68,6 +68,8 @@ class P2UxContractTests(unittest.TestCase):
         self.assertIn('id="npsDriverDetail"', self.index_html)
         self.assertIn("selectNpsDriver", self.app_js)
         self.assertIn("npsDriverList", self.app_js)
+        self.assertIn('md:grid-cols-[3rem_minmax(0,1.6fr)_4.5rem_4.5rem_5rem]', self.index_html)
+        self.assertIn('md:grid-cols-[3rem_minmax(0,1.6fr)_4.5rem_4.5rem_5rem]', self.app_js)
 
 
 if __name__ == "__main__":
