@@ -70,6 +70,7 @@ MONTHLY_DATA_IMPORT.md
 DASHBOARD_HERMES_MONITORING.md
 data/months.json
 scripts/validate_dashboard.py
+scripts/validate_month_schema.py
 scripts/hermes_dashboard_check.py
 ```
 
@@ -122,6 +123,7 @@ scripts/hermes_dashboard_check.py
 | `data/YYYYMM.json` | 每月 dashboard 純資料 | 不放 function、Chart.js config、event handler |
 | `serve.py` | 本地 HTTP server、port fallback、no-store cache header | 不處理資料轉換 |
 | `scripts/validate_dashboard.py` | manifest / monthly JSON 驗證 | 不取代 HTTP / UI 驗收 |
+| `scripts/validate_month_schema.py` | manifest-driven current / legacy schema 驗證 | 不修改 JSON、不取代可計算欄位一致性檢查 |
 | `scripts/check_month_consistency.py` | 單月或 manifest 全月份可計算欄位一致性檢查 | 不修改 JSON、不取代資料來源判讀 |
 | `scripts/hermes_dashboard_check.py` | Hermes read-only post-change validation | 不修改 production 檔案 |
 
@@ -132,6 +134,7 @@ scripts/hermes_dashboard_check.py
 基礎驗證：
 
 ```sh
+python3 scripts/validate_month_schema.py --all --strict-warnings
 python3 scripts/validate_dashboard.py
 python3 scripts/check_month_consistency.py --all --strict-warnings
 python3 scripts/check_print_report_static.py

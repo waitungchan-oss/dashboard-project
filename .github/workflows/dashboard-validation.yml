@@ -1,0 +1,70 @@
+name: Dashboard validation
+
+on:
+  pull_request:
+    paths:
+      - "app.js"
+      - "index.html"
+      - "data/**"
+      - "js/**"
+      - "scripts/**"
+      - "serve.py"
+      - "AGENTS.md"
+      - "MONTHLY_DATA_IMPORT.md"
+      - "DASHBOARD_HERMES_MONITORING.md"
+      - ".github/workflows/dashboard-validation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "app.js"
+      - "index.html"
+      - "data/**"
+      - "js/**"
+      - "scripts/**"
+      - "serve.py"
+      - "AGENTS.md"
+      - "MONTHLY_DATA_IMPORT.md"
+      - "DASHBOARD_HERMES_MONITORING.md"
+      - ".github/workflows/dashboard-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate month schemas
+        run: python3 scripts/validate_month_schema.py --all --strict-warnings
+
+      - name: Run dashboard data validation
+        run: python3 scripts/validate_dashboard.py
+
+      - name: Run manifest-wide consistency checks
+        run: python3 scripts/check_month_consistency.py --all --strict-warnings
+
+      - name: Run static layout checks
+        run: |
+          python3 scripts/check_print_report_static.py
+          python3 scripts/check_screen_layout_static.py
+
+      - name: Check JavaScript syntax
+        run: node --check app.js
+
+      - name: Run Hermes read-only acceptance
+        run: python3 scripts/hermes_dashboard_check.py --json

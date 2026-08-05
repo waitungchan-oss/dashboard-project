@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Common dashboard month data",
+  "type": "object",
+  "properties": {
+    "dashboardSummary": { "type": "object" },
+    "dashboardTextLabels": { "type": "object" },
+    "dashboardInsights": { "type": "object" },
+    "recordsSummary": { "type": "object" },
+    "recordsInsights": { "type": "object" },
+    "rawFeedbacks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": { "enum": ["positive", "suggestion", "negative"] },
+          "content": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "branchRawFeedbacks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": { "enum": ["positive", "suggestion", "negative"] },
+          "content": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "uniqueTours": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "leadersRaw": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "branchLeaderboardData": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "feedbackKeywordCloud": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "strategicSummary": { "type": "object" }
+  },
+  "additionalProperties": true
+}
