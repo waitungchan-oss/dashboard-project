@@ -63,6 +63,12 @@ class P2UxContractTests(unittest.TestCase):
                 self.assertTrue(month_path.exists(), f"Missing month file: {month_path.name}")
                 load_json(month_path)
 
+    def test_key_driver_has_ranked_list_hook(self) -> None:
+        self.assertIn('id="npsDriverList"', self.index_html)
+        self.assertIn('id="npsDriverDetail"', self.index_html)
+        self.assertIn("selectNpsDriver", self.app_js)
+        self.assertIn("npsDriverList", self.app_js)
+
 
 if __name__ == "__main__":
     unittest.main()

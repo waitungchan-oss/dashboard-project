@@ -136,6 +136,10 @@ throw new Error(`無法載入 ${monthKey}.json（HTTP ${response.status}）`);
 const DashboardApp = (function() {
     let satCrossChart = null;
     let printState = null;
+    let npsDriverChart = null;
+    let npsDriverRankedPoints = [];
+    let npsDriverIndexByName = new Map();
+    let npsSelectedDriverName = '';
 
     const refreshChartsForPrint = () => {
         if (typeof Chart === 'undefined' || typeof Chart.getChart !== 'function') return;
@@ -208,6 +212,158 @@ const DashboardApp = (function() {
             cardBorder: 'border-emerald-100',
             cardTitle: 'text-emerald-700 border-emerald-50'
         }
+    };
+
+    const NPS_ZONE_META = {
+        maintain: {
+            label: '優勢區',
+            chipClass: 'bg-green-100 text-green-700',
+            itemClass: 'border-l-green-500',
+            actionNote: '高影響且高滿意度，優先維持交付水準並複製成功做法。'
+        },
+        urgent: {
+            label: '急需改善區',
+            chipClass: 'bg-red-100 text-red-700',
+            itemClass: 'border-l-red-500',
+            actionNote: '高影響但滿意度偏低，最值得優先投入改善資源。'
+        },
+        stable: {
+            label: '維持現狀區',
+            chipClass: 'bg-blue-100 text-blue-700',
+            itemClass: 'border-l-blue-500',
+            actionNote: '滿意度不差但影響力較低，維持現況並持續觀察即可。'
+        },
+        low: {
+            label: '低優先級區',
+            chipClass: 'bg-gray-200 text-gray-700',
+            itemClass: 'border-l-gray-400',
+            actionNote: '影響力與滿意度都相對較低，先避免投入過量改善成本。'
+        }
+    };
+
+    const getNpsDriverZoneKey = (point, threshold) => {
+        if (!point || !threshold) return 'low';
+        if (point.x > threshold.x && point.y < threshold.y) return 'urgent';
+        if (point.x > threshold.x && point.y >= threshold.y) return 'maintain';
+        if (point.x <= threshold.x && point.y >= threshold.y) return 'stable';
+        return 'low';
+    };
+
+    const buildNpsDriverRankedPoints = (points, threshold) => {
+        return (Array.isArray(points) ? points : [])
+            .map((point, index) => {
+                const zoneKey = getNpsDriverZoneKey(point, threshold);
+                return {
+                    ...point,
+                    originalIndex: index,
+                    zoneKey,
+                    zoneMeta: NPS_ZONE_META[zoneKey] || NPS_ZONE_META.low
+                };
+            })
+            .sort((a, b) => (Number(b.x) - Number(a.x)) || (Number(b.y) - Number(a.y)) || String(a.item).localeCompare(String(b.item), 'zh-Hant'))
+            .map((point, index) => ({ ...point, rank: index + 1 }));
+    };
+
+    const formatNpsMetric = (value, digits) => {
+        return Number.isFinite(Number(value)) ? Number(value).toFixed(digits) : '-';
+    };
+
+    const renderNpsDriverList = () => {
+        const listEl = document.getElementById('npsDriverList');
+        if (!listEl) return;
+
+        listEl.innerHTML = npsDriverRankedPoints.map((point) => {
+            const isActive = point.item === npsSelectedDriverName;
+            return `
+                <button type="button"
+                    class="nps-driver-row w-full border-l-4 px-4 py-3 text-left transition-colors ${point.zoneMeta.itemClass} ${isActive ? 'bg-blue-50/70' : 'bg-white hover:bg-gray-50'}"
+                    data-driver-name="${escapeHTML(point.item)}"
+                    aria-pressed="${isActive ? 'true' : 'false'}">
+                    <span class="grid grid-cols-[3rem_minmax(0,1.6fr)_4.5rem_4.5rem_5rem] gap-2 items-center">
+                        <span class="inline-flex items-center gap-2 text-xs font-semibold text-gray-600">
+                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gray-800 text-white">${point.rank}</span>
+                        </span>
+                        <span class="min-w-0">
+                            <span class="block truncate font-semibold text-gray-800">${escapeHTML(point.item)}</span>
+                        </span>
+                        <span class="text-right text-sm font-semibold text-gray-700">${formatNpsMetric(point.y, 2)}</span>
+                        <span class="text-right text-sm font-semibold text-gray-700">${formatNpsMetric(point.x, 3)}</span>
+                        <span class="text-right text-[11px] font-semibold ${point.zoneMeta.chipClass} px-2 py-1 rounded">${point.zoneMeta.label}</span>
+                    </span>
+                </button>
+            `;
+        }).join('');
+
+        listEl.querySelectorAll('[data-driver-name]').forEach((button) => {
+            button.addEventListener('click', () => {
+                DashboardApp.selectNpsDriver(button.getAttribute('data-driver-name'));
+            });
+        });
+    };
+
+    const renderNpsDriverDetail = () => {
+        const detailEl = document.getElementById('npsDriverDetail');
+        if (!detailEl) return;
+        const point = npsDriverRankedPoints.find((entry) => entry.item === npsSelectedDriverName);
+
+        if (!point) {
+            detailEl.innerHTML = `
+                <p class="text-sm font-bold text-gray-800">Driver 明細</p>
+                <p class="mt-2 text-sm text-gray-500">請從圖表或右側排名選擇一個服務項目。</p>
+            `;
+            return;
+        }
+
+        detailEl.innerHTML = `
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-sm font-bold text-gray-800">${escapeHTML(point.item)}</p>
+                    <p class="mt-1 text-xs text-gray-500">Rank #${point.rank} | 依影響力排序</p>
+                </div>
+                <span class="inline-flex items-center rounded px-2 py-1 text-xs font-semibold ${point.zoneMeta.chipClass}">${point.zoneMeta.label}</span>
+            </div>
+            <div class="mt-4 grid grid-cols-3 gap-3 text-center">
+                <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
+                    <p class="text-[11px] font-bold uppercase text-gray-500">滿意度</p>
+                    <p class="mt-1 text-lg font-bold text-gray-800">${formatNpsMetric(point.y, 2)}</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
+                    <p class="text-[11px] font-bold uppercase text-gray-500">影響力</p>
+                    <p class="mt-1 text-lg font-bold text-gray-800">${formatNpsMetric(point.x, 3)}</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
+                    <p class="text-[11px] font-bold uppercase text-gray-500">推薦相關</p>
+                    <p class="mt-1 text-lg font-bold text-gray-800">${formatNpsMetric(point.recommendationCorrelation, 3)}</p>
+                </div>
+            </div>
+            <div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-600">
+                <p class="font-semibold text-gray-800">建議閱讀</p>
+                <p class="mt-1 leading-relaxed">${point.zoneMeta.actionNote}</p>
+            </div>
+        `;
+    };
+
+    const syncNpsDriverSelection = () => {
+        renderNpsDriverList();
+        renderNpsDriverDetail();
+        if (!npsDriverChart) return;
+
+        const activeIndex = npsDriverIndexByName.get(npsSelectedDriverName);
+        if (Number.isInteger(activeIndex)) {
+            const activeElements = [{ datasetIndex: 0, index: activeIndex }];
+            npsDriverChart.setActiveElements(activeElements);
+            if (npsDriverChart.tooltip && typeof npsDriverChart.tooltip.setActiveElements === 'function') {
+                const point = npsDriverChart.getDatasetMeta(0)?.data?.[activeIndex];
+                const position = point ? { x: point.x, y: point.y } : { x: 0, y: 0 };
+                npsDriverChart.tooltip.setActiveElements(activeElements, position);
+            }
+        } else {
+            npsDriverChart.setActiveElements([]);
+            if (npsDriverChart.tooltip && typeof npsDriverChart.tooltip.setActiveElements === 'function') {
+                npsDriverChart.tooltip.setActiveElements([], { x: 0, y: 0 });
+            }
+        }
+        npsDriverChart.update('none');
     };
 
     const renderStrategicSummaryUnavailable = () => {
@@ -1203,6 +1359,13 @@ const DashboardApp = (function() {
 
         setSatCrossChart: function(chart) { satCrossChart = chart; },
 
+        selectNpsDriver: function(name) {
+            if (!npsDriverRankedPoints.length) return;
+            const canonical = npsDriverRankedPoints.find((point) => point.item === name) || npsDriverRankedPoints[0];
+            npsSelectedDriverName = canonical?.item || '';
+            syncNpsDriverSelection();
+        },
+
         initCharts: function() {
             // 核心對抗性審查：防止 Chart.js Canvas 記憶體洩漏 (Memory Leak / Overlapping)
             const initChartSafe = (canvasId, config) => {
@@ -1317,8 +1480,75 @@ const DashboardApp = (function() {
             const npsYMin = Math.max(0, Math.floor((Math.min(...npsYValues, 4.0) - 0.15) * 10) / 10);
             const npsYMax = Math.ceil((Math.max(...npsYValues, 5.0) + 0.15) * 10) / 10;
             const npsScaleLabel = npsYMax > 6 ? '平均滿意度評分 (Satisfaction: 1-10分)' : '平均滿意度評分 (Satisfaction: 1-5分)';
-            const npsChart = initChartSafe('npsCorrelationChart', { type: 'scatter', data: { datasets: [{ label: '服務環節', data: npsPoints, backgroundColor: (ctx) => { const val = ctx.raw; if (!val) return '#ccc'; if (val.x > npsCorrelationData.threshold.x && val.y < npsCorrelationData.threshold.y) return pbi8; if (val.x > npsCorrelationData.threshold.x && val.y >= npsCorrelationData.threshold.y) return pbi4; if (val.x <= npsCorrelationData.threshold.x && val.y >= npsCorrelationData.threshold.y) return pbi1; return softGrey; }, pointRadius: 10, pointHoverRadius: 12 }] }, options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25, right: 30, left: 15, bottom: 10 } }, plugins: { legend: { display: false }, quadrantCrosshair: true, datalabels: { display: true, align: 'center', anchor: 'center', color: '#fff', backgroundColor: '#252423', borderRadius: 10, padding: 3, font: { weight: 'bold', size: 10 }, formatter: (_, ctx) => String(ctx.dataIndex + 1) }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw.item}: 滿意度 ${ctx.raw.y.toFixed(2)}, 對總分相關性 ${ctx.raw.x.toFixed(3)}, 對推薦意願相關性 ${(ctx.raw.recommendationCorrelation ?? 0).toFixed(3)}` } } }, scales: { x: { title: { display: true, text: '對總分影響力 / 相關性 (Importance)', font: { weight: 'bold' } }, min: npsXMin, max: npsXMax }, y: { title: { display: true, text: npsScaleLabel, font: { weight: 'bold' } }, min: npsYMin, max: npsYMax } } } });
-            setHTML('nps-driver-legend', npsPoints.map((point, index) => `<span class="flex items-center gap-2"><strong class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-800 text-white">${index + 1}</strong><span>${escapeHTML(point.item)}</span></span>`).join(''));
+            const npsThresholdData = npsCorrelationData.threshold || npsThreshold;
+            npsDriverRankedPoints = buildNpsDriverRankedPoints(npsPoints, npsThresholdData);
+            npsDriverIndexByName = new Map(npsPoints.map((point, index) => [point.item, index]));
+            npsSelectedDriverName = npsDriverRankedPoints[0]?.item || '';
+            npsDriverChart = initChartSafe('npsCorrelationChart', {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: '服務環節',
+                        data: npsPoints,
+                        backgroundColor: (ctx) => {
+                            const val = ctx.raw;
+                            if (!val) return '#ccc';
+                            const zoneKey = getNpsDriverZoneKey(val, npsThresholdData);
+                            if (zoneKey === 'urgent') return pbi8;
+                            if (zoneKey === 'maintain') return pbi4;
+                            if (zoneKey === 'stable') return pbi1;
+                            return softGrey;
+                        },
+                        pointRadius: (ctx) => (ctx.raw?.item === npsSelectedDriverName ? 13 : 10),
+                        pointHoverRadius: 13,
+                        pointBorderWidth: (ctx) => (ctx.raw?.item === npsSelectedDriverName ? 3 : 1),
+                        pointBorderColor: (ctx) => (ctx.raw?.item === npsSelectedDriverName ? '#252423' : '#ffffff')
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (_, activeEls) => {
+                        if (!activeEls.length) return;
+                        const point = npsPoints[activeEls[0].index];
+                        if (point?.item) DashboardApp.selectNpsDriver(point.item);
+                    },
+                    onHover: (event, activeEls) => {
+                        if (event?.native?.target) event.native.target.style.cursor = activeEls[0] ? 'pointer' : 'default';
+                    },
+                    layout: { padding: { top: 25, right: 30, left: 15, bottom: 10 } },
+                    plugins: {
+                        legend: { display: false },
+                        quadrantCrosshair: true,
+                        datalabels: {
+                            display: true,
+                            align: 'center',
+                            anchor: 'center',
+                            color: '#fff',
+                            backgroundColor: '#252423',
+                            borderRadius: 10,
+                            padding: 3,
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (_, ctx) => {
+                                const point = npsPoints[ctx.dataIndex];
+                                const rankedPoint = npsDriverRankedPoints.find((entry) => entry.item === point?.item);
+                                return rankedPoint ? String(rankedPoint.rank) : '';
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw.item}: 滿意度 ${ctx.raw.y.toFixed(2)}, 對總分相關性 ${ctx.raw.x.toFixed(3)}, 對推薦意願相關性 ${formatNpsMetric(ctx.raw.recommendationCorrelation, 3)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: '對總分影響力 / 相關性 (Importance)', font: { weight: 'bold' } }, min: npsXMin, max: npsXMax },
+                        y: { title: { display: true, text: npsScaleLabel, font: { weight: 'bold' } }, min: npsYMin, max: npsYMax }
+                    }
+                }
+            });
+            setHTML('nps-driver-legend', npsDriverRankedPoints.map((point) => `<span class="flex items-center gap-2"><strong class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-800 text-white">${point.rank}</strong><span>${escapeHTML(point.item)}</span></span>`).join(''));
+            syncNpsDriverSelection();
             
             const topDestData = DataStore.topDestData || { labels: ['韓國', '張家界', '桂林', '雲南', '北京'], values: [52, 39, 32, 24, 14] };
             const topDestChart = initChartSafe('topDestChart', { type: 'bar', data: { labels: topDestData.labels, datasets: [{ label: '出團數量', data: topDestData.values, backgroundColor: (ctx) => ctx.dataIndex < 3 ? pbi1 : (ctx.dataIndex < 6 ? '#71B9F5' : softGrey), borderRadius: 0, barThickness: 20 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, onClick: (e, activeEls) => { if(activeEls.length > 0) { DashboardApp.filterSatChart(topDestChart.data.labels[activeEls[0].index]); } else { DashboardApp.resetDrillDown(); } }, onHover: (e, el) => { e.native.target.style.cursor = el[0] ? 'pointer' : 'default'; }, plugins: { legend: { display: false }, quadrantCrosshair: false, datalabels: { anchor: 'end', align: 'end', color: '#252423', formatter: (val) => val + "人" } }, scales: { x: { display: false, max: maxFrom(topDestData.values, 60) }, y: { grid: { display: false } } } } });

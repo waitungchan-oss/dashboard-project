@@ -1633,16 +1633,41 @@
                     </div>
                     <div class="mt-4 md:mt-0 bg-blue-50 p-3 rounded-lg border border-blue-100"><p class="text-xs text-blue-800 font-bold uppercase">NPS 總指標</p><p class="text-3xl font-bold text-blue-600" id="nps-zone-indicator">83.9% <span class="text-sm font-normal text-gray-500">願意推薦</span></p></div>
                 </div>
-                <div class="relative h-[500px] w-full bg-gray-50 rounded-xl p-4 border border-gray-200">
-                    <div class="absolute top-4 right-4 text-green-600 font-bold text-xs bg-green-100 px-2 py-1 rounded opacity-70 z-10">優勢區 (維持)</div>
-                    <div class="absolute bottom-4 right-4 text-red-600 font-bold text-xs bg-red-100 px-2 py-1 rounded opacity-70 z-10">急需改善區 (優先處理)</div>
-                    <div class="absolute top-4 left-4 text-blue-600 font-bold text-xs bg-blue-100 px-2 py-1 rounded opacity-70 z-10">維持現狀區</div>
-                    <div class="absolute bottom-4 left-4 text-gray-500 font-bold text-xs bg-gray-200 px-2 py-1 rounded opacity-70 z-10">低優先級區</div>
-                    <canvas id="npsCorrelationChart"></canvas>
-                </div>
-                <div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                    <div class="mb-2 text-xs font-bold text-gray-600">圖中編號對應服務項目</div>
-                    <div id="nps-driver-legend" class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-xs text-gray-600"></div>
+                <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.95fr)] gap-5 items-start">
+                    <div class="relative h-[500px] w-full bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <div class="absolute top-4 right-4 text-green-600 font-bold text-xs bg-green-100 px-2 py-1 rounded opacity-70 z-10">優勢區 (維持)</div>
+                        <div class="absolute bottom-4 right-4 text-red-600 font-bold text-xs bg-red-100 px-2 py-1 rounded opacity-70 z-10">急需改善區 (優先處理)</div>
+                        <div class="absolute top-4 left-4 text-blue-600 font-bold text-xs bg-blue-100 px-2 py-1 rounded opacity-70 z-10">維持現狀區</div>
+                        <div class="absolute bottom-4 left-4 text-gray-500 font-bold text-xs bg-gray-200 px-2 py-1 rounded opacity-70 z-10">低優先級區</div>
+                        <canvas id="npsCorrelationChart"></canvas>
+                    </div>
+                    <div class="min-w-0 space-y-4">
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
+                            <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+                                <div>
+                                    <p class="text-sm font-bold text-gray-800">Key Driver 排名</p>
+                                    <p class="text-xs text-gray-500">依影響力由高至低排序，點選可同步聚焦圖表與明細。</p>
+                                </div>
+                                <span class="text-[11px] font-semibold text-gray-500 bg-white border border-gray-200 px-2 py-1 rounded">同步選取</span>
+                            </div>
+                            <div class="grid grid-cols-[3rem_minmax(0,1.6fr)_4.5rem_4.5rem_5rem] gap-2 border-b border-gray-200 bg-white/70 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-gray-500">
+                                <span>排名</span>
+                                <span>服務項目</span>
+                                <span class="text-right">滿意度</span>
+                                <span class="text-right">影響力</span>
+                                <span class="text-right">區域</span>
+                            </div>
+                            <div id="npsDriverList" class="divide-y divide-gray-200 bg-white"></div>
+                        </div>
+                        <div id="npsDriverDetail" class="rounded-lg border border-gray-200 bg-white px-4 py-4">
+                            <p class="text-sm font-bold text-gray-800">Driver 明細</p>
+                            <p class="mt-2 text-sm text-gray-500">請從圖表或右側排名選擇一個服務項目。</p>
+                        </div>
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                            <div class="mb-2 text-xs font-bold text-gray-600">圖中編號對應服務項目</div>
+                            <div id="nps-driver-legend" class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-600"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
