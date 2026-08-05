@@ -1434,9 +1434,9 @@ const DashboardApp = (function() {
                 }
             }
 
-            if (filtered.length === 0) { 
-                container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10">沒有符合條件的留言記錄，請調整篩選或搜尋關鍵字。</div>'; 
-                return; 
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10">沒有符合條件的留言記錄，請調整篩選或搜尋關鍵字。</div>';
+                return;
             }
             
             container.innerHTML = filtered.map(f => {
