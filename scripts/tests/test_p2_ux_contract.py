@@ -91,6 +91,15 @@ class P2UxContractTests(unittest.TestCase):
         self.assertIn("feedbackSearch", self.app_js)
         self.assertIn("f.tourNo", self.app_js)
 
+    def test_feedback_controls_keep_intermediate_width_wrap_contract(self) -> None:
+        self.assertIn('data-ux="feedback-header"', self.index_html)
+        self.assertIn('data-ux="feedback-controls"', self.index_html)
+        self.assertIn('data-ux="feedback-search-row"', self.index_html)
+        self.assertIn("xl:flex-row", self.index_html)
+        self.assertIn("md:grid-cols-2", self.index_html)
+        self.assertIn("xl:grid-cols-[minmax(0,19rem)_repeat(3,minmax(0,1fr))]", self.index_html)
+        self.assertNotIn("md:flex-row justify-between items-center", self.index_html)
+
     def test_strategy_sections_have_summary_and_detail_hooks(self) -> None:
         self.assertIn('data-ux="strategy-section"', self.index_html)
         self.assertIn('data-ux="strategy-summary"', self.index_html)
@@ -98,6 +107,14 @@ class P2UxContractTests(unittest.TestCase):
         self.assertIn('data-ux="strategy-section"', self.app_js)
         self.assertIn('data-ux="strategy-summary"', self.app_js)
         self.assertIn('data-ux="strategy-detail"', self.app_js)
+
+    def test_static_analysis_fallback_keeps_only_three_strategy_sections(self) -> None:
+        analysis_start = self.index_html.index('<div id="analysis"')
+        analysis_end = self.index_html.index("</div>\n\n    </div>\n\n    <div id=\"printReport\"", analysis_start)
+        analysis_html = self.index_html[analysis_start:analysis_end]
+        self.assertEqual(analysis_html.count('data-ux="strategy-section"'), 3)
+        self.assertNotIn("綜合建議 (Comprehensive Recommendation)", analysis_html)
+        self.assertIn("renderStrategicDisclosure", self.app_js)
 
 
 if __name__ == "__main__":
