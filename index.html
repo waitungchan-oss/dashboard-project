@@ -441,6 +441,31 @@
             overflow: hidden;
         }
 
+        #analysis details[data-ux="strategy-section"] {
+            overflow: hidden;
+        }
+
+        #analysis summary[data-ux="strategy-summary"] {
+            list-style: none;
+            cursor: pointer;
+        }
+
+        #analysis summary[data-ux="strategy-summary"]::-webkit-details-marker {
+            display: none;
+        }
+
+        #analysis summary[data-ux="strategy-summary"] .strategy-disclosure-icon {
+            transition: transform 0.2s ease;
+        }
+
+        #analysis details[data-ux="strategy-section"][open] summary[data-ux="strategy-summary"] .strategy-disclosure-icon {
+            transform: rotate(180deg);
+        }
+
+        body.print-mode #analysis details[data-ux="strategy-section"] [data-ux="strategy-detail"] {
+            display: block !important;
+        }
+
         canvas {
             max-width: 100% !important;
         }
@@ -2013,9 +2038,15 @@
                 
                 <div id="strategic-summary-sections" class="grid grid-cols-1 gap-6">
                     <!-- 維度一：優先解決的營運痛點 -->
-                    <div class="bg-red-50 p-6 rounded-[2px] border-l-4 border-l-red-500 shadow-sm">
-                        <h3 class="font-bold text-lg text-red-800 mb-4 flex items-center"><i class="fas fa-fire-extinguisher mr-2"></i> 1. 優先解決的營運痛點 (Immediate Operational Fixes)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <details class="bg-red-50 p-6 rounded-[2px] border-l-4 border-l-red-500 shadow-sm" data-ux="strategy-section" open>
+                        <summary class="flex items-start justify-between gap-4" data-ux="strategy-summary">
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-lg text-red-800 flex items-center"><i class="fas fa-fire-extinguisher mr-2"></i> 1. 優先解決的營運痛點 (Immediate Operational Fixes)</h3>
+                                <p class="mt-2 text-sm text-gray-600 leading-relaxed">先處理餐飲、地接服務與不同年齡層的行程匹配問題，避免高推薦率被體驗細節持續拉低。</p>
+                            </div>
+                            <span class="strategy-disclosure-icon mt-1 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-white/80 text-red-700"><i class="fas fa-chevron-down text-xs"></i></span>
+                        </summary>
+                        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6" data-ux="strategy-detail">
                             <div class="bg-white p-5 rounded-sm border border-red-100 shadow-sm">
                                 <h4 class="font-bold text-red-600 mb-2 border-b border-red-50 pb-2">餐飲口味與地接服務波動</h4>
                                 <p class="text-sm text-gray-700 leading-relaxed mb-3"><strong>痛點：</strong>5 月長評中，負面與建議集中在餐飲口味、花椒/辣椒、膳食安排及個別地接服務態度。即使整體推薦率高達 90.97%，餐飲與地接仍是最容易拉低體驗的細節。</p>
@@ -2027,12 +2058,18 @@
                                 <p class="text-sm text-gray-600 leading-relaxed"><strong>行動方案：</strong>熱門線路需標示「購物比例、觀光節奏、自由活動時間」；韓國線增加商場與自由購物時間，北京線針對中壯年客群檢視餐飲、交通與行程密度。</p>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <!-- 維度二：產品競爭力升級方向 -->
-                    <div class="bg-yellow-50 p-6 rounded-[2px] border-l-4 border-l-yellow-500 shadow-sm">
-                        <h3 class="font-bold text-lg text-yellow-800 mb-4 flex items-center"><i class="fas fa-tools mr-2"></i> 2. 產品競爭力升級方向 (Product Upgrades)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <details class="bg-yellow-50 p-6 rounded-[2px] border-l-4 border-l-yellow-500 shadow-sm" data-ux="strategy-section">
+                        <summary class="flex items-start justify-between gap-4" data-ux="strategy-summary">
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-lg text-yellow-800 flex items-center"><i class="fas fa-tools mr-2"></i> 2. 產品競爭力升級方向 (Product Upgrades)</h3>
+                                <p class="mt-2 text-sm text-gray-600 leading-relaxed">依熱門目的地與旅程長度分層產品節奏，讓短線與中長線需求都能被清楚承接。</p>
+                            </div>
+                            <span class="strategy-disclosure-icon mt-1 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-white/80 text-yellow-700"><i class="fas fa-chevron-down text-xs"></i></span>
+                        </summary>
+                        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6" data-ux="strategy-detail">
                             <div class="bg-white p-5 rounded-sm border border-yellow-100 shadow-sm">
                                 <h4 class="font-bold text-yellow-600 mb-2 border-b border-yellow-50 pb-2">以熱門目的地做產品分層</h4>
                                 <p class="text-sm text-gray-700 leading-relaxed mb-3"><strong>痛點：</strong>5 月出團集中於韓國 35、雲南 33、北京 18、新西蘭 15，需求明顯但客群偏好不同，不能用同一套節奏服務所有客人。</p>
@@ -2044,12 +2081,18 @@
                                 <p class="text-sm text-gray-600 leading-relaxed"><strong>行動方案：</strong>短線產品強化便利、快速成行與高性價比；中長線產品強化住宿、餐飲與細節照顧；長線產品則突出安全、專業領隊與高品質體驗。</p>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <!-- 維度三：核心護城河與增長引擎 -->
-                    <div class="bg-blue-50 p-6 rounded-[2px] border-l-4 border-l-blue-500 shadow-sm">
-                        <h3 class="font-bold text-lg text-blue-800 mb-4 flex items-center"><i class="fas fa-rocket mr-2"></i> 3. 核心護城河與增長引擎 (Core Moat & Growth)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <details class="bg-blue-50 p-6 rounded-[2px] border-l-4 border-l-blue-500 shadow-sm" data-ux="strategy-section">
+                        <summary class="flex items-start justify-between gap-4" data-ux="strategy-summary">
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-lg text-blue-800 flex items-center"><i class="fas fa-rocket mr-2"></i> 3. 核心護城河與增長引擎 (Core Moat & Growth)</h3>
+                                <p class="mt-2 text-sm text-gray-600 leading-relaxed">把高口碑的一線服務與線上引流、門市成交模式結合，放大品牌護城河與轉化效率。</p>
+                            </div>
+                            <span class="strategy-disclosure-icon mt-1 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-white/80 text-blue-700"><i class="fas fa-chevron-down text-xs"></i></span>
+                        </summary>
+                        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6" data-ux="strategy-detail">
                             <div class="bg-white p-5 rounded-sm border border-blue-100 shadow-sm">
                                 <h4 class="font-bold text-blue-600 mb-2 border-b border-blue-50 pb-2">領隊與導遊服務是品牌護城河</h4>
                                 <p class="text-sm text-gray-700 leading-relaxed mb-3"><strong>亮點：</strong>5 月長評詞雲中「導遊」「領隊」「滿意」「專業」「細心」高頻出現，整體情緒高度正面；客戶忠誠度主要由一線服務團隊支撐。</p>
@@ -2061,7 +2104,22 @@
                                 <p class="text-sm text-gray-600 leading-relaxed"><strong>行動方案：</strong>加強線上內容與門市顧問銜接，例如線上預約門市、熱門線路 FAQ、顧問跟進清單；以門市服務評分與長評作為成交品質管理指標。</p>
                             </div>
                         </div>
-                    </div>
+                    </details>
+
+                    <details class="bg-emerald-50 p-6 rounded-[2px] border-l-4 border-l-emerald-500 shadow-sm" data-ux="strategy-section">
+                        <summary class="flex items-start justify-between gap-4" data-ux="strategy-summary">
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-lg text-emerald-800 flex items-center"><i class="fas fa-clipboard-check mr-2"></i> 綜合建議 (Comprehensive Recommendation)</h3>
+                                <p class="mt-2 text-sm text-gray-600 leading-relaxed">先止血營運痛點，再依目的地與旅程長度分層產品，同時持續放大前線服務與 O2O 成交優勢。</p>
+                            </div>
+                            <span class="strategy-disclosure-icon mt-1 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-white/80 text-emerald-700"><i class="fas fa-chevron-down text-xs"></i></span>
+                        </summary>
+                        <div class="mt-5" data-ux="strategy-detail">
+                            <div class="bg-white p-5 rounded-sm border border-emerald-100 shadow-sm">
+                                <p class="text-sm text-gray-700 leading-relaxed">優先處理餐飲口味、地接服務與不同客群節奏不匹配等營運痛點，避免細節瑕疵稀釋高推薦意願；同步依熱門目的地與旅程長度分層產品設計，讓短線、中長線與高品質長線都能對準目標客群；最後把領隊導遊的高口碑服務、線上資訊觸達與門市成交能力串起來，擴大品牌信任與後續轉化。</p>
+                            </div>
+                        </div>
+                    </details>
                 </div>
             </div>
         </div>

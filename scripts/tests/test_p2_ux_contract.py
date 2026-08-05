@@ -78,6 +78,14 @@ class P2UxContractTests(unittest.TestCase):
         self.assertIn("feedbackSearch", self.app_js)
         self.assertIn("f.tourNo", self.app_js)
 
+    def test_strategy_sections_have_summary_and_detail_hooks(self) -> None:
+        self.assertIn('data-ux="strategy-section"', self.index_html)
+        self.assertIn('data-ux="strategy-summary"', self.index_html)
+        self.assertIn('data-ux="strategy-detail"', self.index_html)
+        self.assertIn('data-ux="strategy-section"', self.app_js)
+        self.assertIn('data-ux="strategy-summary"', self.app_js)
+        self.assertIn('data-ux="strategy-detail"', self.app_js)
+
 
 if __name__ == "__main__":
     unittest.main()

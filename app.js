@@ -391,6 +391,45 @@ const DashboardApp = (function() {
         `);
     };
 
+    const getStrategicSummaryText = (section) => {
+        if (!section || !Array.isArray(section.cards)) return '此月份未提供摘要。';
+        for (const card of section.cards) {
+            if (!card || !Array.isArray(card.items)) continue;
+            const firstItem = card.items.find((item) => item && typeof item.text === 'string' && item.text.trim());
+            if (firstItem) return firstItem.text.trim();
+        }
+        return '此月份未提供摘要。';
+    };
+
+    const renderStrategicDisclosure = ({
+        title,
+        icon,
+        summaryText,
+        bodyHTML,
+        sectionClass,
+        titleClass,
+        iconColorClass,
+        open = false
+    }) => {
+        const openAttr = open ? ' open' : '';
+        return `
+            <details class="${sectionClass} p-6 rounded-[2px] border-l-4 shadow-sm" data-ux="strategy-section"${openAttr}>
+                <summary class="flex items-start justify-between gap-4" data-ux="strategy-summary">
+                    <div class="min-w-0">
+                        <h3 class="font-bold text-lg ${titleClass} flex items-center">
+                            <i class="${escapeHTML(icon || 'fas fa-lightbulb')} mr-2"></i>${escapeHTML(title)}
+                        </h3>
+                        <p class="mt-2 text-sm text-gray-600 leading-relaxed">${escapeHTML(summaryText)}</p>
+                    </div>
+                    <span class="strategy-disclosure-icon ${iconColorClass} mt-1 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-white/80">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </span>
+                </summary>
+                <div class="mt-5" data-ux="strategy-detail">${bodyHTML}</div>
+            </details>
+        `;
+    };
+
     const renderStrategicSummary = () => {
         const summary = DataStore.strategicSummary;
         if (!summary) {
@@ -409,34 +448,43 @@ const DashboardApp = (function() {
         const sectionsHTML = summary.sections.map((section) => {
             const theme = strategicThemeMap[section.theme] || strategicThemeMap.blue;
             const cards = Array.isArray(section.cards) ? section.cards : [];
-            return `
-                <div class="${theme.section} p-6 rounded-[2px] border-l-4 shadow-sm">
-                    <h3 class="font-bold text-lg ${theme.title} mb-4 flex items-center">
-                        <i class="${escapeHTML(section.icon || 'fas fa-lightbulb')} mr-2"></i>${escapeHTML(section.title)}
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        ${cards.map(card => `
-                            <div class="bg-white p-5 rounded-sm border ${theme.cardBorder} shadow-sm">
-                                <h4 class="font-bold ${theme.cardTitle} mb-2 border-b pb-2">${escapeHTML(card.title)}</h4>
-                                ${(Array.isArray(card.items) ? card.items : []).map(item => `
-                                    <p class="text-sm text-gray-700 leading-relaxed mb-3">
-                                        <strong>${escapeHTML(item.label)}：</strong>${escapeHTML(item.text)}
-                                    </p>
-                                `).join('')}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
+            const bodyHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    ${cards.map(card => `
+                        <div class="bg-white p-5 rounded-sm border ${theme.cardBorder} shadow-sm">
+                            <h4 class="font-bold ${theme.cardTitle} mb-2 border-b pb-2">${escapeHTML(card.title)}</h4>
+                            ${(Array.isArray(card.items) ? card.items : []).map(item => `
+                                <p class="text-sm text-gray-700 leading-relaxed mb-3">
+                                    <strong>${escapeHTML(item.label)}：</strong>${escapeHTML(item.text)}
+                                </p>
+                            `).join('')}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            return renderStrategicDisclosure({
+                title: section.title,
+                icon: section.icon || 'fas fa-lightbulb',
+                summaryText: getStrategicSummaryText(section),
+                bodyHTML,
+                sectionClass: theme.section,
+                titleClass: theme.title,
+                iconColorClass: theme.title,
+                open: section.theme === 'red'
+            });
         }).join('');
 
         const final = summary.finalRecommendation;
-        const finalHTML = final ? `
-            <div class="bg-emerald-50 p-6 rounded-[2px] border-l-4 border-l-emerald-500 shadow-sm">
-                <h3 class="font-bold text-lg text-emerald-800 mb-3 flex items-center">
-                    <i class="${escapeHTML(final.icon || 'fas fa-clipboard-check')} mr-2"></i>${escapeHTML(final.title)}
-                </h3>
-                <p class="text-sm text-gray-700 leading-relaxed">${escapeHTML(final.text)}</p>
-            </div>` : '';
+        const finalHTML = final ? renderStrategicDisclosure({
+            title: final.title,
+            icon: final.icon || 'fas fa-clipboard-check',
+            summaryText: final.text,
+            bodyHTML: `<div class="bg-white p-5 rounded-sm border border-emerald-100 shadow-sm"><p class="text-sm text-gray-700 leading-relaxed">${escapeHTML(final.text)}</p></div>`,
+            sectionClass: 'bg-emerald-50 border-l-emerald-500',
+            titleClass: 'text-emerald-800',
+            iconColorClass: 'text-emerald-700',
+            open: false
+        }) : '';
 
         setHTML('strategic-summary-sections', sectionsHTML + finalHTML);
     };
