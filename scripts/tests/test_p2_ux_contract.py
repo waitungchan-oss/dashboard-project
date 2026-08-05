@@ -71,6 +71,19 @@ class P2UxContractTests(unittest.TestCase):
         self.assertIn('md:grid-cols-[3rem_minmax(0,1.6fr)_4.5rem_4.5rem_5rem]', self.index_html)
         self.assertIn('md:grid-cols-[3rem_minmax(0,1.6fr)_4.5rem_4.5rem_5rem]', self.app_js)
 
+    def test_key_driver_does_not_fabricate_fallback_points(self) -> None:
+        self.assertNotIn("隨團領隊' }, { x: 0.392", self.app_js)
+        self.assertNotIn(
+            "const npsCorrelationData = DataStore.npsCorrelationData || { threshold: npsThreshold, points:",
+            self.app_js,
+        )
+
+    def test_key_driver_has_unavailable_state_for_missing_legacy_data(self) -> None:
+        self.assertIn("此月份沒有可用驅動因素資料", self.app_js)
+        self.assertIn("npsDriverRankedPoints = []", self.app_js)
+        self.assertIn("npsDriverIndexByName = new Map()", self.app_js)
+        self.assertIn("npsSelectedDriverName = ''", self.app_js)
+
     def test_feedback_markup_has_search_and_tour_number_hook(self) -> None:
         self.assertIn('id="feedbackSearch"', self.index_html)
         self.assertIn('id="feedbackResultCount"', self.index_html)

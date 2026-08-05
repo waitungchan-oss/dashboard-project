@@ -268,6 +268,43 @@ const DashboardApp = (function() {
         return Number.isFinite(Number(value)) ? Number(value).toFixed(digits) : '-';
     };
 
+    const setNpsDriverChartNotice = (message = '') => {
+        const canvas = document.getElementById('npsCorrelationChart');
+        const container = canvas?.parentElement;
+        if (!container) return;
+
+        let noticeEl = container.querySelector('[data-nps-driver-empty]');
+        if (!message) {
+            noticeEl?.remove();
+            return;
+        }
+
+        if (!noticeEl) {
+            noticeEl = document.createElement('div');
+            noticeEl.setAttribute('data-nps-driver-empty', 'true');
+            noticeEl.className = 'absolute inset-x-6 bottom-6 rounded-lg border border-dashed border-gray-300 bg-white/95 px-4 py-3 text-center text-sm font-medium text-gray-600 shadow-sm';
+            container.appendChild(noticeEl);
+        }
+        noticeEl.textContent = message;
+    };
+
+    const renderNpsDriverUnavailableState = (message) => {
+        npsDriverRankedPoints = [];
+        npsDriverIndexByName = new Map();
+        npsSelectedDriverName = '';
+        setNpsDriverChartNotice(message);
+        setHTML('npsDriverList', `
+            <div class="px-4 py-6 text-sm text-gray-500">${escapeHTML(message)}</div>
+        `);
+        setHTML('npsDriverDetail', `
+            <p class="text-sm font-bold text-gray-800">Driver 明細</p>
+            <p class="mt-2 text-sm text-gray-500">${escapeHTML(message)}</p>
+        `);
+        setHTML('nps-driver-legend', `
+            <span class="col-span-full text-sm text-gray-500">${escapeHTML(message)}</span>
+        `);
+    };
+
     const renderNpsDriverList = () => {
         const listEl = document.getElementById('npsDriverList');
         if (!listEl) return;
@@ -375,6 +412,16 @@ const DashboardApp = (function() {
             }
         }
         npsDriverChart.update('none');
+    };
+
+    const normalizeNpsDriverPoints = (points) => {
+        return (Array.isArray(points) ? points : []).filter((point) => (
+            point
+            && typeof point.item === 'string'
+            && point.item.trim()
+            && Number.isFinite(Number(point.x))
+            && Number.isFinite(Number(point.y))
+        ));
     };
 
     const renderStrategicSummaryUnavailable = () => {
@@ -1553,8 +1600,8 @@ const DashboardApp = (function() {
                 if(crossChart) DashboardApp.setSatCrossChart(crossChart);
             }
 
-            const npsCorrelationData = DataStore.npsCorrelationData || { threshold: npsThreshold, points: [ { x: 0.521, y: 4.673, item: '隨團領隊' }, { x: 0.392, y: 4.715, item: '當地導遊' }, { x: 0.277, y: 4.776, item: '旅車司機' }, { x: 0.388, y: 4.632, item: '交通' }, { x: 0.364, y: 4.415, item: '酒店' }, { x: 0.380, y: 4.228, item: '餐廳及膳食' }, { x: 0.400, y: 4.225, item: '購物安排' }, { x: 0.350, y: 4.450, item: '觀光節目安排' }, { x: 0.293, y: 4.280, item: '自費活動安排' } ] };
-            const npsPoints = Array.isArray(npsCorrelationData.points) ? npsCorrelationData.points : [];
+            const npsCorrelationData = DataStore.npsCorrelationData || {};
+            const npsPoints = normalizeNpsDriverPoints(npsCorrelationData.points);
             const npsXValues = npsPoints.map(point => Number(point.x)).filter(Number.isFinite);
             const npsYValues = npsPoints.map(point => Number(point.y)).filter(Number.isFinite);
             const npsXMin = Math.max(0, Math.floor((Math.min(...npsXValues, 0.2) - 0.05) * 10) / 10);
@@ -1563,9 +1610,16 @@ const DashboardApp = (function() {
             const npsYMax = Math.ceil((Math.max(...npsYValues, 5.0) + 0.15) * 10) / 10;
             const npsScaleLabel = npsYMax > 6 ? '平均滿意度評分 (Satisfaction: 1-10分)' : '平均滿意度評分 (Satisfaction: 1-5分)';
             const npsThresholdData = npsCorrelationData.threshold || npsThreshold;
-            npsDriverRankedPoints = buildNpsDriverRankedPoints(npsPoints, npsThresholdData);
-            npsDriverIndexByName = new Map(npsPoints.map((point, index) => [point.item, index]));
-            npsSelectedDriverName = npsDriverRankedPoints[0]?.item || '';
+            const hasNpsDriverData = npsPoints.length > 0;
+
+            if (hasNpsDriverData) {
+                setNpsDriverChartNotice('');
+                npsDriverRankedPoints = buildNpsDriverRankedPoints(npsPoints, npsThresholdData);
+                npsDriverIndexByName = new Map(npsPoints.map((point, index) => [point.item, index]));
+                npsSelectedDriverName = npsDriverRankedPoints[0]?.item || '';
+            } else {
+                renderNpsDriverUnavailableState('此月份沒有可用驅動因素資料');
+            }
             npsDriverChart = initChartSafe('npsCorrelationChart', {
                 type: 'scatter',
                 data: {
@@ -1591,6 +1645,7 @@ const DashboardApp = (function() {
                     responsive: true,
                     maintainAspectRatio: false,
                     onClick: (_, activeEls) => {
+                        if (!hasNpsDriverData) return;
                         if (!activeEls.length) return;
                         const point = npsPoints[activeEls[0].index];
                         if (point?.item) DashboardApp.selectNpsDriver(point.item);
@@ -1601,9 +1656,9 @@ const DashboardApp = (function() {
                     layout: { padding: { top: 25, right: 30, left: 15, bottom: 10 } },
                     plugins: {
                         legend: { display: false },
-                        quadrantCrosshair: true,
+                        quadrantCrosshair: hasNpsDriverData,
                         datalabels: {
-                            display: true,
+                            display: hasNpsDriverData,
                             align: 'center',
                             anchor: 'center',
                             color: '#fff',
@@ -1629,8 +1684,10 @@ const DashboardApp = (function() {
                     }
                 }
             });
-            setHTML('nps-driver-legend', npsDriverRankedPoints.map((point) => `<span class="flex items-center gap-2"><strong class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-800 text-white">${point.rank}</strong><span>${escapeHTML(point.item)}</span></span>`).join(''));
-            syncNpsDriverSelection();
+            if (hasNpsDriverData) {
+                setHTML('nps-driver-legend', npsDriverRankedPoints.map((point) => `<span class="flex items-center gap-2"><strong class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-800 text-white">${point.rank}</strong><span>${escapeHTML(point.item)}</span></span>`).join(''));
+                syncNpsDriverSelection();
+            }
             
             const topDestData = DataStore.topDestData || { labels: ['韓國', '張家界', '桂林', '雲南', '北京'], values: [52, 39, 32, 24, 14] };
             const topDestChart = initChartSafe('topDestChart', { type: 'bar', data: { labels: topDestData.labels, datasets: [{ label: '出團數量', data: topDestData.values, backgroundColor: (ctx) => ctx.dataIndex < 3 ? pbi1 : (ctx.dataIndex < 6 ? '#71B9F5' : softGrey), borderRadius: 0, barThickness: 20 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, onClick: (e, activeEls) => { if(activeEls.length > 0) { DashboardApp.filterSatChart(topDestChart.data.labels[activeEls[0].index]); } else { DashboardApp.resetDrillDown(); } }, onHover: (e, el) => { e.native.target.style.cursor = el[0] ? 'pointer' : 'default'; }, plugins: { legend: { display: false }, quadrantCrosshair: false, datalabels: { anchor: 'end', align: 'end', color: '#252423', formatter: (val) => val + "人" } }, scales: { x: { display: false, max: maxFrom(topDestData.values, 60) }, y: { grid: { display: false } } } } });
