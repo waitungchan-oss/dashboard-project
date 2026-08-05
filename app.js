@@ -1238,6 +1238,7 @@ const DashboardApp = (function() {
         renderFeedbackFilters: function() {
             const destEl = document.getElementById('destFilter');
             const leaderEl = document.getElementById('leaderFilter');
+            const searchEl = document.getElementById('feedbackSearch');
             const feedbacks = Array.isArray(DataStore.rawFeedbacks) ? DataStore.rawFeedbacks : [];
 
             const uniqueValues = (key) => {
@@ -1263,26 +1264,47 @@ const DashboardApp = (function() {
 
             rebuildSelect(destEl, '所有目的地', uniqueValues('dest'));
             rebuildSelect(leaderEl, '所有領隊', uniqueValues('leader'));
+            if (searchEl) searchEl.value = '';
+        },
+
+        clearFeedbackSearch: function() {
+            const searchEl = document.getElementById('feedbackSearch');
+            if (!searchEl) return;
+            searchEl.value = '';
+            this.filterFeedback();
         },
 
         filterFeedback: function() {
             const destEl = document.getElementById('destFilter'); 
             const typeEl = document.getElementById('typeFilter');
             const leaderEl = document.getElementById('leaderFilter');
+            const searchEl = document.getElementById('feedbackSearch');
             const container = document.getElementById('feedbackGrid');
-            const statusBar = document.getElementById('sentimentStatusBar'); 
+            const statusBar = document.getElementById('sentimentStatusBar');
+            const resultCountEl = document.getElementById('feedbackResultCount');
             
             if (!container || !DataStore.rawFeedbacks) return;
             
             const dest = destEl ? destEl.value : 'all'; 
             const type = typeEl ? typeEl.value : 'all';
             const leader = leaderEl ? leaderEl.value : 'all';
+            const searchTerm = searchEl ? searchEl.value.trim().toLocaleLowerCase('zh-Hant') : '';
             
             const filtered = DataStore.rawFeedbacks.filter(f => 
                 (dest === 'all' || (f.dest && f.dest.includes(dest))) &&
                 (type === 'all' || f.type === type) &&
-                (leader === 'all' || f.leader === leader)
+                (leader === 'all' || f.leader === leader) &&
+                (!searchTerm || [f.dest, f.leader, f.tourNo, f.content]
+                    .filter(Boolean)
+                    .some(value => String(value).toLocaleLowerCase('zh-Hant').includes(searchTerm)))
             );
+
+            if (resultCountEl) {
+                const total = DataStore.rawFeedbacks.length;
+                resultCountEl.textContent = filtered.length === total
+                    ? `目前顯示 ${filtered.length} 則長評`
+                    : `目前顯示 ${filtered.length} / ${total} 則長評`;
+            }
 
             if(statusBar) {
                 if (filtered.length === 0) {
@@ -1318,7 +1340,7 @@ const DashboardApp = (function() {
             }
 
             if (filtered.length === 0) { 
-                container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10">沒有符合條件的留言記錄</div>'; 
+                container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10">沒有符合條件的留言記錄，請調整篩選或搜尋關鍵字。</div>'; 
                 return; 
             }
             
@@ -1327,7 +1349,7 @@ const DashboardApp = (function() {
                 const icon = f.type === 'positive' ? '<i class="fas fa-thumbs-up text-[#00B8AA]"></i>' : (f.type === 'suggestion' ? '<i class="fas fa-lightbulb text-[#F2C80F]"></i>' : '<i class="fas fa-exclamation-triangle text-[#FD625E]"></i>');
                 const typeText = f.type === 'positive' ? '表揚' : (f.type === 'suggestion' ? '建議' : '投訴');
                 const typeColor = f.type === 'positive' ? 'text-[#00B8AA] bg-[#00B8AA]/10' : (f.type === 'suggestion' ? 'text-[#E66C37] bg-[#F2C80F]/20' : 'text-[#FD625E] bg-[#FD625E]/10');
-                const tourLabel = f.tourNo ? `<div class="text-xs font-semibold text-gray-500 mt-1"><i class="fas fa-ticket-alt mr-1"></i> 團號: ${escapeHTML(f.tourNo)}</div>` : '';
+                const tourLabel = f.tourNo ? f.tourNo : '未提供';
                 return `
                 <div class="bg-[#faf9f8] rounded-[2px] shadow-sm border border-gray-200 p-5 ${borderClass} card-hover">
                     <div class="flex justify-between items-start mb-3">
@@ -1335,9 +1357,10 @@ const DashboardApp = (function() {
                         <div class="text-right"><div class="text-xs font-bold text-gray-500">${escapeHTML(f.dest || '未知')}</div></div>
                     </div>
                     <p class="text-[#252423] text-sm italic leading-relaxed mb-4 whitespace-pre-wrap">"${escapeHTML(f.content)}"</p>
-                    <div class="flex items-center justify-between pt-3 border-t border-[#e1dfdd]">
-                        <div class="flex items-center text-xs text-gray-500"><i class="fas fa-user-circle mr-1"></i> 領隊: ${escapeHTML(f.leader || '未提供')}</div>
-                        ${tourLabel}
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-3 border-t border-[#e1dfdd] text-xs text-gray-500">
+                        <div class="flex items-center"><i class="fas fa-map-marker-alt mr-1"></i> 目的地: ${escapeHTML(f.dest || '未知')}</div>
+                        <div class="flex items-center"><i class="fas fa-user-circle mr-1"></i> 領隊: ${escapeHTML(f.leader || '未提供')}</div>
+                        <div class="flex items-center font-semibold" data-feedback-field="tourNo"><i class="fas fa-ticket-alt mr-1"></i> 團號: ${escapeHTML(tourLabel)}</div>
                     </div>
                 </div>`;
             }).join('');

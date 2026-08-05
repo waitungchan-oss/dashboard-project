@@ -71,6 +71,13 @@ class P2UxContractTests(unittest.TestCase):
         self.assertIn('md:grid-cols-[3rem_minmax(0,1.6fr)_4.5rem_4.5rem_5rem]', self.index_html)
         self.assertIn('md:grid-cols-[3rem_minmax(0,1.6fr)_4.5rem_4.5rem_5rem]', self.app_js)
 
+    def test_feedback_markup_has_search_and_tour_number_hook(self) -> None:
+        self.assertIn('id="feedbackSearch"', self.index_html)
+        self.assertIn('id="feedbackResultCount"', self.index_html)
+        self.assertIn('data-feedback-field="tourNo"', self.app_js)
+        self.assertIn("feedbackSearch", self.app_js)
+        self.assertIn("f.tourNo", self.app_js)
+
 
 if __name__ == "__main__":
     unittest.main()
