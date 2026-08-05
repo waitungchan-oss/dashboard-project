@@ -31,6 +31,7 @@ FORBIDDEN_TOKENS = ("function", "formatter", "onClick", "=>")
 VALID_SCHEMAS = {"current", "legacy"}
 
 BASE_COMMAND_CHECKS: list[tuple[str, list[str], bool]] = [
+    ("validate_month_schema_all", ["python3", "scripts/validate_month_schema.py", "--all", "--strict-warnings"], False),
     ("validate_dashboard", ["python3", "scripts/validate_dashboard.py"], False),
     ("check_month_consistency_all", ["python3", "scripts/check_month_consistency.py", "--all", "--strict-warnings"], False),
     ("check_print_report_static", ["python3", "scripts/check_print_report_static.py"], False),

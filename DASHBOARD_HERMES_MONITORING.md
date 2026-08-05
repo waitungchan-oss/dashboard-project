@@ -46,6 +46,8 @@ http://127.0.0.1:8080/index.html
 | `data/months.json` | `defaultMonth`、月份清單、schema、duplicate keys |
 | `data/202605.json` | current schema reference |
 | `data/202604.json` | legacy schema compatibility |
+| `data/schema/*.schema.json` | current / legacy month data structure profiles |
+| `scripts/validate_month_schema.py` | manifest-driven month schema validation |
 | `scripts/validate_dashboard.py` | manifest / monthly JSON validation |
 | `scripts/check_print_report_static.py` | PDF / print static contract |
 | `scripts/check_screen_layout_static.py` | normal screen layout isolation |
@@ -66,6 +68,7 @@ git status --short --branch
 git diff --stat
 python3 scripts/hermes_dashboard_check.py
 python3 scripts/hermes_dashboard_check.py --json
+python3 scripts/validate_month_schema.py --all --strict-warnings
 python3 scripts/validate_dashboard.py
 python3 scripts/check_print_report_static.py
 python3 scripts/check_screen_layout_static.py

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Legacy dashboard month data",
+  "type": "object",
+  "required": [
+    "satisfactionCrossData",
+    "branchLeaderboardData",
+    "branchRawFeedbacks",
+    "sourceData",
+    "channelData",
+    "rawFeedbacks",
+    "uniqueTours",
+    "leadersRaw",
+    "futureDestData",
+    "npsDistData",
+    "npsScoreData",
+    "topDestData",
+    "durationDistData",
+    "dashboardSummary",
+    "dashboardTextLabels",
+    "dashboardInsights",
+    "recordsSummary"
+  ],
+  "x-optional": [
+    "recordsInsights"
+  ],
+  "properties": {
+    "satisfactionCrossData": { "type": "object" },
+    "sourceData": { "type": "object" },
+    "channelData": { "type": "object" },
+    "futureDestData": { "type": "object" },
+    "npsDistData": { "type": "object" },
+    "npsScoreData": { "type": "object" },
+    "topDestData": { "type": "object" },
+    "durationDistData": { "type": "object" }
+  },
+  "additionalProperties": true
+}

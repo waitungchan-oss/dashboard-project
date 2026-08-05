@@ -67,7 +67,9 @@ JSON 必須只保留純資料，不可加入：
 執行：
 
 ```sh
+python3 scripts/validate_month_schema.py --all --strict-warnings
 python3 scripts/validate_dashboard.py
+python3 scripts/check_month_consistency.py --all --strict-warnings
 python3 scripts/check_print_report_static.py
 python3 scripts/check_screen_layout_static.py
 node --check app.js
@@ -79,8 +81,13 @@ python3 -m json.tool data/202605.json >/dev/null
 新增月份後也要檢查：
 
 ```sh
+python3 scripts/validate_month_schema.py YYYYMM --strict-warnings
 python3 -m json.tool data/YYYYMM.json >/dev/null
 ```
+
+`data/schema/` 是可演進的結構驗證層。它依 `data/months.json` 的 `schema` profile
+分別檢查 current / legacy 月份，允許新增未知圖表與洞察欄位，不限制圖表顏色、排序或 layout。
+資料口徑與 count 一致性仍由 `check_month_consistency.py` 負責。
 
 ## 5. 啟動與 HTTP 驗收
 
