@@ -136,6 +136,10 @@ throw new Error(`無法載入 ${monthKey}.json（HTTP ${response.status}）`);
 const DashboardApp = (function() {
     let satCrossChart = null;
     let printState = null;
+    let npsDriverChart = null;
+    let npsDriverRankedPoints = [];
+    let npsDriverIndexByName = new Map();
+    let npsSelectedDriverName = '';
 
     const refreshChartsForPrint = () => {
         if (typeof Chart === 'undefined' || typeof Chart.getChart !== 'function') return;
@@ -210,6 +214,216 @@ const DashboardApp = (function() {
         }
     };
 
+    const NPS_ZONE_META = {
+        maintain: {
+            label: '優勢區',
+            chipClass: 'bg-green-100 text-green-700',
+            itemClass: 'border-l-green-500',
+            actionNote: '高影響且高滿意度，優先維持交付水準並複製成功做法。'
+        },
+        urgent: {
+            label: '急需改善區',
+            chipClass: 'bg-red-100 text-red-700',
+            itemClass: 'border-l-red-500',
+            actionNote: '高影響但滿意度偏低，最值得優先投入改善資源。'
+        },
+        stable: {
+            label: '維持現狀區',
+            chipClass: 'bg-blue-100 text-blue-700',
+            itemClass: 'border-l-blue-500',
+            actionNote: '滿意度不差但影響力較低，維持現況並持續觀察即可。'
+        },
+        low: {
+            label: '低優先級區',
+            chipClass: 'bg-gray-200 text-gray-700',
+            itemClass: 'border-l-gray-400',
+            actionNote: '影響力與滿意度都相對較低，先避免投入過量改善成本。'
+        }
+    };
+
+    const getNpsDriverZoneKey = (point, threshold) => {
+        if (!point || !threshold) return 'low';
+        if (point.x > threshold.x && point.y < threshold.y) return 'urgent';
+        if (point.x > threshold.x && point.y >= threshold.y) return 'maintain';
+        if (point.x <= threshold.x && point.y >= threshold.y) return 'stable';
+        return 'low';
+    };
+
+    const buildNpsDriverRankedPoints = (points, threshold) => {
+        return (Array.isArray(points) ? points : [])
+            .map((point, index) => {
+                const zoneKey = getNpsDriverZoneKey(point, threshold);
+                return {
+                    ...point,
+                    originalIndex: index,
+                    zoneKey,
+                    zoneMeta: NPS_ZONE_META[zoneKey] || NPS_ZONE_META.low
+                };
+            })
+            .sort((a, b) => (Number(b.x) - Number(a.x)) || (Number(b.y) - Number(a.y)) || String(a.item).localeCompare(String(b.item), 'zh-Hant'))
+            .map((point, index) => ({ ...point, rank: index + 1 }));
+    };
+
+    const formatNpsMetric = (value, digits) => {
+        return Number.isFinite(Number(value)) ? Number(value).toFixed(digits) : '-';
+    };
+
+    const setNpsDriverChartNotice = (message = '') => {
+        const canvas = document.getElementById('npsCorrelationChart');
+        const container = canvas?.parentElement;
+        if (!container) return;
+
+        let noticeEl = container.querySelector('[data-nps-driver-empty]');
+        if (!message) {
+            noticeEl?.remove();
+            return;
+        }
+
+        if (!noticeEl) {
+            noticeEl = document.createElement('div');
+            noticeEl.setAttribute('data-nps-driver-empty', 'true');
+            noticeEl.className = 'absolute inset-x-6 bottom-6 rounded-lg border border-dashed border-gray-300 bg-white/95 px-4 py-3 text-center text-sm font-medium text-gray-600 shadow-sm';
+            container.appendChild(noticeEl);
+        }
+        noticeEl.textContent = message;
+    };
+
+    const renderNpsDriverUnavailableState = (message) => {
+        npsDriverRankedPoints = [];
+        npsDriverIndexByName = new Map();
+        npsSelectedDriverName = '';
+        setNpsDriverChartNotice(message);
+        setHTML('npsDriverList', `
+            <div class="px-4 py-6 text-sm text-gray-500">${escapeHTML(message)}</div>
+        `);
+        setHTML('npsDriverDetail', `
+            <p class="text-sm font-bold text-gray-800">Driver 明細</p>
+            <p class="mt-2 text-sm text-gray-500">${escapeHTML(message)}</p>
+        `);
+        setHTML('nps-driver-legend', `
+            <span class="col-span-full text-sm text-gray-500">${escapeHTML(message)}</span>
+        `);
+    };
+
+    const renderNpsDriverList = () => {
+        const listEl = document.getElementById('npsDriverList');
+        if (!listEl) return;
+
+        listEl.innerHTML = npsDriverRankedPoints.map((point) => {
+            const isActive = point.item === npsSelectedDriverName;
+            return `
+                <button type="button"
+                    class="nps-driver-row w-full border-l-4 px-4 py-3 text-left transition-colors ${point.zoneMeta.itemClass} ${isActive ? 'bg-blue-50/70' : 'bg-white hover:bg-gray-50'}"
+                    data-driver-name="${escapeHTML(point.item)}"
+                    aria-pressed="${isActive ? 'true' : 'false'}">
+                    <span class="grid gap-3 md:grid-cols-[3rem_minmax(0,1.6fr)_4.5rem_4.5rem_5rem] md:items-center">
+                        <span class="inline-flex items-center gap-2 text-xs font-semibold text-gray-600">
+                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gray-800 text-white">${point.rank}</span>
+                        </span>
+                        <span class="min-w-0">
+                            <span class="block truncate font-semibold text-gray-800">${escapeHTML(point.item)}</span>
+                        </span>
+                        <span class="grid grid-cols-2 gap-2 text-xs text-gray-600 md:contents">
+                            <span class="rounded bg-gray-50 px-3 py-2 md:rounded-none md:bg-transparent md:px-0 md:py-0 md:text-right md:text-sm md:font-semibold md:text-gray-700">
+                                <span class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-gray-500 md:hidden">滿意度</span>
+                                ${formatNpsMetric(point.y, 2)}
+                            </span>
+                            <span class="rounded bg-gray-50 px-3 py-2 md:rounded-none md:bg-transparent md:px-0 md:py-0 md:text-right md:text-sm md:font-semibold md:text-gray-700">
+                                <span class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-gray-500 md:hidden">影響力</span>
+                                ${formatNpsMetric(point.x, 3)}
+                            </span>
+                            <span class="col-span-2 inline-flex items-center justify-between gap-2 rounded bg-gray-50 px-3 py-2 md:col-span-1 md:justify-end md:rounded-none md:bg-transparent md:px-0 md:py-0">
+                                <span class="text-[11px] font-bold uppercase tracking-wide text-gray-500 md:hidden">區域</span>
+                                <span class="text-[11px] font-semibold ${point.zoneMeta.chipClass} px-2 py-1 rounded">${point.zoneMeta.label}</span>
+                            </span>
+                        </span>
+                    </span>
+                </button>
+            `;
+        }).join('');
+
+        listEl.querySelectorAll('[data-driver-name]').forEach((button) => {
+            button.addEventListener('click', () => {
+                DashboardApp.selectNpsDriver(button.getAttribute('data-driver-name'));
+            });
+        });
+    };
+
+    const renderNpsDriverDetail = () => {
+        const detailEl = document.getElementById('npsDriverDetail');
+        if (!detailEl) return;
+        const point = npsDriverRankedPoints.find((entry) => entry.item === npsSelectedDriverName);
+
+        if (!point) {
+            detailEl.innerHTML = `
+                <p class="text-sm font-bold text-gray-800">Driver 明細</p>
+                <p class="mt-2 text-sm text-gray-500">請從圖表或右側排名選擇一個服務項目。</p>
+            `;
+            return;
+        }
+
+        detailEl.innerHTML = `
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-sm font-bold text-gray-800">${escapeHTML(point.item)}</p>
+                    <p class="mt-1 text-xs text-gray-500">Rank #${point.rank} | 依影響力排序</p>
+                </div>
+                <span class="inline-flex items-center rounded px-2 py-1 text-xs font-semibold ${point.zoneMeta.chipClass}">${point.zoneMeta.label}</span>
+            </div>
+            <div class="mt-4 grid grid-cols-3 gap-3 text-center">
+                <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
+                    <p class="text-[11px] font-bold uppercase text-gray-500">滿意度</p>
+                    <p class="mt-1 text-lg font-bold text-gray-800">${formatNpsMetric(point.y, 2)}</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
+                    <p class="text-[11px] font-bold uppercase text-gray-500">影響力</p>
+                    <p class="mt-1 text-lg font-bold text-gray-800">${formatNpsMetric(point.x, 3)}</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
+                    <p class="text-[11px] font-bold uppercase text-gray-500">推薦相關</p>
+                    <p class="mt-1 text-lg font-bold text-gray-800">${formatNpsMetric(point.recommendationCorrelation, 3)}</p>
+                </div>
+            </div>
+            <div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-600">
+                <p class="font-semibold text-gray-800">建議閱讀</p>
+                <p class="mt-1 leading-relaxed">${point.zoneMeta.actionNote}</p>
+            </div>
+        `;
+    };
+
+    const syncNpsDriverSelection = () => {
+        renderNpsDriverList();
+        renderNpsDriverDetail();
+        if (!npsDriverChart) return;
+
+        const activeIndex = npsDriverIndexByName.get(npsSelectedDriverName);
+        if (Number.isInteger(activeIndex)) {
+            const activeElements = [{ datasetIndex: 0, index: activeIndex }];
+            npsDriverChart.setActiveElements(activeElements);
+            if (npsDriverChart.tooltip && typeof npsDriverChart.tooltip.setActiveElements === 'function') {
+                const point = npsDriverChart.getDatasetMeta(0)?.data?.[activeIndex];
+                const position = point ? { x: point.x, y: point.y } : { x: 0, y: 0 };
+                npsDriverChart.tooltip.setActiveElements(activeElements, position);
+            }
+        } else {
+            npsDriverChart.setActiveElements([]);
+            if (npsDriverChart.tooltip && typeof npsDriverChart.tooltip.setActiveElements === 'function') {
+                npsDriverChart.tooltip.setActiveElements([], { x: 0, y: 0 });
+            }
+        }
+        npsDriverChart.update('none');
+    };
+
+    const normalizeNpsDriverPoints = (points) => {
+        return (Array.isArray(points) ? points : []).filter((point) => (
+            point
+            && typeof point.item === 'string'
+            && point.item.trim()
+            && Number.isFinite(Number(point.x))
+            && Number.isFinite(Number(point.y))
+        ));
+    };
+
     const renderStrategicSummaryUnavailable = () => {
         const monthLabel = formatMonthLabel(currentMonthKey);
         const notice = `${monthLabel}未提供綜合戰略分析與建議資料；此區已清空，避免沿用其他月份分析。`;
@@ -222,6 +436,45 @@ const DashboardApp = (function() {
                 <p class="text-sm text-gray-600 leading-relaxed">${escapeHTML(notice)}</p>
             </div>
         `);
+    };
+
+    const getStrategicSummaryText = (section) => {
+        if (!section || !Array.isArray(section.cards)) return '此月份未提供摘要。';
+        for (const card of section.cards) {
+            if (!card || !Array.isArray(card.items)) continue;
+            const firstItem = card.items.find((item) => item && typeof item.text === 'string' && item.text.trim());
+            if (firstItem) return firstItem.text.trim();
+        }
+        return '此月份未提供摘要。';
+    };
+
+    const renderStrategicDisclosure = ({
+        title,
+        icon,
+        summaryText,
+        bodyHTML,
+        sectionClass,
+        titleClass,
+        iconColorClass,
+        open = false
+    }) => {
+        const openAttr = open ? ' open' : '';
+        return `
+            <details class="${sectionClass} p-6 rounded-[2px] border-l-4 shadow-sm" data-ux="strategy-section"${openAttr}>
+                <summary class="flex items-start justify-between gap-4" data-ux="strategy-summary">
+                    <div class="min-w-0">
+                        <h3 class="font-bold text-lg ${titleClass} flex items-center">
+                            <i class="${escapeHTML(icon || 'fas fa-lightbulb')} mr-2"></i>${escapeHTML(title)}
+                        </h3>
+                        <p class="mt-2 text-sm text-gray-600 leading-relaxed">${escapeHTML(summaryText)}</p>
+                    </div>
+                    <span class="strategy-disclosure-icon ${iconColorClass} mt-1 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-white/80">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </span>
+                </summary>
+                <div class="mt-5" data-ux="strategy-detail">${bodyHTML}</div>
+            </details>
+        `;
     };
 
     const renderStrategicSummary = () => {
@@ -242,34 +495,43 @@ const DashboardApp = (function() {
         const sectionsHTML = summary.sections.map((section) => {
             const theme = strategicThemeMap[section.theme] || strategicThemeMap.blue;
             const cards = Array.isArray(section.cards) ? section.cards : [];
-            return `
-                <div class="${theme.section} p-6 rounded-[2px] border-l-4 shadow-sm">
-                    <h3 class="font-bold text-lg ${theme.title} mb-4 flex items-center">
-                        <i class="${escapeHTML(section.icon || 'fas fa-lightbulb')} mr-2"></i>${escapeHTML(section.title)}
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        ${cards.map(card => `
-                            <div class="bg-white p-5 rounded-sm border ${theme.cardBorder} shadow-sm">
-                                <h4 class="font-bold ${theme.cardTitle} mb-2 border-b pb-2">${escapeHTML(card.title)}</h4>
-                                ${(Array.isArray(card.items) ? card.items : []).map(item => `
-                                    <p class="text-sm text-gray-700 leading-relaxed mb-3">
-                                        <strong>${escapeHTML(item.label)}：</strong>${escapeHTML(item.text)}
-                                    </p>
-                                `).join('')}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
+            const bodyHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    ${cards.map(card => `
+                        <div class="bg-white p-5 rounded-sm border ${theme.cardBorder} shadow-sm">
+                            <h4 class="font-bold ${theme.cardTitle} mb-2 border-b pb-2">${escapeHTML(card.title)}</h4>
+                            ${(Array.isArray(card.items) ? card.items : []).map(item => `
+                                <p class="text-sm text-gray-700 leading-relaxed mb-3">
+                                    <strong>${escapeHTML(item.label)}：</strong>${escapeHTML(item.text)}
+                                </p>
+                            `).join('')}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            return renderStrategicDisclosure({
+                title: section.title,
+                icon: section.icon || 'fas fa-lightbulb',
+                summaryText: getStrategicSummaryText(section),
+                bodyHTML,
+                sectionClass: theme.section,
+                titleClass: theme.title,
+                iconColorClass: theme.title,
+                open: section.theme === 'red'
+            });
         }).join('');
 
         const final = summary.finalRecommendation;
-        const finalHTML = final ? `
-            <div class="bg-emerald-50 p-6 rounded-[2px] border-l-4 border-l-emerald-500 shadow-sm">
-                <h3 class="font-bold text-lg text-emerald-800 mb-3 flex items-center">
-                    <i class="${escapeHTML(final.icon || 'fas fa-clipboard-check')} mr-2"></i>${escapeHTML(final.title)}
-                </h3>
-                <p class="text-sm text-gray-700 leading-relaxed">${escapeHTML(final.text)}</p>
-            </div>` : '';
+        const finalHTML = final ? renderStrategicDisclosure({
+            title: final.title,
+            icon: final.icon || 'fas fa-clipboard-check',
+            summaryText: final.text,
+            bodyHTML: `<div class="bg-white p-5 rounded-sm border border-emerald-100 shadow-sm"><p class="text-sm text-gray-700 leading-relaxed">${escapeHTML(final.text)}</p></div>`,
+            sectionClass: 'bg-emerald-50 border-l-emerald-500',
+            titleClass: 'text-emerald-800',
+            iconColorClass: 'text-emerald-700',
+            open: false
+        }) : '';
 
         setHTML('strategic-summary-sections', sectionsHTML + finalHTML);
     };
@@ -1071,6 +1333,7 @@ const DashboardApp = (function() {
         renderFeedbackFilters: function() {
             const destEl = document.getElementById('destFilter');
             const leaderEl = document.getElementById('leaderFilter');
+            const searchEl = document.getElementById('feedbackSearch');
             const feedbacks = Array.isArray(DataStore.rawFeedbacks) ? DataStore.rawFeedbacks : [];
 
             const uniqueValues = (key) => {
@@ -1096,26 +1359,47 @@ const DashboardApp = (function() {
 
             rebuildSelect(destEl, '所有目的地', uniqueValues('dest'));
             rebuildSelect(leaderEl, '所有領隊', uniqueValues('leader'));
+            if (searchEl) searchEl.value = '';
+        },
+
+        clearFeedbackSearch: function() {
+            const searchEl = document.getElementById('feedbackSearch');
+            if (!searchEl) return;
+            searchEl.value = '';
+            this.filterFeedback();
         },
 
         filterFeedback: function() {
             const destEl = document.getElementById('destFilter'); 
             const typeEl = document.getElementById('typeFilter');
             const leaderEl = document.getElementById('leaderFilter');
+            const searchEl = document.getElementById('feedbackSearch');
             const container = document.getElementById('feedbackGrid');
-            const statusBar = document.getElementById('sentimentStatusBar'); 
+            const statusBar = document.getElementById('sentimentStatusBar');
+            const resultCountEl = document.getElementById('feedbackResultCount');
             
             if (!container || !DataStore.rawFeedbacks) return;
             
             const dest = destEl ? destEl.value : 'all'; 
             const type = typeEl ? typeEl.value : 'all';
             const leader = leaderEl ? leaderEl.value : 'all';
+            const searchTerm = searchEl ? searchEl.value.trim().toLocaleLowerCase('zh-Hant') : '';
             
             const filtered = DataStore.rawFeedbacks.filter(f => 
                 (dest === 'all' || (f.dest && f.dest.includes(dest))) &&
                 (type === 'all' || f.type === type) &&
-                (leader === 'all' || f.leader === leader)
+                (leader === 'all' || f.leader === leader) &&
+                (!searchTerm || [f.dest, f.leader, f.tourNo, f.content]
+                    .filter(Boolean)
+                    .some(value => String(value).toLocaleLowerCase('zh-Hant').includes(searchTerm)))
             );
+
+            if (resultCountEl) {
+                const total = DataStore.rawFeedbacks.length;
+                resultCountEl.textContent = filtered.length === total
+                    ? `目前顯示 ${filtered.length} 則長評`
+                    : `目前顯示 ${filtered.length} / ${total} 則長評`;
+            }
 
             if(statusBar) {
                 if (filtered.length === 0) {
@@ -1150,9 +1434,9 @@ const DashboardApp = (function() {
                 }
             }
 
-            if (filtered.length === 0) { 
-                container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10">沒有符合條件的留言記錄</div>'; 
-                return; 
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10">沒有符合條件的留言記錄，請調整篩選或搜尋關鍵字。</div>';
+                return;
             }
             
             container.innerHTML = filtered.map(f => {
@@ -1160,7 +1444,7 @@ const DashboardApp = (function() {
                 const icon = f.type === 'positive' ? '<i class="fas fa-thumbs-up text-[#00B8AA]"></i>' : (f.type === 'suggestion' ? '<i class="fas fa-lightbulb text-[#F2C80F]"></i>' : '<i class="fas fa-exclamation-triangle text-[#FD625E]"></i>');
                 const typeText = f.type === 'positive' ? '表揚' : (f.type === 'suggestion' ? '建議' : '投訴');
                 const typeColor = f.type === 'positive' ? 'text-[#00B8AA] bg-[#00B8AA]/10' : (f.type === 'suggestion' ? 'text-[#E66C37] bg-[#F2C80F]/20' : 'text-[#FD625E] bg-[#FD625E]/10');
-                const tourLabel = f.tourNo ? `<div class="text-xs font-semibold text-gray-500 mt-1"><i class="fas fa-ticket-alt mr-1"></i> 團號: ${escapeHTML(f.tourNo)}</div>` : '';
+                const tourLabel = f.tourNo ? f.tourNo : '未提供';
                 return `
                 <div class="bg-[#faf9f8] rounded-[2px] shadow-sm border border-gray-200 p-5 ${borderClass} card-hover">
                     <div class="flex justify-between items-start mb-3">
@@ -1168,9 +1452,10 @@ const DashboardApp = (function() {
                         <div class="text-right"><div class="text-xs font-bold text-gray-500">${escapeHTML(f.dest || '未知')}</div></div>
                     </div>
                     <p class="text-[#252423] text-sm italic leading-relaxed mb-4 whitespace-pre-wrap">"${escapeHTML(f.content)}"</p>
-                    <div class="flex items-center justify-between pt-3 border-t border-[#e1dfdd]">
-                        <div class="flex items-center text-xs text-gray-500"><i class="fas fa-user-circle mr-1"></i> 領隊: ${escapeHTML(f.leader || '未提供')}</div>
-                        ${tourLabel}
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-3 border-t border-[#e1dfdd] text-xs text-gray-500">
+                        <div class="flex items-center"><i class="fas fa-map-marker-alt mr-1"></i> 目的地: ${escapeHTML(f.dest || '未知')}</div>
+                        <div class="flex items-center"><i class="fas fa-user-circle mr-1"></i> 領隊: ${escapeHTML(f.leader || '未提供')}</div>
+                        <div class="flex items-center font-semibold" data-feedback-field="tourNo"><i class="fas fa-ticket-alt mr-1"></i> 團號: ${escapeHTML(tourLabel)}</div>
                     </div>
                 </div>`;
             }).join('');
@@ -1202,6 +1487,13 @@ const DashboardApp = (function() {
         },
 
         setSatCrossChart: function(chart) { satCrossChart = chart; },
+
+        selectNpsDriver: function(name) {
+            if (!npsDriverRankedPoints.length) return;
+            const canonical = npsDriverRankedPoints.find((point) => point.item === name) || npsDriverRankedPoints[0];
+            npsSelectedDriverName = canonical?.item || '';
+            syncNpsDriverSelection();
+        },
 
         initCharts: function() {
             // 核心對抗性審查：防止 Chart.js Canvas 記憶體洩漏 (Memory Leak / Overlapping)
@@ -1308,8 +1600,8 @@ const DashboardApp = (function() {
                 if(crossChart) DashboardApp.setSatCrossChart(crossChart);
             }
 
-            const npsCorrelationData = DataStore.npsCorrelationData || { threshold: npsThreshold, points: [ { x: 0.521, y: 4.673, item: '隨團領隊' }, { x: 0.392, y: 4.715, item: '當地導遊' }, { x: 0.277, y: 4.776, item: '旅車司機' }, { x: 0.388, y: 4.632, item: '交通' }, { x: 0.364, y: 4.415, item: '酒店' }, { x: 0.380, y: 4.228, item: '餐廳及膳食' }, { x: 0.400, y: 4.225, item: '購物安排' }, { x: 0.350, y: 4.450, item: '觀光節目安排' }, { x: 0.293, y: 4.280, item: '自費活動安排' } ] };
-            const npsPoints = Array.isArray(npsCorrelationData.points) ? npsCorrelationData.points : [];
+            const npsCorrelationData = DataStore.npsCorrelationData || {};
+            const npsPoints = normalizeNpsDriverPoints(npsCorrelationData.points);
             const npsXValues = npsPoints.map(point => Number(point.x)).filter(Number.isFinite);
             const npsYValues = npsPoints.map(point => Number(point.y)).filter(Number.isFinite);
             const npsXMin = Math.max(0, Math.floor((Math.min(...npsXValues, 0.2) - 0.05) * 10) / 10);
@@ -1317,8 +1609,85 @@ const DashboardApp = (function() {
             const npsYMin = Math.max(0, Math.floor((Math.min(...npsYValues, 4.0) - 0.15) * 10) / 10);
             const npsYMax = Math.ceil((Math.max(...npsYValues, 5.0) + 0.15) * 10) / 10;
             const npsScaleLabel = npsYMax > 6 ? '平均滿意度評分 (Satisfaction: 1-10分)' : '平均滿意度評分 (Satisfaction: 1-5分)';
-            const npsChart = initChartSafe('npsCorrelationChart', { type: 'scatter', data: { datasets: [{ label: '服務環節', data: npsPoints, backgroundColor: (ctx) => { const val = ctx.raw; if (!val) return '#ccc'; if (val.x > npsCorrelationData.threshold.x && val.y < npsCorrelationData.threshold.y) return pbi8; if (val.x > npsCorrelationData.threshold.x && val.y >= npsCorrelationData.threshold.y) return pbi4; if (val.x <= npsCorrelationData.threshold.x && val.y >= npsCorrelationData.threshold.y) return pbi1; return softGrey; }, pointRadius: 10, pointHoverRadius: 12 }] }, options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25, right: 30, left: 15, bottom: 10 } }, plugins: { legend: { display: false }, quadrantCrosshair: true, datalabels: { display: true, align: 'center', anchor: 'center', color: '#fff', backgroundColor: '#252423', borderRadius: 10, padding: 3, font: { weight: 'bold', size: 10 }, formatter: (_, ctx) => String(ctx.dataIndex + 1) }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw.item}: 滿意度 ${ctx.raw.y.toFixed(2)}, 對總分相關性 ${ctx.raw.x.toFixed(3)}, 對推薦意願相關性 ${(ctx.raw.recommendationCorrelation ?? 0).toFixed(3)}` } } }, scales: { x: { title: { display: true, text: '對總分影響力 / 相關性 (Importance)', font: { weight: 'bold' } }, min: npsXMin, max: npsXMax }, y: { title: { display: true, text: npsScaleLabel, font: { weight: 'bold' } }, min: npsYMin, max: npsYMax } } } });
-            setHTML('nps-driver-legend', npsPoints.map((point, index) => `<span class="flex items-center gap-2"><strong class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-800 text-white">${index + 1}</strong><span>${escapeHTML(point.item)}</span></span>`).join(''));
+            const npsThresholdData = npsCorrelationData.threshold || npsThreshold;
+            const hasNpsDriverData = npsPoints.length > 0;
+
+            if (hasNpsDriverData) {
+                setNpsDriverChartNotice('');
+                npsDriverRankedPoints = buildNpsDriverRankedPoints(npsPoints, npsThresholdData);
+                npsDriverIndexByName = new Map(npsPoints.map((point, index) => [point.item, index]));
+                npsSelectedDriverName = npsDriverRankedPoints[0]?.item || '';
+            } else {
+                renderNpsDriverUnavailableState('此月份沒有可用驅動因素資料');
+            }
+            npsDriverChart = initChartSafe('npsCorrelationChart', {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: '服務環節',
+                        data: npsPoints,
+                        backgroundColor: (ctx) => {
+                            const val = ctx.raw;
+                            if (!val) return '#ccc';
+                            const zoneKey = getNpsDriverZoneKey(val, npsThresholdData);
+                            if (zoneKey === 'urgent') return pbi8;
+                            if (zoneKey === 'maintain') return pbi4;
+                            if (zoneKey === 'stable') return pbi1;
+                            return softGrey;
+                        },
+                        pointRadius: (ctx) => (ctx.raw?.item === npsSelectedDriverName ? 13 : 10),
+                        pointHoverRadius: 13,
+                        pointBorderWidth: (ctx) => (ctx.raw?.item === npsSelectedDriverName ? 3 : 1),
+                        pointBorderColor: (ctx) => (ctx.raw?.item === npsSelectedDriverName ? '#252423' : '#ffffff')
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (_, activeEls) => {
+                        if (!hasNpsDriverData) return;
+                        if (!activeEls.length) return;
+                        const point = npsPoints[activeEls[0].index];
+                        if (point?.item) DashboardApp.selectNpsDriver(point.item);
+                    },
+                    onHover: (event, activeEls) => {
+                        if (event?.native?.target) event.native.target.style.cursor = activeEls[0] ? 'pointer' : 'default';
+                    },
+                    layout: { padding: { top: 25, right: 30, left: 15, bottom: 10 } },
+                    plugins: {
+                        legend: { display: false },
+                        quadrantCrosshair: hasNpsDriverData,
+                        datalabels: {
+                            display: hasNpsDriverData,
+                            align: 'center',
+                            anchor: 'center',
+                            color: '#fff',
+                            backgroundColor: '#252423',
+                            borderRadius: 10,
+                            padding: 3,
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (_, ctx) => {
+                                const point = npsPoints[ctx.dataIndex];
+                                const rankedPoint = npsDriverRankedPoints.find((entry) => entry.item === point?.item);
+                                return rankedPoint ? String(rankedPoint.rank) : '';
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw.item}: 滿意度 ${ctx.raw.y.toFixed(2)}, 對總分相關性 ${ctx.raw.x.toFixed(3)}, 對推薦意願相關性 ${formatNpsMetric(ctx.raw.recommendationCorrelation, 3)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: '對總分影響力 / 相關性 (Importance)', font: { weight: 'bold' } }, min: npsXMin, max: npsXMax },
+                        y: { title: { display: true, text: npsScaleLabel, font: { weight: 'bold' } }, min: npsYMin, max: npsYMax }
+                    }
+                }
+            });
+            if (hasNpsDriverData) {
+                setHTML('nps-driver-legend', npsDriverRankedPoints.map((point) => `<span class="flex items-center gap-2"><strong class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-800 text-white">${point.rank}</strong><span>${escapeHTML(point.item)}</span></span>`).join(''));
+                syncNpsDriverSelection();
+            }
             
             const topDestData = DataStore.topDestData || { labels: ['韓國', '張家界', '桂林', '雲南', '北京'], values: [52, 39, 32, 24, 14] };
             const topDestChart = initChartSafe('topDestChart', { type: 'bar', data: { labels: topDestData.labels, datasets: [{ label: '出團數量', data: topDestData.values, backgroundColor: (ctx) => ctx.dataIndex < 3 ? pbi1 : (ctx.dataIndex < 6 ? '#71B9F5' : softGrey), borderRadius: 0, barThickness: 20 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, onClick: (e, activeEls) => { if(activeEls.length > 0) { DashboardApp.filterSatChart(topDestChart.data.labels[activeEls[0].index]); } else { DashboardApp.resetDrillDown(); } }, onHover: (e, el) => { e.native.target.style.cursor = el[0] ? 'pointer' : 'default'; }, plugins: { legend: { display: false }, quadrantCrosshair: false, datalabels: { anchor: 'end', align: 'end', color: '#252423', formatter: (val) => val + "人" } }, scales: { x: { display: false, max: maxFrom(topDestData.values, 60) }, y: { grid: { display: false } } } } });

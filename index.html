@@ -441,6 +441,31 @@
             overflow: hidden;
         }
 
+        #analysis details[data-ux="strategy-section"] {
+            overflow: hidden;
+        }
+
+        #analysis summary[data-ux="strategy-summary"] {
+            list-style: none;
+            cursor: pointer;
+        }
+
+        #analysis summary[data-ux="strategy-summary"]::-webkit-details-marker {
+            display: none;
+        }
+
+        #analysis summary[data-ux="strategy-summary"] .strategy-disclosure-icon {
+            transition: transform 0.2s ease;
+        }
+
+        #analysis details[data-ux="strategy-section"][open] summary[data-ux="strategy-summary"] .strategy-disclosure-icon {
+            transform: rotate(180deg);
+        }
+
+        body.print-mode #analysis details[data-ux="strategy-section"] [data-ux="strategy-detail"] {
+            display: block !important;
+        }
+
         canvas {
             max-width: 100% !important;
         }
@@ -1633,16 +1658,41 @@
                     </div>
                     <div class="mt-4 md:mt-0 bg-blue-50 p-3 rounded-lg border border-blue-100"><p class="text-xs text-blue-800 font-bold uppercase">NPS 總指標</p><p class="text-3xl font-bold text-blue-600" id="nps-zone-indicator">83.9% <span class="text-sm font-normal text-gray-500">願意推薦</span></p></div>
                 </div>
-                <div class="relative h-[500px] w-full bg-gray-50 rounded-xl p-4 border border-gray-200">
-                    <div class="absolute top-4 right-4 text-green-600 font-bold text-xs bg-green-100 px-2 py-1 rounded opacity-70 z-10">優勢區 (維持)</div>
-                    <div class="absolute bottom-4 right-4 text-red-600 font-bold text-xs bg-red-100 px-2 py-1 rounded opacity-70 z-10">急需改善區 (優先處理)</div>
-                    <div class="absolute top-4 left-4 text-blue-600 font-bold text-xs bg-blue-100 px-2 py-1 rounded opacity-70 z-10">維持現狀區</div>
-                    <div class="absolute bottom-4 left-4 text-gray-500 font-bold text-xs bg-gray-200 px-2 py-1 rounded opacity-70 z-10">低優先級區</div>
-                    <canvas id="npsCorrelationChart"></canvas>
-                </div>
-                <div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                    <div class="mb-2 text-xs font-bold text-gray-600">圖中編號對應服務項目</div>
-                    <div id="nps-driver-legend" class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-xs text-gray-600"></div>
+                <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.95fr)] gap-5 items-start">
+                    <div class="relative h-[500px] w-full bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <div class="absolute top-4 right-4 text-green-600 font-bold text-xs bg-green-100 px-2 py-1 rounded opacity-70 z-10">優勢區 (維持)</div>
+                        <div class="absolute bottom-4 right-4 text-red-600 font-bold text-xs bg-red-100 px-2 py-1 rounded opacity-70 z-10">急需改善區 (優先處理)</div>
+                        <div class="absolute top-4 left-4 text-blue-600 font-bold text-xs bg-blue-100 px-2 py-1 rounded opacity-70 z-10">維持現狀區</div>
+                        <div class="absolute bottom-4 left-4 text-gray-500 font-bold text-xs bg-gray-200 px-2 py-1 rounded opacity-70 z-10">低優先級區</div>
+                        <canvas id="npsCorrelationChart"></canvas>
+                    </div>
+                    <div class="min-w-0 space-y-4">
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
+                            <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+                                <div>
+                                    <p class="text-sm font-bold text-gray-800">Key Driver 排名</p>
+                                    <p class="text-xs text-gray-500">依影響力由高至低排序，點選可同步聚焦圖表與明細。</p>
+                                </div>
+                                <span class="text-[11px] font-semibold text-gray-500 bg-white border border-gray-200 px-2 py-1 rounded">同步選取</span>
+                            </div>
+                            <div class="hidden md:grid md:grid-cols-[3rem_minmax(0,1.6fr)_4.5rem_4.5rem_5rem] gap-2 border-b border-gray-200 bg-white/70 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-gray-500">
+                                <span>排名</span>
+                                <span>服務項目</span>
+                                <span class="text-right">滿意度</span>
+                                <span class="text-right">影響力</span>
+                                <span class="text-right">區域</span>
+                            </div>
+                            <div id="npsDriverList" class="divide-y divide-gray-200 bg-white"></div>
+                        </div>
+                        <div id="npsDriverDetail" class="rounded-lg border border-gray-200 bg-white px-4 py-4">
+                            <p class="text-sm font-bold text-gray-800">Driver 明細</p>
+                            <p class="mt-2 text-sm text-gray-500">請從圖表或右側排名選擇一個服務項目。</p>
+                        </div>
+                        <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                            <div class="mb-2 text-xs font-bold text-gray-600">圖中編號對應服務項目</div>
+                            <div id="nps-driver-legend" class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-600"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1865,16 +1915,40 @@
              ========================================== -->
         <div id="feedback_analysis" class="tab-content" data-print-title="出團長評回饋">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-screen">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4">
-                    <div><h2 class="text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-comment-alt text-teal-600 mr-3"></i> 客戶長評回饋分析</h2><span class="source-label">數據來源：旅行團服務問卷 (長評提取)</span></div>
-                    <div class="flex space-x-3 mt-4 md:mt-0">
-                        <select id="typeFilter" class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" onchange="DashboardApp.filterFeedback()">
+                <div class="mb-6 border-b pb-4 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between" data-ux="feedback-header">
+                    <div class="min-w-0">
+                        <h2 class="text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-comment-alt text-teal-600 mr-3"></i> 客戶長評回饋分析</h2>
+                        <span class="source-label">數據來源：旅行團服務問卷 (長評提取)</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3 w-full md:grid-cols-2 xl:w-auto xl:min-w-[46rem] xl:grid-cols-[minmax(0,19rem)_repeat(3,minmax(0,1fr))] xl:items-center" data-ux="feedback-controls">
+                        <div class="flex items-center gap-2 w-full min-w-0 md:col-span-2 xl:col-span-1" data-ux="feedback-search-row">
+                            <label for="feedbackSearch" class="sr-only">搜尋長評內容、目的地、領隊或團號</label>
+                            <div class="relative flex-1 min-w-0">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fas fa-search"></i></span>
+                                <input
+                                    id="feedbackSearch"
+                                    type="search"
+                                    placeholder="搜尋目的地、領隊、團號、內容"
+                                    class="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 pr-4 p-2.5"
+                                    oninput="DashboardApp.filterFeedback()"
+                                >
+                            </div>
+                            <button
+                                type="button"
+                                aria-label="清除長評搜尋"
+                                class="shrink-0 inline-flex items-center justify-center w-10 h-10 bg-gray-50 border border-gray-300 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                onclick="DashboardApp.clearFeedbackSearch()"
+                            >
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <select id="typeFilter" class="w-full min-w-0 bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" onchange="DashboardApp.filterFeedback()">
                             <option value="all">所有評論</option>
                             <option value="positive">表揚 (Positive)</option>
                             <option value="suggestion">建議 (Suggestion)</option>
                             <option value="negative">投訴 (Negative)</option>
                         </select>
-                        <select id="destFilter" class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" onchange="DashboardApp.filterFeedback()">
+                        <select id="destFilter" class="w-full min-w-0 bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" onchange="DashboardApp.filterFeedback()">
                             <option value="all">所有目的地</option>
                             <option value="韓國">韓國</option>
                             <option value="張家界">張家界</option>
@@ -1891,7 +1965,7 @@
                             <option value="新西蘭">新西蘭</option>
                             <option value="馬來西亞">馬來西亞</option>
                         </select>
-                        <select id="leaderFilter" class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" onchange="DashboardApp.filterFeedback()">
+                        <select id="leaderFilter" class="w-full min-w-0 bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" onchange="DashboardApp.filterFeedback()">
                             <option value="all">所有領隊</option>
                             <option value="譚泳康">譚泳康</option>
                             <option value="李國亮">李國亮</option>
@@ -1916,6 +1990,7 @@
                 
                 <!-- 全局情緒佔比統計棒 -->
                 <div id="sentimentStatusBar" class="mb-6"></div>
+                <div id="feedbackResultCount" class="mb-4 text-sm text-gray-500" aria-live="polite"></div>
 
                 <div class="mb-8"><h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center"><i class="fas fa-cloud text-indigo-500 mr-2"></i> AI 智能關鍵詞雲 (High Frequency Keywords)</h3><div class="bg-indigo-50 rounded-xl p-6 border border-indigo-100 word-cloud-container" id="wordCloudContainer"></div></div>
                 <div id="feedbackGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
@@ -1966,9 +2041,15 @@
                 
                 <div id="strategic-summary-sections" class="grid grid-cols-1 gap-6">
                     <!-- 維度一：優先解決的營運痛點 -->
-                    <div class="bg-red-50 p-6 rounded-[2px] border-l-4 border-l-red-500 shadow-sm">
-                        <h3 class="font-bold text-lg text-red-800 mb-4 flex items-center"><i class="fas fa-fire-extinguisher mr-2"></i> 1. 優先解決的營運痛點 (Immediate Operational Fixes)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <details class="bg-red-50 p-6 rounded-[2px] border-l-4 border-l-red-500 shadow-sm" data-ux="strategy-section" open>
+                        <summary class="flex items-start justify-between gap-4" data-ux="strategy-summary">
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-lg text-red-800 flex items-center"><i class="fas fa-fire-extinguisher mr-2"></i> 1. 優先解決的營運痛點 (Immediate Operational Fixes)</h3>
+                                <p class="mt-2 text-sm text-gray-600 leading-relaxed">先處理餐飲、地接服務與不同年齡層的行程匹配問題，避免高推薦率被體驗細節持續拉低。</p>
+                            </div>
+                            <span class="strategy-disclosure-icon mt-1 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-white/80 text-red-700"><i class="fas fa-chevron-down text-xs"></i></span>
+                        </summary>
+                        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6" data-ux="strategy-detail">
                             <div class="bg-white p-5 rounded-sm border border-red-100 shadow-sm">
                                 <h4 class="font-bold text-red-600 mb-2 border-b border-red-50 pb-2">餐飲口味與地接服務波動</h4>
                                 <p class="text-sm text-gray-700 leading-relaxed mb-3"><strong>痛點：</strong>5 月長評中，負面與建議集中在餐飲口味、花椒/辣椒、膳食安排及個別地接服務態度。即使整體推薦率高達 90.97%，餐飲與地接仍是最容易拉低體驗的細節。</p>
@@ -1980,12 +2061,18 @@
                                 <p class="text-sm text-gray-600 leading-relaxed"><strong>行動方案：</strong>熱門線路需標示「購物比例、觀光節奏、自由活動時間」；韓國線增加商場與自由購物時間，北京線針對中壯年客群檢視餐飲、交通與行程密度。</p>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <!-- 維度二：產品競爭力升級方向 -->
-                    <div class="bg-yellow-50 p-6 rounded-[2px] border-l-4 border-l-yellow-500 shadow-sm">
-                        <h3 class="font-bold text-lg text-yellow-800 mb-4 flex items-center"><i class="fas fa-tools mr-2"></i> 2. 產品競爭力升級方向 (Product Upgrades)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <details class="bg-yellow-50 p-6 rounded-[2px] border-l-4 border-l-yellow-500 shadow-sm" data-ux="strategy-section">
+                        <summary class="flex items-start justify-between gap-4" data-ux="strategy-summary">
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-lg text-yellow-800 flex items-center"><i class="fas fa-tools mr-2"></i> 2. 產品競爭力升級方向 (Product Upgrades)</h3>
+                                <p class="mt-2 text-sm text-gray-600 leading-relaxed">依熱門目的地與旅程長度分層產品節奏，讓短線與中長線需求都能被清楚承接。</p>
+                            </div>
+                            <span class="strategy-disclosure-icon mt-1 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-white/80 text-yellow-700"><i class="fas fa-chevron-down text-xs"></i></span>
+                        </summary>
+                        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6" data-ux="strategy-detail">
                             <div class="bg-white p-5 rounded-sm border border-yellow-100 shadow-sm">
                                 <h4 class="font-bold text-yellow-600 mb-2 border-b border-yellow-50 pb-2">以熱門目的地做產品分層</h4>
                                 <p class="text-sm text-gray-700 leading-relaxed mb-3"><strong>痛點：</strong>5 月出團集中於韓國 35、雲南 33、北京 18、新西蘭 15，需求明顯但客群偏好不同，不能用同一套節奏服務所有客人。</p>
@@ -1997,12 +2084,18 @@
                                 <p class="text-sm text-gray-600 leading-relaxed"><strong>行動方案：</strong>短線產品強化便利、快速成行與高性價比；中長線產品強化住宿、餐飲與細節照顧；長線產品則突出安全、專業領隊與高品質體驗。</p>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <!-- 維度三：核心護城河與增長引擎 -->
-                    <div class="bg-blue-50 p-6 rounded-[2px] border-l-4 border-l-blue-500 shadow-sm">
-                        <h3 class="font-bold text-lg text-blue-800 mb-4 flex items-center"><i class="fas fa-rocket mr-2"></i> 3. 核心護城河與增長引擎 (Core Moat & Growth)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <details class="bg-blue-50 p-6 rounded-[2px] border-l-4 border-l-blue-500 shadow-sm" data-ux="strategy-section">
+                        <summary class="flex items-start justify-between gap-4" data-ux="strategy-summary">
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-lg text-blue-800 flex items-center"><i class="fas fa-rocket mr-2"></i> 3. 核心護城河與增長引擎 (Core Moat & Growth)</h3>
+                                <p class="mt-2 text-sm text-gray-600 leading-relaxed">把高口碑的一線服務與線上引流、門市成交模式結合，放大品牌護城河與轉化效率。</p>
+                            </div>
+                            <span class="strategy-disclosure-icon mt-1 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-white/80 text-blue-700"><i class="fas fa-chevron-down text-xs"></i></span>
+                        </summary>
+                        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6" data-ux="strategy-detail">
                             <div class="bg-white p-5 rounded-sm border border-blue-100 shadow-sm">
                                 <h4 class="font-bold text-blue-600 mb-2 border-b border-blue-50 pb-2">領隊與導遊服務是品牌護城河</h4>
                                 <p class="text-sm text-gray-700 leading-relaxed mb-3"><strong>亮點：</strong>5 月長評詞雲中「導遊」「領隊」「滿意」「專業」「細心」高頻出現，整體情緒高度正面；客戶忠誠度主要由一線服務團隊支撐。</p>
@@ -2014,7 +2107,7 @@
                                 <p class="text-sm text-gray-600 leading-relaxed"><strong>行動方案：</strong>加強線上內容與門市顧問銜接，例如線上預約門市、熱門線路 FAQ、顧問跟進清單；以門市服務評分與長評作為成交品質管理指標。</p>
                             </div>
                         </div>
-                    </div>
+                    </details>
                 </div>
             </div>
         </div>
