@@ -1,0 +1,61 @@
+{
+  "version": "1.0",
+  "issues": [
+    {
+      "id": "ISSUE-SHOPPING-001",
+      "category": "shopping",
+      "title": "購物安排的時間透明度與自費/推銷壓力",
+      "ownerDepartment": "Product Operations",
+      "priority": "high",
+      "status": "monitoring",
+      "recommendedAction": "核對行程表與實際購物停留時間，明確標示自費與購物安排，並建立導遊不得施壓的回訪檢查。",
+      "trackingMetrics": [{"key": "shopping_low_satisfaction_rate", "period": "202605", "value": 0.103226, "unit": "rate"}, {"key": "shopping_low_satisfaction_rate", "period": "202606", "value": 0.109091, "unit": "rate"}, {"key": "shopping_low_satisfaction_rate", "period": "202607", "value": 0.190476, "unit": "rate"}],
+      "firstSeenMonth": "202604",
+      "lastSeenMonth": "202607",
+      "monthlySnapshots": [{"period": "202604", "value": null, "note": "No satisfactionDistributionData in legacy month; raw feedback evidence exists."}, {"period": "202605", "value": 0.103226}, {"period": "202606", "value": 0.109091}, {"period": "202607", "value": 0.190476}],
+      "sourceRefs": [{"kind": "month", "month": "202604", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[16]", "path": "data/202604.json#/rawFeedbacks/16"}, {"kind": "month", "month": "202605", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[19]", "path": "data/202605.json#/rawFeedbacks/19"}, {"kind": "month", "month": "202606", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[36]", "path": "data/202606.json#/rawFeedbacks/36"}, {"kind": "month", "month": "202607", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[1]", "path": "data/202607.json#/rawFeedbacks/1"}]
+    },
+    {
+      "id": "ISSUE-HOTEL-001",
+      "category": "hotel",
+      "title": "酒店房間、設備與位置品質不穩定",
+      "ownerDepartment": "Supplier Management",
+      "priority": "high",
+      "status": "monitoring",
+      "recommendedAction": "按房間設備、清潔、隔音、冷氣與位置建立供應商驗收清單，對重複出現的酒店安排升級或替換。",
+      "trackingMetrics": [{"key": "hotel_low_satisfaction_rate", "period": "202605", "value": 0.122581, "unit": "rate"}, {"key": "hotel_low_satisfaction_rate", "period": "202606", "value": 0.115152, "unit": "rate"}, {"key": "hotel_low_satisfaction_rate", "period": "202607", "value": 0.133333, "unit": "rate"}],
+      "firstSeenMonth": "202604",
+      "lastSeenMonth": "202607",
+      "monthlySnapshots": [{"period": "202604", "value": null, "note": "No satisfactionDistributionData in legacy month; raw feedback evidence exists."}, {"period": "202605", "value": 0.122581}, {"period": "202606", "value": 0.115152}, {"period": "202607", "value": 0.133333}],
+      "sourceRefs": [{"kind": "month", "month": "202604", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[2]", "path": "data/202604.json#/rawFeedbacks/2"}, {"kind": "month", "month": "202605", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[13]", "path": "data/202605.json#/rawFeedbacks/13"}, {"kind": "month", "month": "202606", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[16]", "path": "data/202606.json#/rawFeedbacks/16"}, {"kind": "month", "month": "202607", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[34]", "path": "data/202607.json#/rawFeedbacks/34"}]
+    },
+    {
+      "id": "ISSUE-DINING-001",
+      "category": "dining",
+      "title": "餐飲味道、份量與餐次品質落差",
+      "ownerDepartment": "Product Operations",
+      "priority": "medium",
+      "status": "monitoring",
+      "recommendedAction": "按路線追蹤餐廳及膳食的普通/不滿意比例，覆核菜單、份量與口味回饋，並將改善結果回寫供應商評估。",
+      "trackingMetrics": [{"key": "dining_low_satisfaction_rate", "period": "202605", "value": 0.16129, "unit": "rate"}, {"key": "dining_low_satisfaction_rate", "period": "202606", "value": 0.084848, "unit": "rate"}, {"key": "dining_low_satisfaction_rate", "period": "202607", "value": 0.180952, "unit": "rate"}],
+      "firstSeenMonth": "202604",
+      "lastSeenMonth": "202607",
+      "monthlySnapshots": [{"period": "202604", "value": null, "note": "No satisfactionDistributionData in legacy month; raw feedback evidence exists."}, {"period": "202605", "value": 0.16129}, {"period": "202606", "value": 0.084848}, {"period": "202607", "value": 0.180952}],
+      "sourceRefs": [{"kind": "month", "month": "202604", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[5]", "path": "data/202604.json#/rawFeedbacks/5"}, {"kind": "month", "month": "202605", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[15]", "path": "data/202605.json#/rawFeedbacks/15"}, {"kind": "month", "month": "202606", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[23]", "path": "data/202606.json#/rawFeedbacks/23"}, {"kind": "month", "month": "202607", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[36]", "path": "data/202607.json#/rawFeedbacks/36"}]
+    },
+    {
+      "id": "ISSUE-GROUND-SERVICE-001",
+      "category": "ground_service",
+      "title": "當地導遊溝通、行程節奏與安全回應",
+      "ownerDepartment": "Tour Operations",
+      "priority": "high",
+      "status": "open",
+      "recommendedAction": "加強導遊語言需求配對、購物及安全事件處理指引，並以行程資訊透明度與旅客回應時效作為帶團檢查項目。",
+      "trackingMetrics": [{"key": "explicit_ground_service_feedback_count", "period": "202604", "value": 1, "unit": "feedbacks"}, {"key": "explicit_ground_service_feedback_count", "period": "202605", "value": 2, "unit": "feedbacks"}, {"key": "explicit_ground_service_feedback_count", "period": "202606", "value": 2, "unit": "feedbacks"}, {"key": "explicit_ground_service_feedback_count", "period": "202607", "value": 4, "unit": "feedbacks"}],
+      "firstSeenMonth": "202604",
+      "lastSeenMonth": "202607",
+      "monthlySnapshots": [{"period": "202604", "value": 1}, {"period": "202605", "value": 2}, {"period": "202606", "value": 2}, {"period": "202607", "value": 4}],
+      "sourceRefs": [{"kind": "month", "month": "202604", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[32]", "path": "data/202604.json#/rawFeedbacks/32"}, {"kind": "month", "month": "202605", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[36]", "path": "data/202605.json#/rawFeedbacks/36"}, {"kind": "month", "month": "202606", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[33]", "path": "data/202606.json#/rawFeedbacks/33"}, {"kind": "month", "month": "202607", "section": "rawFeedbacks", "recordKey": "rawFeedbacks[1]", "path": "data/202607.json#/rawFeedbacks/1"}]
+    }
+  ]
+}

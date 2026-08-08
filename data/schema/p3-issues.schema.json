@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "P3 issue tracking data",
+  "type": "object",
+  "required": ["version", "issues"],
+  "properties": {
+    "version": { "type": "string", "minLength": 1 },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "title",
+          "ownerDepartment",
+          "priority",
+          "status",
+          "recommendedAction",
+          "trackingMetrics",
+          "firstSeenMonth",
+          "lastSeenMonth",
+          "monthlySnapshots",
+          "sourceRefs"
+        ],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "category": { "enum": ["shopping", "hotel", "dining", "ground_service"] },
+          "title": { "type": "string", "minLength": 1 },
+          "ownerDepartment": { "type": "string", "minLength": 1 },
+          "priority": { "enum": ["low", "medium", "high"] },
+          "status": { "enum": ["open", "monitoring", "resolved"] },
+          "recommendedAction": { "type": "string", "minLength": 1 },
+          "trackingMetrics": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/trackingMetric" }
+          },
+          "firstSeenMonth": { "type": "string", "pattern": "^20[0-9]{4}$" },
+          "lastSeenMonth": { "type": "string", "pattern": "^20[0-9]{4}$" },
+          "monthlySnapshots": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/monthlySnapshot" }
+          },
+          "sourceRefs": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/sourceRef" }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "$defs": {
+    "trackingMetric": {
+      "type": "object",
+      "required": ["key", "period", "value"],
+      "properties": {
+        "key": { "type": "string", "minLength": 1 },
+        "period": { "type": "string", "pattern": "^20[0-9]{4}$" },
+        "value": { "type": ["number", "string", "null"] },
+        "unit": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "monthlySnapshot": {
+      "type": "object",
+      "required": ["period", "value"],
+      "properties": {
+        "period": { "type": "string", "pattern": "^20[0-9]{4}$" },
+        "value": { "type": ["number", "string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "sourceRef": {
+      "type": "object",
+      "required": ["kind", "path"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
