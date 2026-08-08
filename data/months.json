@@ -7,7 +7,7 @@
       "schema": "current",
       "status": "ready",
       "description": "2026 年 5 月問卷匯總、出團長評、門市服務與綜合洞察",
-      "p3": { "status": "unavailable", "path": "p3/monthly/202605.json" }
+      "p3": { "status": "ready", "path": "p3/monthly/202605.json" }
     },
     {
       "key": "202607",
@@ -15,7 +15,7 @@
       "schema": "current",
       "status": "ready",
       "description": "2026 年 7 月問卷匯總、推薦意願、領隊表現、出團記錄、長評、門市服務與綜合洞察",
-      "p3": { "status": "unavailable", "path": "p3/monthly/202607.json" }
+      "p3": { "status": "ready", "path": "p3/monthly/202607.json" }
     },
     {
       "key": "202606",
@@ -23,7 +23,7 @@
       "schema": "current",
       "status": "ready",
       "description": "2026 年 6 月問卷匯總、會員推廣接受度、O2O 轉化、旅程滿意度與目的地洞察",
-      "p3": { "status": "unavailable", "path": "p3/monthly/202606.json" }
+      "p3": { "status": "ready", "path": "p3/monthly/202606.json" }
     },
     {
       "key": "202604",
@@ -31,7 +31,7 @@
       "schema": "legacy",
       "status": "ready",
       "description": "2026 年 4 月歷史資料，允許缺少部分 5 月後新增欄位",
-      "p3": { "status": "unavailable", "path": "p3/monthly/202604.json" }
+      "p3": { "status": "ready", "path": "p3/monthly/202604.json" }
     }
   ]
 }

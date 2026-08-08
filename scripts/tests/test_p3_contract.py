@@ -68,13 +68,53 @@ class P3ContractTests(unittest.TestCase):
         self.assertEqual(manifest["defaultMonth"], "202605")
         self.assertEqual({month["key"] for month in manifest["months"]}, {"202604", "202605", "202606", "202607"})
 
-    def test_manifest_p3_metadata_is_unavailable_until_snapshots_exist(self) -> None:
+    def test_manifest_p3_metadata_is_ready_when_snapshots_exist(self) -> None:
         manifest = self.load_json(ROOT / "data" / "months.json")
 
         for month in manifest["months"]:
             self.assertEqual(
                 month["p3"],
-                {"status": "unavailable", "path": f"p3/monthly/{month['key']}.json"},
+                {"status": "ready", "path": f"p3/monthly/{month['key']}.json"},
+            )
+            self.assertTrue((ROOT / "data" / month["p3"]["path"]).is_file())
+
+    def test_manifest_unavailable_fixture_requires_missing_snapshot(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="dashboard-p3-manifest-") as temp_dir:
+            temp_root = Path(temp_dir)
+            fixture = {"p3": {"status": "unavailable", "path": "p3/monthly/209901.json"}}
+            self.assertFalse((temp_root / "data" / fixture["p3"]["path"]).is_file())
+
+    def test_observed_customer_value_links_have_source_fields_and_base_values(self) -> None:
+        expected_months = {
+            "202605": (18, 6),
+            "202606": (17, 6),
+            "202607": (9, 7),
+        }
+        for month, (expected_count, expected_disagree) in expected_months.items():
+            snapshot = self.load_json(ROOT / "data" / "p3" / "monthly" / f"{month}.json")
+            base = self.load_json(ROOT / "data" / f"{month}.json")
+            links = snapshot["customerValueChain"]["links"]
+            self.assertEqual(len(links), 1)
+            link = links[0]
+            for field in ("from", "to", "count", "n", "sourceRefs"):
+                self.assertIn(field, link)
+            self.assertEqual(link["from"], "member_status:是會員")
+            self.assertEqual(link["to"], "consent:同意")
+            self.assertEqual(link["count"], base["memberConsentCrossData"]["datasets"][0]["data"][0])
+            self.assertEqual(link["n"], expected_count + expected_disagree)
+            self.assertEqual(link["count"], expected_count)
+            self.assertEqual(len(link["sourceRefs"]), 2)
+            for source_ref in link["sourceRefs"]:
+                self.assertEqual(source_ref["month"], month)
+                self.assertEqual(source_ref["section"], "memberConsentCrossData")
+                self.assertTrue(source_ref.get("recordKey"))
+                self.assertTrue(source_ref.get("path"))
+            self.assertEqual(
+                {source_ref["path"] for source_ref in link["sourceRefs"]},
+                {
+                    f"data/{month}.json#/memberConsentCrossData/datasets/0/data/0",
+                    f"data/{month}.json#/memberConsentCrossData/datasets/1/data/0",
+                },
             )
 
     def test_p3_enum_contracts_are_explicit(self) -> None:
