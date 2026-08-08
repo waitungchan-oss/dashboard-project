@@ -457,3 +457,39 @@ test('explicit unavailable renderer keeps the value-chain tab isolated', () => {
     assert.equal(status.textContent, '沒有 P3 snapshot');
     assert.match(JSON.stringify(unavailable), /沒有 P3 snapshot/);
 });
+
+test('renders 202607 observed customer value links and stable labels', () => {
+    const snapshot202607 = JSON.parse(fs.readFileSync(
+        new URL('../../data/p3/monthly/202607.json', import.meta.url),
+        'utf8'
+    ));
+    const model = getP3CustomerValueChainViewModel(snapshot202607);
+
+    assert.deepEqual(model.stages.map(stage => [stage.key, stage.label]), [
+        ['recommendation', '推薦意願'],
+        ['consent', '訊息同意'],
+        ['member_consent_joint', '會員同意交集'],
+        ['store_signup', '門市登記']
+    ]);
+
+    const container = fakeDocument.createElement('section');
+    const status = fakeDocument.createElement('p');
+    const stages = fakeDocument.createElement('div');
+    const links = fakeDocument.createElement('div');
+    const unavailable = fakeDocument.createElement('div');
+    container.querySelector = (selector) => ({
+        '#p3ValueChainStatus': status,
+        '#p3ValueChainStages': stages,
+        '#p3ValueChainLinks': links,
+        '#p3ValueChainUnavailable': unavailable
+    }[selector]);
+    global.document = fakeDocument;
+
+    renderP3CustomerValueChain(container, snapshot202607);
+
+    assert.match(JSON.stringify(stages), /推薦意願/);
+    assert.match(JSON.stringify(stages), /會員同意交集/);
+    assert.match(JSON.stringify(stages), /門市登記/);
+    assert.match(JSON.stringify(links), /9\/16/);
+    assert.doesNotMatch(JSON.stringify(links), /—/);
+});

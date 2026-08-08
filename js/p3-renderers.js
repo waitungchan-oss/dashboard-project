@@ -249,10 +249,14 @@ export const renderP3Comparison = (container, comparison, options = {}) => {
 
 const VALUE_CHAIN_STAGE_LABELS = {
     recommendation_intention: '推薦意願',
+    recommendation: '推薦意願',
     long_feedback_sentiment: '長評情緒',
     member_status: '會員狀態',
     message_consent: '訊息同意',
-    repeat_customer: '回訪客群'
+    consent: '訊息同意',
+    member_consent_joint: '會員同意交集',
+    repeat_customer: '回訪客群',
+    store_signup: '門市登記'
 };
 
 const valueChainStatusLabel = (status) => ({
@@ -319,6 +323,16 @@ const renderValueChainItems = (target, items, builder, emptyMessage) => {
     ]));
 };
 
+const valueChainLinkValue = (link) => {
+    if (link?.value !== undefined && link?.value !== null && link.value !== '') {
+        return formatValue(link.value);
+    }
+    if (link?.count !== undefined && link?.count !== null && link?.n !== undefined && link?.n !== null) {
+        return `${formatValue(link.count)}/${formatValue(link.n)}`;
+    }
+    return formatValue(link?.value);
+};
+
 export const renderP3CustomerValueChainUnavailable = (container, message = '客戶價值鏈路資料不可用') => {
     if (!container) return;
     const status = valueChainTarget(container, '#p3ValueChainStatus');
@@ -349,7 +363,7 @@ export const renderP3CustomerValueChain = (container, snapshot) => {
     ), '目前沒有可觀察的價值鏈階段。');
     renderValueChainItems(links, model.links, (link) => create(
         'article', 'bg-white border border-green-200 p-4 min-w-0',
-        `${text(link.label || link.key)}：${formatValue(link.value)}（來源 ${link.sourceRefs.map(source => `${text(source.month)} ${text(source.path || source.section, '')}`).join('、')}）`
+        `${text(link.label || link.key)}：${valueChainLinkValue(link)}（來源 ${link.sourceRefs.map(source => `${text(source.month)} ${text(source.path || source.section, '')}`).join('、')}）`
     ), '目前沒有具備 sourceRefs 的價值鏈連結。');
     if (unavailable) {
         unavailable.replaceChildren(...(model.unavailable.length
