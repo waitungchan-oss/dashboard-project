@@ -13,6 +13,7 @@ import {
 import { exportCSV } from './js/csv-export.js';
 import { destroyAllCharts, getValidTourDays } from './js/dashboard-utils.js';
 import { createJsonP3DataProvider } from './js/p3-data-provider.js';
+import { renderP3Comparison, renderP3ComparisonUnavailable } from './js/p3-renderers.js';
 
 let DataStore = {};
 window.DataStore = DataStore;
@@ -127,6 +128,99 @@ const refreshP3ForMonth = async (monthKey) => {
     }
 };
 window.refreshP3ForMonth = refreshP3ForMonth;
+
+const p3ComparisonState = {
+    baseMonth: null,
+    compareMonth: null,
+    loading: false,
+    requestId: 0
+};
+
+const getP3ComparisonContainer = () => document.getElementById('p3_comparison');
+
+const setP3ComparisonStatus = (message, isError = false) => {
+    const status = document.getElementById('p3ComparisonStatus');
+    if (!status) return;
+    status.textContent = message;
+    status.classList.toggle('text-red-700', isError);
+    status.classList.toggle('text-gray-600', !isError);
+};
+
+const getAlternativeMonth = (monthKey) => MonthCatalog.months.find(month => month.key !== monthKey && month.status === 'ready')?.key || null;
+
+const populateP3ComparisonSelectors = (baseMonth = currentMonthKey) => {
+    const baseSelector = document.getElementById('p3BaseMonthSelector');
+    const compareSelector = document.getElementById('p3CompareMonthSelector');
+    if (!baseSelector || !compareSelector) return;
+
+    const months = MonthCatalog.months.filter(month => month.status === 'ready');
+    const selectedBase = months.some(month => month.key === baseMonth) ? baseMonth : months[0]?.key;
+    const selectedCompare = p3ComparisonState.compareMonth && months.some(month => month.key === p3ComparisonState.compareMonth)
+        ? p3ComparisonState.compareMonth
+        : getAlternativeMonth(selectedBase);
+    const options = (selected) => months.map(month => `<option value="${escapeHTML(month.key)}"${month.key === selected ? ' selected' : ''}>${escapeHTML(month.label)}</option>`).join('');
+    baseSelector.innerHTML = options(selectedBase);
+    compareSelector.innerHTML = options(selectedCompare);
+    p3ComparisonState.baseMonth = selectedBase || null;
+    p3ComparisonState.compareMonth = selectedCompare || null;
+};
+
+const loadP3MonthComparison = async (baseMonth, compareMonth) => {
+    const container = getP3ComparisonContainer();
+    if (!container) return;
+    if (!baseMonth || !compareMonth || baseMonth === compareMonth) {
+        setP3ComparisonStatus('基準月份與比較月份必須不同。', true);
+        renderP3ComparisonUnavailable(container, '請選擇兩個不同月份。');
+        return;
+    }
+    if (!P3State.provider) initializeP3Provider();
+    const requestId = ++p3ComparisonState.requestId;
+    p3ComparisonState.loading = true;
+    setP3ComparisonStatus(`正在載入 ${formatMonthLabel(baseMonth)} 與 ${formatMonthLabel(compareMonth)} 的比較資料…`);
+    try {
+        const comparison = await P3State.provider.loadP3MonthComparison(baseMonth, compareMonth);
+        if (requestId !== p3ComparisonState.requestId) return;
+        renderP3Comparison(container, comparison);
+        setP3ComparisonStatus(`已比較 ${formatMonthLabel(baseMonth)} 與 ${formatMonthLabel(compareMonth)}。`);
+    } catch (error) {
+        if (requestId !== p3ComparisonState.requestId) return;
+        renderP3ComparisonUnavailable(container, error.message || '月份比較資料載入失敗。');
+        setP3ComparisonStatus(error.message || '月份比較資料載入失敗。', true);
+    } finally {
+        if (requestId === p3ComparisonState.requestId) p3ComparisonState.loading = false;
+    }
+};
+
+const handleP3SelectorChange = (kind, value) => {
+    const nextValue = normalizeMonthValue(value);
+    if (kind === 'base') p3ComparisonState.baseMonth = nextValue;
+    else p3ComparisonState.compareMonth = nextValue;
+    if (p3ComparisonState.baseMonth === p3ComparisonState.compareMonth) {
+        const replacement = getAlternativeMonth(nextValue);
+        if (kind === 'base') p3ComparisonState.baseMonth = replacement;
+        else p3ComparisonState.compareMonth = replacement;
+        populateP3ComparisonSelectors(p3ComparisonState.baseMonth);
+        setP3ComparisonStatus('基準月份與比較月份必須不同，已自動調整選擇。', true);
+    }
+    void loadP3MonthComparison(p3ComparisonState.baseMonth, p3ComparisonState.compareMonth);
+};
+
+const setupP3Comparison = () => {
+    const container = getP3ComparisonContainer();
+    const baseSelector = document.getElementById('p3BaseMonthSelector');
+    const compareSelector = document.getElementById('p3CompareMonthSelector');
+    if (!container || !baseSelector || !compareSelector) return;
+    populateP3ComparisonSelectors(currentMonthKey);
+    baseSelector.onchange = (event) => handleP3SelectorChange('base', event.target.value);
+    compareSelector.onchange = (event) => handleP3SelectorChange('compare', event.target.value);
+    P3State.onUpdate = (_, monthKey) => {
+        const section = getP3ComparisonContainer();
+        if (!section?.classList.contains('active')) return;
+        populateP3ComparisonSelectors(monthKey);
+        void loadP3MonthComparison(p3ComparisonState.baseMonth, p3ComparisonState.compareMonth);
+    };
+    void loadP3MonthComparison(p3ComparisonState.baseMonth, p3ComparisonState.compareMonth);
+};
 
 const populateMonthSelector = () => {
     const selector = document.getElementById('globalMonthSelector');
@@ -735,6 +829,16 @@ const DashboardApp = (function() {
             pages: [
                 { blocks: [{ path: [0] }, { path: [1] }, { path: [2] }] }
             ]
+        },
+        p3_comparison: {
+            title: '月份比較',
+            pages: [
+                { blocks: [{ path: [0] }] },
+                { blocks: [{ path: [1] }] },
+                { blocks: [{ path: [2] }] },
+                { blocks: [{ path: [3] }] },
+                { blocks: [{ path: [4] }] }
+            ]
         }
     };
 
@@ -944,6 +1048,7 @@ const DashboardApp = (function() {
                 this.filterFeedback();
                 this.initCharts();
                 this.setupEventListeners();
+                setupP3Comparison();
             } catch (e) {
                 console.error("Dashboard Initialization Critical Error:", e);
             }
@@ -1238,7 +1343,8 @@ const DashboardApp = (function() {
                 {id: 'dashboard', name: '旅行團數據儀表板'}, {id: 'sales_forecast', name: 'AI 銷售預測'},
                 {id: 'nps_zone', name: '推薦意願專區'}, {id: 'tourleader', name: '領隊表現專區'},
                 {id: 'records', name: '出團記錄分析'}, {id: 'feedback_analysis', name: '出團長評回饋'},
-                {id: 'branch_feedback', name: '門市服務意見'}, {id: 'analysis', name: '綜合意見'}
+                {id: 'branch_feedback', name: '門市服務意見'}, {id: 'analysis', name: '綜合意見'},
+                {id: 'p3_comparison', name: '月份比較'}
             ];
             container.innerHTML = tabs.map(tab => `
                 <label class="flex items-center px-3 py-2 hover:bg-gray-50 rounded cursor-pointer transition-colors">

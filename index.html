@@ -1454,6 +1454,7 @@
                 <button data-tab-id="feedback_analysis" onclick="DashboardApp.switchTab('feedback_analysis', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-comment-dots mr-2"></i>出團長評回饋</button>
                 <button data-tab-id="branch_feedback" onclick="DashboardApp.switchTab('branch_feedback', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-store mr-2"></i>門市服務意見</button>
                 <button data-tab-id="analysis" onclick="DashboardApp.switchTab('analysis', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-lightbulb mr-2"></i>綜合意見</button>
+                <button data-tab-id="p3_comparison" onclick="DashboardApp.switchTab('p3_comparison', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-arrows-alt-h mr-2"></i>月份比較</button>
             </div>
 
             <!-- Filter Button & Menu -->
@@ -1466,6 +1467,45 @@
                     <div class="p-1 space-y-1 max-h-[300px] overflow-y-auto custom-scroll" id="filterCheckboxes"></div>
                 </div>
             </div>
+        </div>
+
+        <!-- ==========================================
+             1. Dashboard Tab
+             ========================================== -->
+        <div id="p3_comparison" class="tab-content space-y-6" data-print-title="月份比較">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex flex-col lg:flex-row lg:items-end gap-4">
+                    <div class="flex-1 min-w-0">
+                        <label for="p3BaseMonthSelector" class="block text-sm font-bold text-gray-800 mb-2">基準月份</label>
+                        <select id="p3BaseMonthSelector" aria-label="選擇月份比較的基準月份" class="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded-lg px-3 py-2"></select>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <label for="p3CompareMonthSelector" class="block text-sm font-bold text-gray-800 mb-2">比較月份</label>
+                        <select id="p3CompareMonthSelector" aria-label="選擇月份比較的比較月份" class="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded-lg px-3 py-2"></select>
+                    </div>
+                </div>
+                <p id="p3ComparisonStatus" class="mt-4 text-sm text-gray-600" aria-live="polite">正在載入月份比較資料…</p>
+            </div>
+
+            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100" aria-labelledby="p3-metrics-heading">
+                <h2 id="p3-metrics-heading" class="text-xl font-bold text-gray-900 mb-4">核心指標比較</h2>
+                <div id="p3MetricCards" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+            </section>
+
+            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100" aria-labelledby="p3-branch-heading">
+                <h2 id="p3-branch-heading" class="text-xl font-bold text-gray-900 mb-4">門市排名比較</h2>
+                <div id="p3BranchComparison" class="overflow-x-auto"></div>
+            </section>
+
+            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100" aria-labelledby="p3-destination-heading">
+                <h2 id="p3-destination-heading" class="text-xl font-bold text-gray-900 mb-4">目的地需求比較</h2>
+                <div id="p3DestinationComparison" class="overflow-x-auto"></div>
+            </section>
+
+            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100" aria-labelledby="p3-sentiment-heading">
+                <h2 id="p3-sentiment-heading" class="text-xl font-bold text-gray-900 mb-4">情緒分類比較</h2>
+                <div id="p3SentimentComparison" class="overflow-x-auto"></div>
+            </section>
         </div>
 
         <!-- ==========================================
