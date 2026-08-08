@@ -35,6 +35,29 @@ class P3FrontendContractTests(unittest.TestCase):
         self.assertIn("renderP3Comparison", self.app)
         self.assertIn("p3_comparison:", self.app)
 
+    def test_issue_tracker_tab_has_local_controls_and_renderer_wiring(self) -> None:
+        for needle in (
+            'data-tab-id="p3_issue_tracker"',
+            'id="p3_issue_tracker"',
+            'id="p3IssueCategoryFilter"',
+            'id="p3IssueDepartmentFilter"',
+            'id="p3IssueStatusFilter"',
+            'id="p3IssuePriorityFilter"',
+            'id="p3IssueGrid"',
+            'id="p3IssueResultCount"',
+            'renderP3IssueTracker',
+            'renderP3IssueTrackerUnavailable',
+            'filterP3Issues',
+        ):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, self.index + self.app)
+
+    def test_issue_tracker_does_not_reuse_global_feedback_filters(self) -> None:
+        self.assertIn("p3IssueTrackerState", self.app)
+        self.assertIn("P3State.issuesError", self.app)
+        self.assertIn("p3_issue_tracker:", self.app)
+        self.assertNotIn("tabFilterMenu", self.index[self.index.index('id="p3_issue_tracker"'):self.index.index('id="p3_comparison"')])
+
     def test_provider_field_deltas_and_rank_fields_are_renderer_contract(self) -> None:
         renderer = (ROOT / "js" / "p3-renderers.js").read_text(encoding="utf-8")
         for needle in ("scoreDelta", "nDelta", "valueDelta", "rateDelta", "countDelta", "rankDelta"):

@@ -6,6 +6,40 @@ import {
     buildP3Comparison,
     createJsonP3DataProvider
 } from '../../js/p3-data-provider.js';
+import {
+    filterP3Issues,
+    renderP3IssueTracker
+} from '../../js/p3-renderers.js';
+
+const issue = (overrides = {}) => ({
+    id: 'ISSUE-SHOPPING-001',
+    category: 'shopping',
+    title: 'Shopping pressure',
+    ownerDepartment: 'Product Operations',
+    priority: 'high',
+    status: 'open',
+    recommendedAction: 'Review the route and follow-up checks.',
+    trackingMetrics: [{ key: 'shopping_rate', period: '202605', value: 0.2, target: 0.1, unit: 'rate' }],
+    firstSeenMonth: '202604',
+    lastSeenMonth: '202605',
+    monthlySnapshots: [{ period: '202605', value: 0.2 }],
+    sourceRefs: [{ kind: 'month', month: '202605', path: 'data/202605.json#/rawFeedbacks/1' }],
+    ...overrides
+});
+
+const fakeDocument = {
+    createElement(tag) {
+        return {
+            tagName: tag,
+            children: [],
+            className: '',
+            textContent: '',
+            appendChild(child) { this.children.push(child); return child; },
+            replaceChildren(...children) { this.children = children; },
+            querySelector() { return null; }
+        };
+    }
+};
 
 const snapshot = (period, overrides = {}) => ({
     version: '1.0',
@@ -92,6 +126,48 @@ test('loads the issue register through its configured path', async () => {
     });
 
     assert.deepEqual(await provider.loadP3Issues(), { url: '/assets/data/p3/issues.json' });
+});
+
+test('filters issues by category and open status, while no filters keep the full register', () => {
+    const issues = [issue(), issue({ id: 'ISSUE-HOTEL-001', category: 'hotel', status: 'monitoring' })];
+
+    assert.deepEqual(filterP3Issues(issues, { category: 'shopping' }).map(item => item.id), ['ISSUE-SHOPPING-001']);
+    assert.deepEqual(filterP3Issues(issues, { status: 'open' }).map(item => item.id), ['ISSUE-SHOPPING-001']);
+    assert.equal(filterP3Issues(issues, {}).length, 2);
+});
+
+test('omits incomplete issues and exposes validation error in the tracker status', () => {
+    const container = fakeDocument.createElement('section');
+    container.querySelector = (selector) => selector === '#p3IssueGrid'
+        ? container.grid
+        : selector === '#p3IssueResultCount' ? container.count : container.status;
+    container.grid = fakeDocument.createElement('div');
+    container.count = fakeDocument.createElement('span');
+    container.status = fakeDocument.createElement('p');
+    global.document = fakeDocument;
+
+    renderP3IssueTracker(container, [issue(), { id: 'BROKEN', category: 'shopping' }], {});
+
+    assert.match(container.status.textContent, /不完整/);
+    assert.match(container.count.textContent, /1/);
+    assert.equal(container.grid.children.length, 1);
+});
+
+test('renders department, action, tracking metric and observation fields', () => {
+    const container = fakeDocument.createElement('section');
+    container.querySelector = (selector) => selector === '#p3IssueGrid' ? container.grid : container.status;
+    container.grid = fakeDocument.createElement('div');
+    container.status = fakeDocument.createElement('p');
+    global.document = fakeDocument;
+
+    renderP3IssueTracker(container, [issue()], {});
+
+    const cardText = JSON.stringify(container.grid.children[0]);
+    assert.match(cardText, /Product Operations/);
+    assert.match(cardText, /Review the route/);
+    assert.match(cardText, /shopping_rate/);
+    assert.match(cardText, /202604/);
+    assert.match(cardText, /202605/);
 });
 
 test('builds metric deltas and stable-key row statuses', () => {

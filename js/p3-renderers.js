@@ -11,6 +11,79 @@ const create = (tag, className, content) => {
     return node;
 };
 
+const ISSUE_REQUIRED_FIELDS = [
+    'id', 'category', 'title', 'ownerDepartment', 'priority', 'status',
+    'recommendedAction', 'trackingMetrics', 'firstSeenMonth', 'lastSeenMonth', 'sourceRefs'
+];
+
+const isCompleteIssue = (issue) => issue && ISSUE_REQUIRED_FIELDS.every((field) => {
+    if (!(field in issue)) return false;
+    if (['trackingMetrics', 'sourceRefs'].includes(field)) return Array.isArray(issue[field]);
+    return issue[field] !== null && issue[field] !== undefined && issue[field] !== '';
+});
+
+const issueList = (issues) => Array.isArray(issues) ? issues : issues?.issues;
+
+const matchesIssueFilter = (value, selected) => {
+    if (!selected || (Array.isArray(selected) && !selected.length)) return true;
+    return Array.isArray(selected) ? selected.includes(value) : value === selected;
+};
+
+export const filterP3Issues = (issues, filters = {}) => (issueList(issues) || [])
+    .filter(isCompleteIssue)
+    .filter((issue) => matchesIssueFilter(issue.category, filters.category))
+    .filter((issue) => matchesIssueFilter(issue.ownerDepartment, filters.department || filters.ownerDepartment))
+    .filter((issue) => matchesIssueFilter(issue.status, filters.status))
+    .filter((issue) => matchesIssueFilter(issue.priority, filters.priority));
+
+const formatIssueMetric = (metric) => {
+    const value = formatValue(metric?.value);
+    const target = metric?.target === undefined || metric?.target === null ? '' : `；目標：${formatValue(metric.target)}`;
+    return `${text(metric?.key)}（${text(metric?.period)}）：${value}${target} ${text(metric?.unit, '')}`.trim();
+};
+
+const issueSourceLabel = (issue) => (Array.isArray(issue?.sourceRefs) ? issue.sourceRefs : [])
+    .map((source) => `${text(source?.month)} ${text(source?.section, '')}`.trim())
+    .filter(Boolean)
+    .join('、');
+
+const makeIssueCard = (issue, currentMonth) => {
+    const card = create('article', 'bg-white border border-gray-200 p-5 shadow-sm');
+    const currentSnapshot = (issue.monthlySnapshots || []).find((snapshot) => snapshot?.period === currentMonth);
+    append(card,
+        create('h3', 'text-lg font-bold text-gray-900 break-words', `${text(issue.id)}｜${text(issue.title)}`),
+        create('p', 'mt-2 text-sm text-gray-600', `類別：${text(issue.category)}；優先級：${text(issue.priority)}；狀態：${text(issue.status)}`),
+        create('p', 'mt-2 text-sm text-gray-700 break-words', `負責部門：${text(issue.ownerDepartment)}`),
+        create('p', 'mt-2 text-sm text-gray-700 break-words', `證據來源月份：${issueSourceLabel(issue) || '—'}`),
+        create('p', 'mt-2 text-sm text-gray-700 break-words', `建議行動：${text(issue.recommendedAction)}`),
+        create('p', 'mt-2 text-sm text-gray-700 break-words', `追蹤指標：${(issue.trackingMetrics || []).map(formatIssueMetric).join('、') || '—'}`),
+        create('p', 'mt-2 text-xs text-gray-600', `觀察視窗：${text(issue.firstSeenMonth)} 至 ${text(issue.lastSeenMonth)}`),
+        create('p', 'mt-1 text-xs text-gray-600', `目前觀察月份：${text(currentMonth)}；本月值：${formatValue(currentSnapshot?.value)}`)
+    );
+    return card;
+};
+
+export const renderP3IssueTrackerUnavailable = (container, message = '營運問題 register 不可用') => {
+    if (!container) return;
+    const status = container.id === 'p3IssueStatus' ? container : container.querySelector?.('#p3IssueStatus');
+    const grid = container.id === 'p3IssueGrid' ? container : container.querySelector?.('#p3IssueGrid');
+    if (status) status.textContent = message;
+    if (grid) grid.replaceChildren(create('p', 'p-4 border border-red-200 bg-red-50 text-red-800 text-sm', message));
+};
+
+export const renderP3IssueTracker = (container, issues, filters = {}, options = {}) => {
+    if (!container) return;
+    const grid = container.id === 'p3IssueGrid' ? container : container.querySelector?.('#p3IssueGrid');
+    const count = container.id === 'p3IssueResultCount' ? container : container.querySelector?.('#p3IssueResultCount');
+    const status = container.id === 'p3IssueStatus' ? container : container.querySelector?.('#p3IssueStatus');
+    const allIssues = issueList(issues) || [];
+    const invalidCount = allIssues.filter((issue) => !isCompleteIssue(issue)).length;
+    const filtered = filterP3Issues(allIssues, filters);
+    if (grid) grid.replaceChildren(...filtered.map((issue) => makeIssueCard(issue, options.currentMonth)));
+    if (count) count.textContent = `顯示 ${filtered.length} 筆問題`;
+    if (status) status.textContent = invalidCount ? `已排除 ${invalidCount} 筆不完整問題資料。` : `已載入 ${allIssues.length} 筆問題。`;
+};
+
 const append = (parent, ...children) => {
     children.filter(Boolean).forEach(child => parent.appendChild(child));
     return parent;

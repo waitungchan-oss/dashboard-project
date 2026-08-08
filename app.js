@@ -13,7 +13,13 @@ import {
 import { exportCSV } from './js/csv-export.js';
 import { destroyAllCharts, getValidTourDays } from './js/dashboard-utils.js';
 import { createJsonP3DataProvider } from './js/p3-data-provider.js';
-import { renderP3Comparison, renderP3ComparisonUnavailable } from './js/p3-renderers.js';
+import {
+    filterP3Issues,
+    renderP3Comparison,
+    renderP3ComparisonUnavailable,
+    renderP3IssueTracker,
+    renderP3IssueTrackerUnavailable
+} from './js/p3-renderers.js';
 
 let DataStore = {};
 window.DataStore = DataStore;
@@ -139,6 +145,61 @@ const p3ComparisonState = {
     stale: true
 };
 
+const p3IssueTrackerState = {
+    filters: { category: '', department: '', status: '', priority: '' },
+    currentMonth: DEFAULT_MONTH
+};
+
+const getP3IssueTrackerContainer = () => document.getElementById('p3_issue_tracker');
+
+const getP3IssueItems = () => Array.isArray(P3State.issues)
+    ? P3State.issues
+    : Array.isArray(P3State.issues?.issues) ? P3State.issues.issues : [];
+
+const populateP3IssueFilter = (id, values, label) => {
+    const select = document.getElementById(id);
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = `<option value="">${escapeHTML(label)}</option>${values.map(value => `<option value="${escapeHTML(value)}">${escapeHTML(value)}</option>`).join('')}`;
+    if (values.includes(current)) select.value = current;
+};
+
+const setupP3IssueFilters = () => {
+    const issues = getP3IssueItems();
+    const validIssues = issues.filter((issue) => filterP3Issues([issue], {}).length === 1);
+    const unique = (field) => [...new Set(validIssues.map(issue => issue?.[field]).filter(Boolean))].sort();
+    populateP3IssueFilter('p3IssueCategoryFilter', unique('category'), '全部類別');
+    populateP3IssueFilter('p3IssueDepartmentFilter', unique('ownerDepartment'), '全部負責部門');
+    populateP3IssueFilter('p3IssueStatusFilter', unique('status'), '全部狀態');
+    populateP3IssueFilter('p3IssuePriorityFilter', unique('priority'), '全部優先級');
+    ['category', 'department', 'status', 'priority'].forEach((field) => {
+        const id = `p3Issue${field[0].toUpperCase()}${field.slice(1)}Filter`;
+        const select = document.getElementById(id);
+        if (!select || select.dataset.bound === 'true') return;
+        select.dataset.bound = 'true';
+        select.addEventListener('change', () => {
+            p3IssueTrackerState.filters[field] = select.value;
+            renderP3IssueTrackerView();
+        });
+    });
+};
+
+const renderP3IssueTrackerView = (monthKey = p3IssueTrackerState.currentMonth || currentMonthKey) => {
+    const container = getP3IssueTrackerContainer();
+    if (!container) return;
+    p3IssueTrackerState.currentMonth = monthKey || currentMonthKey;
+    if (P3State.issuesError) {
+        renderP3IssueTrackerUnavailable(container, P3State.issuesError.message || '營運問題 register 載入失敗。');
+        return;
+    }
+    if (!P3State.issues) {
+        renderP3IssueTrackerUnavailable(container, '正在載入營運問題 register…');
+        return;
+    }
+    setupP3IssueFilters();
+    renderP3IssueTracker(container, P3State.issues, p3IssueTrackerState.filters, { currentMonth: p3IssueTrackerState.currentMonth });
+};
+
 const getP3ComparisonContainer = () => document.getElementById('p3_comparison');
 
 const setP3ComparisonStatus = (message, isError = false) => {
@@ -229,6 +290,7 @@ const setupP3Comparison = () => {
     compareSelector.onchange = (event) => handleP3SelectorChange('compare', event.target.value);
     P3State.onUpdate = (_, monthKey) => {
         p3ComparisonState.latestGlobalMonth = monthKey || currentMonthKey;
+        renderP3IssueTrackerView(monthKey || currentMonthKey);
         p3ComparisonState.updateVersion += 1;
         p3ComparisonState.stale = true;
         const section = getP3ComparisonContainer();
@@ -281,10 +343,14 @@ const initializeP3Provider = () => {
         fetchImpl: (...args) => fetch(...args)
     });
     void P3State.provider.loadP3Issues()
-        .then(issues => { P3State.issues = issues; })
+        .then(issues => {
+            P3State.issues = issues;
+            renderP3IssueTrackerView(currentMonthKey);
+        })
         .catch(error => {
             P3State.issuesError = { code: error.code || 'P3_ISSUES_LOAD_FAILED', message: error.message };
             console.warn('P3 issue register loading failed:', error);
+            renderP3IssueTrackerView(currentMonthKey);
         });
     return P3State.provider;
 };
@@ -855,6 +921,10 @@ const DashboardApp = (function() {
                 { blocks: [{ path: [3] }] },
                 { blocks: [{ path: [4] }] }
             ]
+        },
+        p3_issue_tracker: {
+            title: '營運問題追蹤',
+            pages: [{ blocks: [{ path: [0] }, { path: [1] }, { path: [2] }] }]
         }
     };
 
@@ -1065,6 +1135,7 @@ const DashboardApp = (function() {
                 this.initCharts();
                 this.setupEventListeners();
                 setupP3Comparison();
+                renderP3IssueTrackerView(currentMonthKey);
             } catch (e) {
                 console.error("Dashboard Initialization Critical Error:", e);
             }
@@ -1313,6 +1384,7 @@ const DashboardApp = (function() {
                 this.filterFeedback();
                 this.renderDashboardText();
                 this.initCharts();
+                renderP3IssueTrackerView(monthKey);
                 console.log(`本地月份數據已切換: ${monthKey}`);
             } catch (error) {
                 console.error('Month data loading failed:', error);
@@ -1324,6 +1396,7 @@ const DashboardApp = (function() {
 
         switchTab: function(tabId, btnElement) {
             if (tabId === 'p3_comparison') refreshP3ComparisonOnOpen();
+            if (tabId === 'p3_issue_tracker') renderP3IssueTrackerView(currentMonthKey);
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             const target = document.getElementById(tabId);
             if (target) target.classList.add('active');
@@ -1361,7 +1434,7 @@ const DashboardApp = (function() {
                 {id: 'nps_zone', name: '推薦意願專區'}, {id: 'tourleader', name: '領隊表現專區'},
                 {id: 'records', name: '出團記錄分析'}, {id: 'feedback_analysis', name: '出團長評回饋'},
                 {id: 'branch_feedback', name: '門市服務意見'}, {id: 'analysis', name: '綜合意見'},
-                {id: 'p3_comparison', name: '月份比較'}
+                {id: 'p3_comparison', name: '月份比較'}, {id: 'p3_issue_tracker', name: '營運問題追蹤'}
             ];
             container.innerHTML = tabs.map(tab => `
                 <label class="flex items-center px-3 py-2 hover:bg-gray-50 rounded cursor-pointer transition-colors">
