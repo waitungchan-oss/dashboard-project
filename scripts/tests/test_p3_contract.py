@@ -5,6 +5,9 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from copy import deepcopy
@@ -341,6 +344,129 @@ class P3ContractTests(unittest.TestCase):
                     base_months,
                 )
                 self.assertEqual(self.contract_errors(self.load_json(SCHEMA_DIR / "manifest.schema.json"), loaded, self.load_json(SCHEMA_DIR / "manifest.schema.json")), [])
+
+    def copy_validator_fixture(self) -> Path:
+        temp_dir = Path(tempfile.mkdtemp(prefix="dashboard-p3-validator-"))
+        shutil.copytree(ROOT / "data", temp_dir / "data")
+        return temp_dir
+
+    def run_validator(self, root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "validate_p3.py"), "--root", str(root), *args],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    def test_validate_p3_all_snapshots_pass_and_json_fields_are_exact(self) -> None:
+        from scripts.validate_p3 import validate_p3
+
+        report = validate_p3(ROOT, None)
+        self.assertEqual(set(report), {"status", "checkedMonths", "errors", "warnings"})
+        self.assertEqual(report["status"], "pass")
+        self.assertEqual(report["checkedMonths"], ["202605", "202607", "202606", "202604"])
+        self.assertEqual(report["errors"], [])
+
+    def test_validate_p3_rejects_missing_manifest_p3_path(self) -> None:
+        root = self.copy_validator_fixture()
+        try:
+            manifest_path = root / "data" / "months.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["months"][0]["p3"]["path"] = "p3/monthly/missing.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            result = self.run_validator(root, "--all")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("missing", result.stdout)
+        finally:
+            shutil.rmtree(root)
+
+    def test_validate_p3_rejects_period_mismatch(self) -> None:
+        root = self.copy_validator_fixture()
+        try:
+            path = root / "data" / "p3" / "monthly" / "202607.json"
+            snapshot = json.loads(path.read_text(encoding="utf-8"))
+            snapshot["period"] = "202606"
+            path.write_text(json.dumps(snapshot), encoding="utf-8")
+            result = self.run_validator(root, "202607")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("period", result.stdout)
+        finally:
+            shutil.rmtree(root)
+
+    def test_validate_p3_rejects_invalid_issue_enum(self) -> None:
+        root = self.copy_validator_fixture()
+        try:
+            path = root / "data" / "p3" / "issues.json"
+            issues = json.loads(path.read_text(encoding="utf-8"))
+            issues["issues"][0]["status"] = "closed"
+            path.write_text(json.dumps(issues), encoding="utf-8")
+            result = self.run_validator(root, "--all")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("status", result.stdout)
+        finally:
+            shutil.rmtree(root)
+
+    def test_validate_p3_rejects_duplicate_issue_id(self) -> None:
+        root = self.copy_validator_fixture()
+        try:
+            path = root / "data" / "p3" / "issues.json"
+            issues = json.loads(path.read_text(encoding="utf-8"))
+            issues["issues"][1]["id"] = issues["issues"][0]["id"]
+            path.write_text(json.dumps(issues), encoding="utf-8")
+            result = self.run_validator(root, "--all")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("duplicate", result.stdout)
+        finally:
+            shutil.rmtree(root)
+
+    def test_validate_p3_rejects_non_numeric_branch_score(self) -> None:
+        root = self.copy_validator_fixture()
+        try:
+            path = root / "data" / "p3" / "monthly" / "202607.json"
+            snapshot = json.loads(path.read_text(encoding="utf-8"))
+            snapshot["branchRanking"][0]["score"] = "4.6"
+            path.write_text(json.dumps(snapshot), encoding="utf-8")
+            result = self.run_validator(root, "202607")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("score", result.stdout)
+        finally:
+            shutil.rmtree(root)
+
+    def test_validate_p3_rejects_metric_count_rate_mismatch(self) -> None:
+        root = self.copy_validator_fixture()
+        try:
+            path = root / "data" / "p3" / "monthly" / "202607.json"
+            snapshot = json.loads(path.read_text(encoding="utf-8"))
+            snapshot["metrics"]["promo_consent"]["value"] = 0.99
+            path.write_text(json.dumps(snapshot), encoding="utf-8")
+            result = self.run_validator(root, "202607")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("rate", result.stdout)
+        finally:
+            shutil.rmtree(root)
+
+    def test_validate_p3_allows_partial_chain_with_explicit_unavailable_reasons(self) -> None:
+        from scripts.validate_p3 import validate_p3
+
+        report = validate_p3(ROOT, ["202604"])
+        self.assertEqual(report["status"], "pass")
+        self.assertEqual(report["errors"], [])
+
+    def test_validate_p3_strict_warnings_return_nonzero(self) -> None:
+        root = self.copy_validator_fixture()
+        try:
+            path = root / "data" / "p3" / "monthly" / "202607.json"
+            snapshot = json.loads(path.read_text(encoding="utf-8"))
+            snapshot["customerValueChain"]["status"] = "unavailable"
+            snapshot["customerValueChain"]["unavailable"] = True
+            snapshot["customerValueChain"]["unavailableLinks"] = ["recommendation_to_consent"]
+            path.write_text(json.dumps(snapshot), encoding="utf-8")
+            result = self.run_validator(root, "202607", "--strict-warnings", "--json")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('"warnings"', result.stdout)
+        finally:
+            shutil.rmtree(root)
 
 
 if __name__ == "__main__":
