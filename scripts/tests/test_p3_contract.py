@@ -368,6 +368,12 @@ class P3ContractTests(unittest.TestCase):
         self.assertEqual(report["checkedMonths"], ["202605", "202607", "202606", "202604"])
         self.assertEqual(report["errors"], [])
 
+    def test_validate_p3_cli_rejects_no_selection(self) -> None:
+        result = self.run_validator(ROOT, "--json")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("use --all or explicit months", result.stderr)
+        self.assertNotIn('"status": "pass"', result.stdout)
+
     def test_validate_p3_rejects_missing_manifest_p3_path(self) -> None:
         root = self.copy_validator_fixture()
         try:

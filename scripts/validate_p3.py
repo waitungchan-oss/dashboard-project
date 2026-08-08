@@ -335,6 +335,8 @@ def main() -> int:
     args = parser.parse_args()
     if args.all and args.months:
         parser.error("use --all or explicit months, not both")
+    if not args.all and not args.months:
+        parser.error("use --all or explicit months")
     selected = None if args.all else args.months
     report = validate_p3(args.root, selected)
     failed = bool(report.errors or (args.strict_warnings and report.warnings))
