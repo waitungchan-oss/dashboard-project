@@ -927,6 +927,8 @@
 
             body:not(.print-mode) #tabFilterContainer .tab-btn-container {
                 width: auto !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
                 display: flex !important;
                 flex-direction: row !important;
                 gap: 0.5rem !important;
@@ -940,10 +942,13 @@
 
             body:not(.print-mode) #tabFilterContainer .tab-btn {
                 width: auto !important;
+                flex: 0 0 auto !important;
+                min-width: max-content !important;
                 justify-content: center !important;
                 white-space: nowrap !important;
                 text-align: center !important;
                 margin: 0 !important;
+                overflow: visible !important;
             }
 
             body:not(.print-mode) #tabFilterContainer > .relative.group {

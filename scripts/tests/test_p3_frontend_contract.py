@@ -81,6 +81,21 @@ class P3FrontendContractTests(unittest.TestCase):
             self.index,
         )
 
+    def test_desktop_p3_tab_navigation_preserves_intrinsic_labels(self) -> None:
+        desktop_nav = self.index[
+            self.index.index("@media screen and (min-width: 1024px)"):
+        ]
+        for needle in (
+            "body:not(.print-mode) #tabFilterContainer .tab-btn-container {",
+            "overflow-x: auto !important;",
+            "body:not(.print-mode) #tabFilterContainer .tab-btn {",
+            "flex: 0 0 auto !important;",
+            "min-width: max-content !important;",
+            "overflow: visible !important;",
+        ):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, desktop_nav)
+
     def test_p3_status_regions_are_live_and_print_titles_are_present(self) -> None:
         for status_id in (
             "p3ComparisonStatus",
