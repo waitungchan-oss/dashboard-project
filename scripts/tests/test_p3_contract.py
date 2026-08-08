@@ -141,6 +141,101 @@ class P3ContractTests(unittest.TestCase):
         schema = self.load_json(SCHEMA_DIR / schema_name)
         self.assertTrue(self.contract_errors(schema, fixture, schema))
 
+    def source_ref_errors(self, ref: dict, period: str, listed_months: set[str]) -> list[str]:
+        errors = []
+        if ref.get("month") != period:
+            errors.append("month mismatch")
+        if ref.get("month") not in listed_months:
+            errors.append("unlisted month")
+        if not (ref.get("recordKey") or ref.get("path")):
+            errors.append("missing stable source locator")
+        return errors
+
+    def issue_register_errors(self, issues: list[dict]) -> list[str]:
+        errors = []
+        ids = [issue.get("id") for issue in issues]
+        if len(ids) != len(set(ids)):
+            errors.append("duplicate issue id")
+        for issue in issues:
+            if issue.get("firstSeenMonth", "") > issue.get("lastSeenMonth", ""):
+                errors.append("reverse observation window")
+        return errors
+
+    def test_source_reference_fixtures_reject_month_and_period_mismatches(self) -> None:
+        mismatched_file = Path("202606.json")
+        mismatched_snapshot = {"period": "202607"}
+        self.assertNotEqual(mismatched_file.stem, mismatched_snapshot["period"])
+
+        snapshot = {
+            "period": "202607",
+            "sourceRefs": [{
+                "kind": "month",
+                "month": "202606",
+                "section": "dashboardSummary",
+                "recordKey": "dashboardSummary.totalRespondents",
+                "path": "data/202606.json#/dashboardSummary/totalRespondents",
+            }],
+        }
+        listed_months = {"202606", "202607"}
+        self.assertIn("month mismatch", self.source_ref_errors(snapshot["sourceRefs"][0], snapshot["period"], listed_months))
+
+        source_ref = deepcopy(snapshot["sourceRefs"][0])
+        source_ref["month"] = "202607"
+        source_ref["path"] = "data/202607.json#/dashboardSummary/totalRespondents"
+        self.assertEqual(self.source_ref_errors(source_ref, snapshot["period"], listed_months), [])
+
+    def test_source_reference_fixture_rejects_unlisted_month(self) -> None:
+        manifest = self.load_json(ROOT / "data" / "months.json")
+        listed_months = {month["key"] for month in manifest["months"]}
+        source_ref = {
+            "kind": "month",
+            "month": "202699",
+            "section": "dashboardSummary",
+            "recordKey": "dashboardSummary.totalRespondents",
+            "path": "data/202699.json#/dashboardSummary/totalRespondents",
+        }
+        self.assertIn("unlisted month", self.source_ref_errors(source_ref, "202699", listed_months))
+
+    def test_issue_fixture_rejects_reverse_observation_window_and_duplicate_ids(self) -> None:
+        issue_fixture = {
+            "issues": [
+                {"id": "ISSUE-SHOPPING-001", "firstSeenMonth": "202607", "lastSeenMonth": "202604"},
+                {"id": "ISSUE-SHOPPING-001", "firstSeenMonth": "202604", "lastSeenMonth": "202607"},
+            ]
+        }
+        errors = self.issue_register_errors(issue_fixture["issues"])
+        self.assertIn("reverse observation window", errors)
+        self.assertIn("duplicate issue id", errors)
+
+    def test_produced_snapshots_and_issue_register_have_traceable_sources(self) -> None:
+        manifest = self.load_json(ROOT / "data" / "months.json")
+        listed_months = {month["key"] for month in manifest["months"]}
+        monthly_dir = ROOT / "data" / "p3" / "monthly"
+        snapshot_files = sorted(monthly_dir.glob("*.json"))
+        self.assertEqual({path.stem for path in snapshot_files}, listed_months)
+
+        for path in snapshot_files:
+            snapshot = self.load_json(path)
+            self.assertEqual(snapshot["period"], path.stem)
+            for source_ref in snapshot["sourceRefs"]:
+                self.assertEqual(self.source_ref_errors(source_ref, snapshot["period"], listed_months), [])
+
+        issues = self.load_json(ROOT / "data" / "p3" / "issues.json")["issues"]
+        ids = [issue["id"] for issue in issues]
+        self.assertEqual(ids, [
+            "ISSUE-SHOPPING-001",
+            "ISSUE-HOTEL-001",
+            "ISSUE-DINING-001",
+            "ISSUE-GROUND-SERVICE-001",
+        ])
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertEqual(self.issue_register_errors(issues), [])
+        for issue in issues:
+            self.assertLessEqual(issue["firstSeenMonth"], issue["lastSeenMonth"])
+            for source_ref in issue["sourceRefs"]:
+                self.assertIn(source_ref["month"], listed_months)
+                self.assertTrue(source_ref.get("recordKey") or source_ref.get("path"))
+
     def test_p3_fixtures_enforce_required_type_and_enum_behavior(self) -> None:
         month_fixture = {
             "version": "1.0",
