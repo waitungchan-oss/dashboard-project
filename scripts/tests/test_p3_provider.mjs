@@ -458,19 +458,46 @@ test('explicit unavailable renderer keeps the value-chain tab isolated', () => {
     assert.match(JSON.stringify(unavailable), /沒有 P3 snapshot/);
 });
 
-test('renders 202607 observed customer value links and stable labels', () => {
-    const snapshot202607 = JSON.parse(fs.readFileSync(
-        new URL('../../data/p3/monthly/202607.json', import.meta.url),
-        'utf8'
-    ));
-    const model = getP3CustomerValueChainViewModel(snapshot202607);
+test('renders observed customer value links and stable labels across monthly snapshots', () => {
+    const expectedStageLabels = {
+        '202604': [
+            ['recommendation', '推薦意願'],
+            ['consent', '訊息同意'],
+            ['customer_segment_repeat', '回訪客群'],
+            ['store_signup', '門市登記']
+        ],
+        '202605': [
+            ['recommendation', '推薦意願'],
+            ['consent', '訊息同意'],
+            ['member_consent_joint', '會員同意交集'],
+            ['customer_segment_repeat', '回訪客群'],
+            ['store_signup', '門市登記']
+        ],
+        '202606': [
+            ['recommendation', '推薦意願'],
+            ['consent', '訊息同意'],
+            ['member_consent_joint', '會員同意交集'],
+            ['customer_segment_repeat', '回訪客群'],
+            ['store_signup', '門市登記']
+        ],
+        '202607': [
+            ['recommendation', '推薦意願'],
+            ['consent', '訊息同意'],
+            ['member_consent_joint', '會員同意交集'],
+            ['store_signup', '門市登記']
+        ]
+    };
 
-    assert.deepEqual(model.stages.map(stage => [stage.key, stage.label]), [
-        ['recommendation', '推薦意願'],
-        ['consent', '訊息同意'],
-        ['member_consent_joint', '會員同意交集'],
-        ['store_signup', '門市登記']
-    ]);
+    const snapshots = Object.fromEntries(Object.keys(expectedStageLabels).map((month) => [
+        month,
+        JSON.parse(fs.readFileSync(new URL(`../../data/p3/monthly/${month}.json`, import.meta.url), 'utf8'))
+    ]));
+    for (const [month, snapshot] of Object.entries(snapshots)) {
+        const model = getP3CustomerValueChainViewModel(snapshot);
+        assert.deepEqual(model.stages.map(stage => [stage.key, stage.label]), expectedStageLabels[month], month);
+    }
+
+    const snapshot202607 = snapshots['202607'];
 
     const container = fakeDocument.createElement('section');
     const status = fakeDocument.createElement('p');

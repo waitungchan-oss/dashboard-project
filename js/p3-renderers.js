@@ -255,6 +255,7 @@ const VALUE_CHAIN_STAGE_LABELS = {
     message_consent: '訊息同意',
     consent: '訊息同意',
     member_consent_joint: '會員同意交集',
+    customer_segment_repeat: '回訪客群',
     repeat_customer: '回訪客群',
     store_signup: '門市登記'
 };
