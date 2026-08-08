@@ -2,10 +2,25 @@
 """Static contract tests for the standalone P3 month comparison tab."""
 
 from pathlib import Path
+import re
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def extract_braced_block(text: str, marker: str) -> str:
+    start = text.index(marker)
+    opening = text.index("{", start)
+    depth = 0
+    for index in range(opening, len(text)):
+        if text[index] == "{":
+            depth += 1
+        elif text[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:index + 1]
+    raise AssertionError(f"Unclosed CSS block: {marker}")
 
 
 class P3FrontendContractTests(unittest.TestCase):
@@ -82,19 +97,40 @@ class P3FrontendContractTests(unittest.TestCase):
         )
 
     def test_desktop_p3_tab_navigation_preserves_intrinsic_labels(self) -> None:
-        desktop_nav = self.index[
-            self.index.index("@media screen and (min-width: 1024px)"):
-        ]
-        for needle in (
+        desktop_nav = extract_braced_block(
+            self.index,
+            "@media screen and (min-width: 1024px) {",
+        )
+        container_rule = extract_braced_block(
+            desktop_nav,
             "body:not(.print-mode) #tabFilterContainer .tab-btn-container {",
-            "overflow-x: auto !important;",
+        )
+        button_rule = extract_braced_block(
+            desktop_nav,
             "body:not(.print-mode) #tabFilterContainer .tab-btn {",
+        )
+
+        for tab_id, label in (
+            ("p3_comparison", "月份比較"),
+            ("p3_issue_tracker", "營運問題追蹤"),
+            ("p3_customer_value_chain", "客戶價值鏈路"),
+        ):
+            with self.subTest(tab_id=tab_id):
+                self.assertRegex(
+                    self.index,
+                    rf'<button[^>]*data-tab-id="{tab_id}"[^>]*>.*?{re.escape(label)}.*?</button>',
+                    msg=f"Missing visible label for {tab_id}",
+                )
+
+        self.assertIn("overflow-x: auto !important;", container_rule)
+        for needle in (
             "flex: 0 0 auto !important;",
             "min-width: max-content !important;",
+            "white-space: nowrap !important;",
             "overflow: visible !important;",
         ):
             with self.subTest(needle=needle):
-                self.assertIn(needle, desktop_nav)
+                self.assertIn(needle, button_rule)
 
     def test_p3_status_regions_are_live_and_print_titles_are_present(self) -> None:
         for status_id in (

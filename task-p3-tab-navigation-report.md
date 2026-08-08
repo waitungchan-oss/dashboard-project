@@ -6,7 +6,9 @@ After the three P3 tabs were added, desktop tab buttons could shrink inside the 
 
 ## Scoped fix
 
-- Added a focused static contract for the desktop navigation container and buttons.
+- Strengthened the focused static contract by extracting the exact `@media screen and (min-width: 1024px)` block with balanced CSS braces.
+- Asserted all three P3 navigation buttons and their visible labels: `月份比較`, `營運問題追蹤`, and `客戶價值鏈路`.
+- Asserted the desktop container and button rules within that exact block.
 - Constrained the desktop tab container to its available width while keeping horizontal scrolling enabled.
 - Preserved intrinsic button width and disabled button clipping in the desktop screen-only scope.
 - Kept mobile rules, existing tab IDs, print layout, data files, `app.js`, Obsidian, and unrelated worktree files unchanged.
@@ -25,4 +27,4 @@ Obsidian backfill was intentionally not performed because the task explicitly fo
 
 ## Commit
 
-Commit message: `fix: preserve P3 tab navigation labels`
+Commit message: `test: strengthen P3 tab navigation contract`
