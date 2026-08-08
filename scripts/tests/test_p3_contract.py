@@ -120,6 +120,37 @@ class P3ContractTests(unittest.TestCase):
                 },
             )
 
+    def test_observed_customer_value_stages_have_base_provenance(self) -> None:
+        expected_paths = {
+            "recommendation": "dashboardSummary/nps/promoterCount",
+            "consent": "dashboardSummary/promoConsent/count",
+            "member_consent_joint": "memberConsentCrossData/datasets/0/data/0",
+            "store_signup": "dashboardSummary/storeSignup/count",
+        }
+        listed_months = {month["key"] for month in self.load_json(ROOT / "data" / "months.json")["months"]}
+        for month in listed_months:
+            snapshot = self.load_json(ROOT / "data" / "p3" / "monthly" / f"{month}.json")
+            base = self.load_json(ROOT / "data" / f"{month}.json")
+            stages = snapshot["customerValueChain"]["stages"]
+            stage_keys = {stage["key"] for stage in stages}
+            self.assertEqual("customer_segment_repeat" in stage_keys, base.get("customerSegments") is not None)
+            for stage in stages:
+                self.assertTrue(stage["sourceRefs"], stage["key"])
+                for source_ref in stage["sourceRefs"]:
+                    self.assertEqual(source_ref["month"], month)
+                    self.assertIn(source_ref["month"], listed_months)
+                    self.assertTrue(source_ref["path"])
+                if stage["key"] in expected_paths:
+                    self.assertTrue(any(expected_paths[stage["key"]] in ref["path"] for ref in stage["sourceRefs"]))
+
+    def test_p3_stage_schema_requires_provenance_fields(self) -> None:
+        schema = self.load_json(SCHEMA_DIR / "p3-month.schema.json")
+        stages = schema["properties"]["customerValueChain"]["properties"]["stages"]
+        self.assertIn("items", stages)
+        stage = self.resolve_schema_ref(schema, stages["items"])
+        self.assertEqual(stage["required"], ["key", "value", "unit", "n", "sourceRefs"])
+        self.assertEqual(stage["properties"]["sourceRefs"]["minItems"], 1)
+
     def test_p3_enum_contracts_are_explicit(self) -> None:
         month_schema = self.load_json(SCHEMA_DIR / "p3-month.schema.json")
         issue_schema = self.load_json(SCHEMA_DIR / "p3-issues.schema.json")
@@ -471,6 +502,43 @@ class P3ContractTests(unittest.TestCase):
             result = self.run_validator(root, "202607", "--strict-warnings", "--json")
             self.assertNotEqual(result.returncode, 0)
             self.assertIn('"warnings"', result.stdout)
+        finally:
+            shutil.rmtree(root)
+
+    def test_validate_p3_rejects_missing_or_empty_stage_source_refs(self) -> None:
+        for source_refs in (None, []):
+            root = self.copy_validator_fixture()
+            try:
+                path = root / "data" / "p3" / "monthly" / "202607.json"
+                snapshot = json.loads(path.read_text(encoding="utf-8"))
+                if source_refs is None:
+                    del snapshot["customerValueChain"]["stages"][0]["sourceRefs"]
+                else:
+                    snapshot["customerValueChain"]["stages"][0]["sourceRefs"] = source_refs
+                path.write_text(json.dumps(snapshot), encoding="utf-8")
+                report = self.run_validator(root, "202607")
+                self.assertNotEqual(report.returncode, 0)
+                self.assertIn("stages[0].sourceRefs", report.stdout)
+            finally:
+                shutil.rmtree(root)
+
+    def test_validate_p3_rejects_stage_source_ref_from_wrong_month(self) -> None:
+        root = self.copy_validator_fixture()
+        try:
+            path = root / "data" / "p3" / "monthly" / "202607.json"
+            snapshot = json.loads(path.read_text(encoding="utf-8"))
+            snapshot["customerValueChain"]["stages"][0]["sourceRefs"] = [{
+                "kind": "month",
+                "month": "202607",
+                "path": "data/202607.json#/dashboardSummary/nps/promoterCount",
+            }]
+            snapshot["customerValueChain"]["stages"][0]["sourceRefs"][0]["month"] = "202606"
+            path.write_text(json.dumps(snapshot), encoding="utf-8")
+            from scripts.validate_p3 import validate_p3
+
+            report = validate_p3(root, ["202607"])
+            self.assertEqual(report["status"], "fail")
+            self.assertTrue(any("expected 202607" in error for error in report["errors"]))
         finally:
             shutil.rmtree(root)
 

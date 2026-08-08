@@ -19,6 +19,16 @@ ISSUE_PRIORITIES = {"low", "medium", "high"}
 ISSUE_STATUSES = {"open", "monitoring", "resolved"}
 CHAIN_STATUSES = {"complete", "partial", "unavailable"}
 EPSILON = 0.0002
+STAGE_SOURCE_PATHS = {
+    "recommendation": ("dashboardSummary/nps/promoterCount",),
+    "consent": ("dashboardSummary/promoConsent/count",),
+    "member_consent_joint": (
+        "memberConsentCrossData/datasets/0/data/0",
+        "memberConsentCrossData/datasets/1/data/0",
+    ),
+    "customer_segment_repeat": ("customerSegments/回頭客 (Repeat)",),
+    "store_signup": ("dashboardSummary/storeSignup/count",),
+}
 
 
 @dataclass
@@ -96,6 +106,31 @@ def _validate_source_ref(
         report.error(f"{location}.path: required non-empty path")
     if not (isinstance(ref.get("recordKey"), str) and ref["recordKey"]):
         report.warning(f"{location}: source reference has no recordKey")
+
+
+def _validate_stage_source_refs(
+    stage: Any,
+    expected_month: str,
+    listed_months: set[str],
+    report: ValidationReport,
+    location: str,
+) -> None:
+    if not isinstance(stage, dict):
+        report.error(f"{location}: stage must be an object")
+        return
+    refs = stage.get("sourceRefs")
+    if not isinstance(refs, list) or not refs:
+        report.error(f"{location}.sourceRefs: required non-empty array")
+        return
+    for ref_index, ref in enumerate(refs):
+        _validate_source_ref(ref, expected_month, listed_months, report, f"{location}.sourceRefs[{ref_index}]")
+    expected_paths = STAGE_SOURCE_PATHS.get(stage.get("key"))
+    if expected_paths:
+        observed_paths = {ref.get("path") for ref in refs if isinstance(ref, dict)}
+        required_paths = {f"data/{expected_month}.json#/{path}" for path in expected_paths}
+        missing_paths = sorted(required_paths - observed_paths)
+        if missing_paths:
+            report.error(f"{location}.sourceRefs: missing expected base paths {missing_paths}")
 
 
 def _validate_snapshot(root: Path, month: str, snapshot: Any, listed_months: set[str], report: ValidationReport) -> None:
@@ -187,6 +222,10 @@ def _validate_snapshot(root: Path, month: str, snapshot: Any, listed_months: set
                     report.error(f"{link_location}: count cannot exceed n")
                 for ref_index, ref in enumerate(link.get("sourceRefs", [])):
                     _validate_source_ref(ref, month, listed_months, report, f"{link_location}.sourceRefs[{ref_index}]")
+        stages = chain.get("stages", [])
+        if isinstance(stages, list):
+            for index, stage in enumerate(stages):
+                _validate_stage_source_refs(stage, month, listed_months, report, f"{location}.customerValueChain.stages[{index}]")
 
     refs = snapshot.get("sourceRefs")
     if isinstance(refs, list):

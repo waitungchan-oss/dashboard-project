@@ -261,7 +261,13 @@ const valueChainStatusLabel = (status) => ({
     unavailable: '不可用：目前沒有足夠的 P3 資料'
 }[status] || '不可用：P3 資料狀態未定義');
 
-const sourceRefsPresent = (value) => Array.isArray(value) && value.length > 0;
+const sourceRefsPresent = (value, expectedMonth) => Array.isArray(value)
+    && value.length > 0
+    && value.every(source => source
+        && typeof source === 'object'
+        && source.month === expectedMonth
+        && typeof source.path === 'string'
+        && source.path.length > 0);
 
 export const getP3CustomerValueChainViewModel = (snapshot) => {
     const chain = snapshot?.customerValueChain;
@@ -271,15 +277,21 @@ export const getP3CustomerValueChainViewModel = (snapshot) => {
         ...(Array.isArray(chain?.unavailable) ? chain.unavailable : chain?.unavailable ? [chain.unavailable] : []),
         ...(Array.isArray(chain?.unavailableLinks) ? chain.unavailableLinks : [])
     ].filter(Boolean).map(String);
-    const stages = Array.isArray(chain?.stages)
-        ? chain.stages.filter(stage => stage && typeof stage === 'object').map(stage => ({
-            ...stage,
-            label: stage.label || VALUE_CHAIN_STAGE_LABELS[stage.key] || text(stage.key)
-        }))
-        : [];
+    const stages = [];
+    (Array.isArray(chain?.stages) ? chain.stages : []).forEach((stage) => {
+        if (stage && typeof stage === 'object' && sourceRefsPresent(stage.sourceRefs, snapshot?.period)) {
+            stages.push({
+                ...stage,
+                label: stage.label || VALUE_CHAIN_STAGE_LABELS[stage.key] || text(stage.key)
+            });
+            return;
+        }
+        const stageKey = stage?.key || 'unknown';
+        unavailable.push(`stage ${stageKey} 缺少有效 sourceRefs，未呈現。`);
+    });
     const links = [];
     (Array.isArray(chain?.links) ? chain.links : []).forEach((link) => {
-        if (link && sourceRefsPresent(link.sourceRefs)) {
+        if (link && sourceRefsPresent(link.sourceRefs, snapshot?.period)) {
             links.push(link);
             return;
         }

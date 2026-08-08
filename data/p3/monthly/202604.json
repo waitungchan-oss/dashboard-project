@@ -20,7 +20,7 @@
   ],
   "customerValueChain": {
     "status": "partial",
-    "stages": [{"key": "recommendation", "value": 199, "unit": "promoters", "n": 223}, {"key": "consent", "value": 70, "unit": "respondents", "n": 223}, {"key": "customer_segment_repeat", "value": 0.429, "unit": "rate", "n": 223}, {"key": "store_signup", "value": 194, "unit": "respondents", "n": 223}],
+    "stages": [{"key": "recommendation", "value": 199, "unit": "promoters", "n": 223, "sourceRefs": [{"kind": "month", "month": "202604", "section": "dashboardSummary.nps", "recordKey": "dashboardSummary.nps.promoterCount", "path": "data/202604.json#/dashboardSummary/nps/promoterCount"}]}, {"key": "consent", "value": 70, "unit": "respondents", "n": 223, "sourceRefs": [{"kind": "month", "month": "202604", "section": "dashboardSummary.promoConsent", "recordKey": "dashboardSummary.promoConsent.count", "path": "data/202604.json#/dashboardSummary/promoConsent/count"}]}, {"key": "customer_segment_repeat", "value": 0.429, "unit": "rate", "n": 223, "sourceRefs": [{"kind": "month", "month": "202604", "section": "customerSegments", "recordKey": "customerSegments['回頭客 (Repeat)']", "path": "data/202604.json#/customerSegments/回頭客 (Repeat)"}]}, {"key": "store_signup", "value": 194, "unit": "respondents", "n": 223, "sourceRefs": [{"kind": "month", "month": "202604", "section": "dashboardSummary.storeSignup", "recordKey": "dashboardSummary.storeSignup.count", "path": "data/202604.json#/dashboardSummary/storeSignup/count"}]}],
     "links": [],
     "unavailable": false,
     "unavailableLinks": ["recommendation_to_consent", "consent_to_repeat_purchase"]

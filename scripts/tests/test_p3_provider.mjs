@@ -382,8 +382,13 @@ test('preserves partial status and exact unavailable reasons without inventing l
     const model = getP3CustomerValueChainViewModel(partialSnapshot);
 
     assert.equal(model.status, 'partial');
+    assert.deepEqual(model.stages, []);
+    assert.match(model.unavailable.join(' '), /stage repeat_customer 缺少有效 sourceRefs/);
     assert.deepEqual(model.links, []);
-    assert.deepEqual(model.unavailable, ['consent_to_verified_future_repurchase: no joint source']);
+    assert.deepEqual(model.unavailable, [
+        'consent_to_verified_future_repurchase: no joint source',
+        'stage repeat_customer 缺少有效 sourceRefs，未呈現。'
+    ]);
 
     const container = fakeDocument.createElement('section');
     const status = fakeDocument.createElement('p');
