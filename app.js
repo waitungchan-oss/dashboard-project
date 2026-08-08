@@ -12,6 +12,7 @@ import {
 } from './js/dom-utils.js';
 import { exportCSV } from './js/csv-export.js';
 import { destroyAllCharts, getValidTourDays } from './js/dashboard-utils.js';
+import { createJsonP3DataProvider } from './js/p3-data-provider.js';
 
 let DataStore = {};
 window.DataStore = DataStore;
@@ -20,6 +21,14 @@ const DATA_PATH = './data/';
 const DEFAULT_MONTH = '202605';
 const STATIC_STRATEGIC_SUMMARY_MONTH = '202605';
 let currentMonthKey = DEFAULT_MONTH;
+const P3State = {
+    provider: null,
+    activeMonthKey: null,
+    activeMonth: null,
+    issues: null,
+    issuesError: null
+};
+window.P3State = P3State;
 let MonthCatalog = {
     defaultMonth: DEFAULT_MONTH,
     months: [
@@ -66,7 +75,8 @@ const normalizeMonthCatalog = (manifest) => {
                 label: month.label || formatMonthLabel(key),
                 schema: month.schema || 'current',
                 status: month.status || 'ready',
-                description: month.description || ''
+                description: month.description || '',
+                p3: month.p3 || null
             };
         })
         .filter(Boolean);
@@ -78,6 +88,29 @@ const normalizeMonthCatalog = (manifest) => {
         months
     };
 };
+
+const refreshP3ForMonth = async (monthKey) => {
+    if (!P3State.provider) return P3State.activeMonth;
+    try {
+        const result = await P3State.provider.loadP3Month(monthKey);
+        P3State.activeMonthKey = monthKey;
+        P3State.activeMonth = result;
+        return result;
+    } catch (error) {
+        P3State.activeMonthKey = monthKey;
+        P3State.activeMonth = {
+            status: 'error',
+            monthKey,
+            error: {
+                code: error.code || 'P3_MONTH_LOAD_FAILED',
+                message: error.message
+            }
+        };
+        console.warn('P3 month loading failed:', error);
+        return P3State.activeMonth;
+    }
+};
+window.refreshP3ForMonth = refreshP3ForMonth;
 
 const populateMonthSelector = () => {
     const selector = document.getElementById('globalMonthSelector');
@@ -112,6 +145,22 @@ const fetchMonthCatalog = async () => {
         populateMonthSelector();
         return MonthCatalog;
     }
+};
+
+const initializeP3Provider = async () => {
+    if (P3State.provider) return P3State.provider;
+    P3State.provider = createJsonP3DataProvider({
+        basePath: DATA_PATH,
+        getMonthEntry: (monthKey) => MonthCatalog.months.find(month => month.key === monthKey),
+        fetchImpl: (...args) => fetch(...args)
+    });
+    try {
+        P3State.issues = await P3State.provider.loadP3Issues();
+    } catch (error) {
+        P3State.issuesError = { code: error.code || 'P3_ISSUES_LOAD_FAILED', message: error.message };
+        console.warn('P3 issue register loading failed:', error);
+    }
+    return P3State.provider;
 };
 
 const fetchMonthData = async (monthVal) => {
@@ -1116,6 +1165,7 @@ const DashboardApp = (function() {
 
             try {
                 await fetchMonthData(monthKey);
+                await refreshP3ForMonth(monthKey);
                 destroyAllCharts();
                 this.renderLeadersTable();
                 this.renderTourDetailsTable();
@@ -1722,8 +1772,10 @@ async function bootApp() {
 
     try {
         await fetchMonthCatalog();
+        await initializeP3Provider();
         const selector = document.getElementById('globalMonthSelector');
         await fetchMonthData(selector ? selector.value : currentMonthKey);
+        await refreshP3ForMonth(currentMonthKey);
 
         Chart.register(ChartDataLabels);
         Chart.defaults.font.family = '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif';
