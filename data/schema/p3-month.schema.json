@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "P3 monthly analytics snapshot",
+  "type": "object",
+  "required": [
+    "version",
+    "period",
+    "sampleSize",
+    "metrics",
+    "branchRanking",
+    "destinationDemand",
+    "sentiment",
+    "customerValueChain",
+    "sourceRefs",
+    "calculationNotes"
+  ],
+  "properties": {
+    "version": { "type": "string", "minLength": 1 },
+    "period": { "type": "string", "pattern": "^20[0-9]{4}$" },
+    "sampleSize": { "type": "integer", "minimum": 0 },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/metric" }
+    },
+    "branchRanking": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/rankingRow" }
+    },
+    "destinationDemand": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/rankingRow" }
+    },
+    "sentiment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "label", "count", "rate"],
+        "properties": {
+          "key": { "type": "string", "minLength": 1 },
+          "label": { "type": "string", "minLength": 1 },
+          "count": { "type": "integer", "minimum": 0 },
+          "rate": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "additionalProperties": true
+      }
+    },
+    "customerValueChain": {
+      "type": "object",
+      "required": ["status", "stages", "links", "unavailable"],
+      "properties": {
+        "status": { "enum": ["complete", "partial", "unavailable"] },
+        "stages": { "type": "array" },
+        "links": { "type": "array" },
+        "unavailable": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "sourceRefs": { "type": "array" },
+    "calculationNotes": { "type": "array" }
+  },
+  "$defs": {
+    "metric": {
+      "type": "object",
+      "required": ["value", "unit", "n", "definition"],
+      "properties": {
+        "value": { "type": ["number", "null"] },
+        "unit": { "type": "string", "minLength": 1 },
+        "n": { "type": "integer", "minimum": 0 },
+        "definition": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "rankingRow": {
+      "type": "object",
+      "required": ["key"],
+      "properties": {
+        "key": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

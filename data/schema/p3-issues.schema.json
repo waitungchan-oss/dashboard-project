@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "P3 issue tracking data",
+  "type": "object",
+  "required": ["version", "issues"],
+  "properties": {
+    "version": { "type": "string", "minLength": 1 },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "title",
+          "ownerDepartment",
+          "priority",
+          "status",
+          "recommendedAction",
+          "trackingMetrics",
+          "firstSeenMonth",
+          "lastSeenMonth",
+          "monthlySnapshots",
+          "sourceRefs"
+        ],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "category": { "enum": ["shopping", "hotel", "dining", "ground_service"] },
+          "title": { "type": "string", "minLength": 1 },
+          "ownerDepartment": { "type": "string", "minLength": 1 },
+          "priority": { "enum": ["low", "medium", "high"] },
+          "status": { "enum": ["open", "monitoring", "resolved"] },
+          "recommendedAction": { "type": "string", "minLength": 1 },
+          "trackingMetrics": { "type": "array" },
+          "firstSeenMonth": { "type": "string", "pattern": "^20[0-9]{4}$" },
+          "lastSeenMonth": { "type": "string", "pattern": "^20[0-9]{4}$" },
+          "monthlySnapshots": { "type": "array" },
+          "sourceRefs": { "type": "array" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}
