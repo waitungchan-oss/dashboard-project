@@ -26,7 +26,8 @@ const P3State = {
     activeMonthKey: null,
     activeMonth: null,
     issues: null,
-    issuesError: null
+    issuesError: null,
+    onUpdate: null
 };
 window.P3State = P3State;
 let MonthCatalog = {
@@ -89,8 +90,21 @@ const normalizeMonthCatalog = (manifest) => {
     };
 };
 
+const notifyP3Update = () => {
+    if (typeof P3State.onUpdate !== 'function') return;
+    try {
+        Promise.resolve(P3State.onUpdate(P3State.activeMonth, P3State.activeMonthKey, P3State))
+            .catch(error => console.warn('P3 update hook failed:', error));
+    } catch (error) {
+        console.warn('P3 update hook failed:', error);
+    }
+};
+
 const refreshP3ForMonth = async (monthKey) => {
-    if (!P3State.provider) return P3State.activeMonth;
+    if (!P3State.provider) {
+        notifyP3Update();
+        return P3State.activeMonth;
+    }
     try {
         const result = await P3State.provider.loadP3Month(monthKey);
         P3State.activeMonthKey = monthKey;
@@ -108,6 +122,8 @@ const refreshP3ForMonth = async (monthKey) => {
         };
         console.warn('P3 month loading failed:', error);
         return P3State.activeMonth;
+    } finally {
+        notifyP3Update();
     }
 };
 window.refreshP3ForMonth = refreshP3ForMonth;
@@ -147,19 +163,19 @@ const fetchMonthCatalog = async () => {
     }
 };
 
-const initializeP3Provider = async () => {
+const initializeP3Provider = () => {
     if (P3State.provider) return P3State.provider;
     P3State.provider = createJsonP3DataProvider({
         basePath: DATA_PATH,
         getMonthEntry: (monthKey) => MonthCatalog.months.find(month => month.key === monthKey),
         fetchImpl: (...args) => fetch(...args)
     });
-    try {
-        P3State.issues = await P3State.provider.loadP3Issues();
-    } catch (error) {
-        P3State.issuesError = { code: error.code || 'P3_ISSUES_LOAD_FAILED', message: error.message };
-        console.warn('P3 issue register loading failed:', error);
-    }
+    void P3State.provider.loadP3Issues()
+        .then(issues => { P3State.issues = issues; })
+        .catch(error => {
+            P3State.issuesError = { code: error.code || 'P3_ISSUES_LOAD_FAILED', message: error.message };
+            console.warn('P3 issue register loading failed:', error);
+        });
     return P3State.provider;
 };
 
@@ -1165,7 +1181,7 @@ const DashboardApp = (function() {
 
             try {
                 await fetchMonthData(monthKey);
-                await refreshP3ForMonth(monthKey);
+                void refreshP3ForMonth(monthKey);
                 destroyAllCharts();
                 this.renderLeadersTable();
                 this.renderTourDetailsTable();
@@ -1772,10 +1788,10 @@ async function bootApp() {
 
     try {
         await fetchMonthCatalog();
-        await initializeP3Provider();
+        initializeP3Provider();
         const selector = document.getElementById('globalMonthSelector');
         await fetchMonthData(selector ? selector.value : currentMonthKey);
-        await refreshP3ForMonth(currentMonthKey);
+        void refreshP3ForMonth(currentMonthKey);
 
         Chart.register(ChartDataLabels);
         Chart.defaults.font.family = '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif';

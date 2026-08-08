@@ -166,15 +166,20 @@ const alignRows = (baseRows, compareRows, valueField) => {
     });
 };
 
+const KNOWN_CHAIN_STATUSES = new Set(['complete', 'partial', 'unavailable']);
+
 const chainStatus = (base, compare) => {
-    if (base?.status === 'unavailable' || compare?.status === 'unavailable') return 'unavailable';
-    if (base?.status === 'partial' || compare?.status === 'partial') return 'partial';
+    const statuses = [base?.status, compare?.status];
+    if (statuses.some(status => !KNOWN_CHAIN_STATUSES.has(status))) return 'unavailable';
+    if (statuses.includes('unavailable')) return 'unavailable';
+    if (statuses.includes('partial')) return 'partial';
     return 'complete';
 };
 
 export const buildP3Comparison = (baseSnapshot, compareSnapshot) => {
     const baseChain = baseSnapshot?.customerValueChain || {};
     const compareChain = compareSnapshot?.customerValueChain || {};
+    const derivedChainStatus = chainStatus(baseChain, compareChain);
     const unavailableLinks = [...new Set([
         ...(Array.isArray(baseChain.unavailableLinks) ? baseChain.unavailableLinks : []),
         ...(Array.isArray(compareChain.unavailableLinks) ? compareChain.unavailableLinks : [])
@@ -191,12 +196,14 @@ export const buildP3Comparison = (baseSnapshot, compareSnapshot) => {
         destinationDemand: alignRows(baseSnapshot?.destinationDemand, compareSnapshot?.destinationDemand, 'value'),
         sentiment: alignRows(baseSnapshot?.sentiment, compareSnapshot?.sentiment, 'count'),
         customerValueChain: {
-            status: chainStatus(baseChain, compareChain),
+            status: derivedChainStatus,
+            baseStatus: baseChain.status ?? 'unknown',
+            compareStatus: compareChain.status ?? 'unknown',
             base: baseChain,
             compare: compareChain,
             stages: alignRows(baseChain.stages, compareChain.stages, 'value'),
             links: alignRows(baseChain.links, compareChain.links, 'count'),
-            unavailable: chainStatus(baseChain, compareChain) === 'unavailable',
+            unavailable: derivedChainStatus === 'unavailable',
             unavailableLinks
         }
     };

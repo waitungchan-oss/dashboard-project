@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -139,4 +140,30 @@ test('marks aligned rows unavailable when their comparison value is unavailable'
     );
 
     assert.equal(result.branchRanking[0].status, 'unavailable');
+});
+
+test('preserves unknown customer chain statuses without deriving complete', () => {
+    const result = buildP3Comparison(
+        snapshot('202605', {
+            customerValueChain: { status: 'observed_unknown', stages: [], links: [], unavailableLinks: ['unknown_link'] }
+        }),
+        snapshot('202606', {
+            customerValueChain: { stages: [], links: [], unavailableLinks: ['missing_link'] }
+        })
+    );
+
+    assert.equal(result.customerValueChain.status, 'unavailable');
+    assert.equal(result.customerValueChain.base.status, 'observed_unknown');
+    assert.equal(Object.hasOwn(result.customerValueChain.compare, 'status'), false);
+    assert.equal(result.customerValueChain.baseStatus, 'observed_unknown');
+    assert.equal(result.customerValueChain.compareStatus, 'unknown');
+    assert.deepEqual(result.customerValueChain.unavailableLinks, ['unknown_link', 'missing_link']);
+});
+
+test('keeps P3 lifecycle work off the existing dashboard critical path', () => {
+    const appSource = fs.readFileSync(new URL('../../app.js', import.meta.url), 'utf8');
+
+    assert.doesNotMatch(appSource, /await initializeP3Provider\(\)/);
+    assert.doesNotMatch(appSource, /await refreshP3ForMonth\(monthKey\)/);
+    assert.match(appSource, /P3State\.onUpdate/);
 });
