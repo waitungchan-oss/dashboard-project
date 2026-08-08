@@ -170,6 +170,30 @@ test('renders department, action, tracking metric and observation fields', () =>
     assert.match(cardText, /202605/);
 });
 
+test('renders distinct empty states for an empty register and a filter with no matches', () => {
+    const makeContainer = () => {
+        const container = fakeDocument.createElement('section');
+        container.querySelector = (selector) => selector === '#p3IssueGrid'
+            ? container.grid
+            : selector === '#p3IssueResultCount' ? container.count : container.status;
+        container.grid = fakeDocument.createElement('div');
+        container.count = fakeDocument.createElement('span');
+        container.status = fakeDocument.createElement('p');
+        return container;
+    };
+    global.document = fakeDocument;
+
+    const emptyRegister = makeContainer();
+    renderP3IssueTracker(emptyRegister, [], {});
+    assert.equal(emptyRegister.grid.children.length, 1);
+    assert.match(emptyRegister.grid.children[0].textContent, /沒有營運問題/);
+
+    const noMatch = makeContainer();
+    renderP3IssueTracker(noMatch, [issue()], { category: 'hotel' });
+    assert.equal(noMatch.grid.children.length, 1);
+    assert.match(noMatch.grid.children[0].textContent, /沒有符合目前篩選條件/);
+});
+
 test('builds metric deltas and stable-key row statuses', () => {
     const result = buildP3Comparison(snapshot('202605'), snapshot('202606'));
 

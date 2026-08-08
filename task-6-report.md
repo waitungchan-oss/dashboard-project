@@ -2,7 +2,7 @@
 
 ## Status
 
-PASS: standalone `p3_issue_tracker` tab implemented.
+PASS: standalone `p3_issue_tracker` tab implemented; review P1/P2 fixes applied.
 
 ## Implementation
 
@@ -12,11 +12,13 @@ PASS: standalone `p3_issue_tracker` tab implemented.
 - Kept issue register loading isolated from the existing dashboard error path.
 - Global month changes update the current observation label without removing cross-month issues.
 - Added the issue tracker to the existing print manifest while preserving existing tab/canvas/print IDs.
+- Added distinct empty-register and no-match states inside `#p3IssueGrid`.
+- Removed the invalid print manifest path `[2]` and added a direct-child path contract test.
 
 ## Verification
 
-- `node scripts/tests/test_p3_provider.mjs`: PASS, 13 tests.
-- `python3 -m unittest scripts.tests.test_p3_frontend_contract -v`: PASS, 7 tests.
+- `node scripts/tests/test_p3_provider.mjs`: PASS, 14 tests.
+- `python3 -m unittest scripts.tests.test_p3_frontend_contract -v`: PASS, 8 tests.
 - `node --check app.js`: PASS.
 - `python3 scripts/check_screen_layout_static.py`: PASS.
 - `python3 scripts/check_print_report_static.py`: PASS.

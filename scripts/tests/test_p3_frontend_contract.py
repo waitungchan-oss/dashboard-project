@@ -58,6 +58,13 @@ class P3FrontendContractTests(unittest.TestCase):
         self.assertIn("p3_issue_tracker:", self.app)
         self.assertNotIn("tabFilterMenu", self.index[self.index.index('id="p3_issue_tracker"'):self.index.index('id="p3_comparison"')])
 
+    def test_issue_tracker_print_manifest_uses_direct_children(self) -> None:
+        manifest = self.app[self.app.index("p3_issue_tracker:"):]
+        manifest = manifest[:manifest.index("\n        }", 1)]
+        self.assertIn("path: [0]", manifest)
+        self.assertIn("path: [1]", manifest)
+        self.assertNotIn("path: [2]", manifest)
+
     def test_provider_field_deltas_and_rank_fields_are_renderer_contract(self) -> None:
         renderer = (ROOT / "js" / "p3-renderers.js").read_text(encoding="utf-8")
         for needle in ("scoreDelta", "nDelta", "valueDelta", "rateDelta", "countDelta", "rankDelta"):

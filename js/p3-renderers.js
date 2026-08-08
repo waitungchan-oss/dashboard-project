@@ -79,7 +79,16 @@ export const renderP3IssueTracker = (container, issues, filters = {}, options = 
     const allIssues = issueList(issues) || [];
     const invalidCount = allIssues.filter((issue) => !isCompleteIssue(issue)).length;
     const filtered = filterP3Issues(allIssues, filters);
-    if (grid) grid.replaceChildren(...filtered.map((issue) => makeIssueCard(issue, options.currentMonth)));
+    if (grid) {
+        if (!filtered.length) {
+            const message = allIssues.length
+                ? '沒有符合目前篩選條件的營運問題。'
+                : '目前沒有營運問題。';
+            grid.replaceChildren(create('p', 'p-4 border border-gray-200 bg-gray-50 text-gray-600 text-sm', message));
+        } else {
+            grid.replaceChildren(...filtered.map((issue) => makeIssueCard(issue, options.currentMonth)));
+        }
+    }
     if (count) count.textContent = `顯示 ${filtered.length} 筆問題`;
     if (status) status.textContent = invalidCount ? `已排除 ${invalidCount} 筆不完整問題資料。` : `已載入 ${allIssues.length} 筆問題。`;
 };

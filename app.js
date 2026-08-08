@@ -924,7 +924,7 @@ const DashboardApp = (function() {
         },
         p3_issue_tracker: {
             title: '營運問題追蹤',
-            pages: [{ blocks: [{ path: [0] }, { path: [1] }, { path: [2] }] }]
+            pages: [{ blocks: [{ path: [0] }, { path: [1] }] }]
         }
     };
 
