@@ -246,3 +246,102 @@ export const renderP3Comparison = (container, comparison, options = {}) => {
     const statusRegion = container.querySelector('#p3ComparisonStatus');
     if (statusRegion) statusRegion.textContent = options.message || `已比較 ${text(comparison.baseMonth)} 與 ${text(comparison.compareMonth)}`;
 };
+
+const VALUE_CHAIN_STAGE_LABELS = {
+    recommendation_intention: '推薦意願',
+    long_feedback_sentiment: '長評情緒',
+    member_status: '會員狀態',
+    message_consent: '訊息同意',
+    repeat_customer: '回訪客群'
+};
+
+const valueChainStatusLabel = (status) => ({
+    complete: '完整：目前資料可呈現已觀察的價值鏈路',
+    partial: '部分完整：僅呈現有資料支持的階段與連結',
+    unavailable: '不可用：目前沒有足夠的 P3 資料'
+}[status] || '不可用：P3 資料狀態未定義');
+
+const sourceRefsPresent = (value) => Array.isArray(value) && value.length > 0;
+
+export const getP3CustomerValueChainViewModel = (snapshot) => {
+    const chain = snapshot?.customerValueChain;
+    const allowedStatuses = new Set(['complete', 'partial', 'unavailable']);
+    const initialStatus = allowedStatuses.has(chain?.status) ? chain.status : 'unavailable';
+    const unavailable = [
+        ...(Array.isArray(chain?.unavailable) ? chain.unavailable : chain?.unavailable ? [chain.unavailable] : []),
+        ...(Array.isArray(chain?.unavailableLinks) ? chain.unavailableLinks : [])
+    ].filter(Boolean).map(String);
+    const stages = Array.isArray(chain?.stages)
+        ? chain.stages.filter(stage => stage && typeof stage === 'object').map(stage => ({
+            ...stage,
+            label: stage.label || VALUE_CHAIN_STAGE_LABELS[stage.key] || text(stage.key)
+        }))
+        : [];
+    const links = [];
+    (Array.isArray(chain?.links) ? chain.links : []).forEach((link) => {
+        if (link && sourceRefsPresent(link.sourceRefs)) {
+            links.push(link);
+            return;
+        }
+        const linkKey = link?.key || `${text(link?.from, 'unknown')} to ${text(link?.to, 'unknown')}`;
+        unavailable.push(`連結 ${linkKey} 缺少 sourceRefs，未呈現。`);
+    });
+    const status = initialStatus === 'complete' && unavailable.length ? 'partial' : initialStatus;
+    return {
+        period: snapshot?.period || null,
+        status,
+        stages,
+        links,
+        unavailable: [...new Set(unavailable)]
+    };
+};
+
+const valueChainTarget = (container, selector) => container?.matches?.(selector)
+    ? container
+    : container?.querySelector?.(selector);
+
+const renderValueChainItems = (target, items, builder, emptyMessage) => {
+    if (!target) return;
+    target.replaceChildren(...(items.length ? items.map(builder) : [
+        create('p', 'p-4 border border-gray-200 bg-gray-50 text-gray-600 text-sm', emptyMessage)
+    ]));
+};
+
+export const renderP3CustomerValueChainUnavailable = (container, message = '客戶價值鏈路資料不可用') => {
+    if (!container) return;
+    const status = valueChainTarget(container, '#p3ValueChainStatus');
+    const stages = valueChainTarget(container, '#p3ValueChainStages');
+    const links = valueChainTarget(container, '#p3ValueChainLinks');
+    const unavailable = valueChainTarget(container, '#p3ValueChainUnavailable');
+    if (status) status.textContent = message;
+    if (stages) stages.replaceChildren();
+    if (links) links.replaceChildren();
+    if (unavailable) unavailable.replaceChildren(create('p', 'p-4 border border-red-200 bg-red-50 text-red-800 text-sm', message));
+};
+
+export const renderP3CustomerValueChain = (container, snapshot) => {
+    if (!container) return;
+    const model = getP3CustomerValueChainViewModel(snapshot);
+    if (model.status === 'unavailable') {
+        renderP3CustomerValueChainUnavailable(container, `不可用：${model.unavailable.join('；') || valueChainStatusLabel(model.status)}`);
+        return;
+    }
+    const status = valueChainTarget(container, '#p3ValueChainStatus');
+    const stages = valueChainTarget(container, '#p3ValueChainStages');
+    const links = valueChainTarget(container, '#p3ValueChainLinks');
+    const unavailable = valueChainTarget(container, '#p3ValueChainUnavailable');
+    if (status) status.textContent = valueChainStatusLabel(model.status);
+    renderValueChainItems(stages, model.stages, (stage) => create(
+        'article', 'bg-white border border-gray-200 p-4 min-w-0',
+        `${text(stage.label)}：${formatValue(stage.value)}${stage.unit ? `（${stage.unit}）` : ''}${stage.n !== undefined ? `；N=${formatValue(stage.n)}` : ''}`
+    ), '目前沒有可觀察的價值鏈階段。');
+    renderValueChainItems(links, model.links, (link) => create(
+        'article', 'bg-white border border-green-200 p-4 min-w-0',
+        `${text(link.label || link.key)}：${formatValue(link.value)}（來源 ${link.sourceRefs.map(source => `${text(source.month)} ${text(source.path || source.section, '')}`).join('、')}）`
+    ), '目前沒有具備 sourceRefs 的價值鏈連結。');
+    if (unavailable) {
+        unavailable.replaceChildren(...(model.unavailable.length
+            ? model.unavailable.map(reason => create('p', 'text-sm text-amber-800', reason))
+            : [create('p', 'text-sm text-gray-600', '沒有額外的不可用原因。')]));
+    }
+};

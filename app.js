@@ -18,7 +18,10 @@ import {
     renderP3Comparison,
     renderP3ComparisonUnavailable,
     renderP3IssueTracker,
-    renderP3IssueTrackerUnavailable
+    renderP3IssueTrackerUnavailable,
+    getP3CustomerValueChainViewModel,
+    renderP3CustomerValueChain,
+    renderP3CustomerValueChainUnavailable
 } from './js/p3-renderers.js';
 
 let DataStore = {};
@@ -148,6 +151,12 @@ const p3ComparisonState = {
 const p3IssueTrackerState = {
     filters: { category: '', department: '', status: '', priority: '' },
     currentMonth: DEFAULT_MONTH
+};
+
+const p3CustomerValueChainState = {
+    monthKey: DEFAULT_MONTH,
+    loading: false,
+    requestId: 0
 };
 
 const getP3IssueTrackerContainer = () => document.getElementById('p3_issue_tracker');
@@ -298,6 +307,65 @@ const setupP3Comparison = () => {
         refreshP3ComparisonOnOpen();
     };
     void loadP3MonthComparison(p3ComparisonState.baseMonth, p3ComparisonState.compareMonth);
+};
+
+const getP3CustomerValueChainContainer = () => document.getElementById('p3_customer_value_chain');
+
+const populateP3CustomerValueChainMonthSelector = (monthKey = currentMonthKey) => {
+    const selector = document.getElementById('p3ValueChainMonthSelector');
+    if (!selector) return;
+    const selected = MonthCatalog.months.some(month => month.key === monthKey) ? monthKey : MonthCatalog.defaultMonth;
+    selector.innerHTML = MonthCatalog.months.map(month => `<option value="${escapeHTML(month.key)}"${month.key === selected ? ' selected' : ''}>${escapeHTML(month.label)}</option>`).join('');
+    p3CustomerValueChainState.monthKey = selected;
+};
+
+const renderP3CustomerValueChainView = (snapshot = P3State.activeMonth, monthKey = p3CustomerValueChainState.monthKey) => {
+    const container = getP3CustomerValueChainContainer();
+    if (!container) return;
+    p3CustomerValueChainState.monthKey = monthKey || currentMonthKey;
+    if (!snapshot || snapshot.status === 'error') {
+        renderP3CustomerValueChainUnavailable(container, snapshot?.error?.message || 'P3 客戶價值鏈路載入失敗。');
+        return;
+    }
+    if (snapshot.status === 'unavailable' || !snapshot.customerValueChain) {
+        renderP3CustomerValueChainUnavailable(container, snapshot.reason || '此月份沒有可用的 P3 客戶價值鏈路資料。');
+        return;
+    }
+    renderP3CustomerValueChain(container, snapshot);
+};
+
+const refreshP3CustomerValueChain = async (monthKey = currentMonthKey) => {
+    const container = getP3CustomerValueChainContainer();
+    if (!container) return;
+    populateP3CustomerValueChainMonthSelector(monthKey);
+    if (!P3State.provider) initializeP3Provider();
+    const requestId = ++p3CustomerValueChainState.requestId;
+    p3CustomerValueChainState.loading = true;
+    const status = document.getElementById('p3ValueChainStatus');
+    if (status) status.textContent = `正在載入 ${formatMonthLabel(monthKey)} 的客戶價值鏈路…`;
+    try {
+        const snapshot = await P3State.provider.loadP3Month(monthKey);
+        if (requestId === p3CustomerValueChainState.requestId) renderP3CustomerValueChainView(snapshot, monthKey);
+    } catch (error) {
+        if (requestId === p3CustomerValueChainState.requestId) renderP3CustomerValueChainUnavailable(container, error.message || '客戶價值鏈路載入失敗。');
+    } finally {
+        if (requestId === p3CustomerValueChainState.requestId) p3CustomerValueChainState.loading = false;
+    }
+};
+
+const setupP3CustomerValueChain = () => {
+    const container = getP3CustomerValueChainContainer();
+    const selector = document.getElementById('p3ValueChainMonthSelector');
+    if (!container || !selector) return;
+    populateP3CustomerValueChainMonthSelector(currentMonthKey);
+    selector.onchange = (event) => void refreshP3CustomerValueChain(event.target.value);
+    const previousUpdate = P3State.onUpdate;
+    P3State.onUpdate = (snapshot, monthKey, state) => {
+        if (typeof previousUpdate === 'function') previousUpdate(snapshot, monthKey, state);
+        populateP3CustomerValueChainMonthSelector(monthKey || currentMonthKey);
+        renderP3CustomerValueChainView(snapshot, monthKey || currentMonthKey);
+    };
+    renderP3CustomerValueChainView(P3State.activeMonth, currentMonthKey);
 };
 
 const populateMonthSelector = () => {
@@ -925,6 +993,10 @@ const DashboardApp = (function() {
         p3_issue_tracker: {
             title: '營運問題追蹤',
             pages: [{ blocks: [{ path: [0] }, { path: [1] }] }]
+        },
+        p3_customer_value_chain: {
+            title: '客戶價值鏈路',
+            pages: [{ blocks: [{ path: [0] }, { path: [1] }, { path: [2] }, { path: [3] }] }]
         }
     };
 
@@ -1135,6 +1207,7 @@ const DashboardApp = (function() {
                 this.initCharts();
                 this.setupEventListeners();
                 setupP3Comparison();
+                setupP3CustomerValueChain();
                 renderP3IssueTrackerView(currentMonthKey);
             } catch (e) {
                 console.error("Dashboard Initialization Critical Error:", e);
@@ -1397,6 +1470,7 @@ const DashboardApp = (function() {
         switchTab: function(tabId, btnElement) {
             if (tabId === 'p3_comparison') refreshP3ComparisonOnOpen();
             if (tabId === 'p3_issue_tracker') renderP3IssueTrackerView(currentMonthKey);
+            if (tabId === 'p3_customer_value_chain') void refreshP3CustomerValueChain(currentMonthKey);
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             const target = document.getElementById(tabId);
             if (target) target.classList.add('active');

@@ -1456,6 +1456,7 @@
                 <button data-tab-id="analysis" onclick="DashboardApp.switchTab('analysis', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-lightbulb mr-2"></i>綜合意見</button>
                 <button data-tab-id="p3_comparison" onclick="DashboardApp.switchTab('p3_comparison', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-arrows-alt-h mr-2"></i>月份比較</button>
                 <button data-tab-id="p3_issue_tracker" onclick="DashboardApp.switchTab('p3_issue_tracker', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-tasks mr-2"></i>營運問題追蹤</button>
+                <button data-tab-id="p3_customer_value_chain" onclick="DashboardApp.switchTab('p3_customer_value_chain', this)" class="tab-btn flex items-center px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 whitespace-nowrap transition-all"><i class="fas fa-route mr-2"></i>客戶價值鏈路</button>
             </div>
 
             <!-- Filter Button & Menu -->
@@ -1535,6 +1536,30 @@
             <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100" aria-labelledby="p3-sentiment-heading">
                 <h2 id="p3-sentiment-heading" class="text-xl font-bold text-gray-900 mb-4">情緒分類比較</h2>
                 <div id="p3SentimentComparison" class="overflow-x-auto"></div>
+            </section>
+        </div>
+
+        <div id="p3_customer_value_chain" class="tab-content space-y-6" data-print-title="客戶價值鏈路">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex flex-col lg:flex-row lg:items-end gap-4">
+                    <div class="flex-1 min-w-0">
+                        <label for="p3ValueChainMonthSelector" class="block text-sm font-bold text-gray-800 mb-2">資料月份</label>
+                        <select id="p3ValueChainMonthSelector" aria-label="選擇客戶價值鏈路月份" class="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded-lg px-3 py-2"></select>
+                    </div>
+                </div>
+                <p id="p3ValueChainStatus" class="mt-4 text-sm text-gray-600" aria-live="polite">正在載入客戶價值鏈路資料…</p>
+            </div>
+            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100" aria-labelledby="p3-value-chain-stages-heading">
+                <h2 id="p3-value-chain-stages-heading" class="text-xl font-bold text-gray-900 mb-4">已觀察階段</h2>
+                <div id="p3ValueChainStages" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+            </section>
+            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100" aria-labelledby="p3-value-chain-links-heading">
+                <h2 id="p3-value-chain-links-heading" class="text-xl font-bold text-gray-900 mb-4">具備來源的連結</h2>
+                <div id="p3ValueChainLinks" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </section>
+            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100" aria-labelledby="p3-value-chain-unavailable-heading">
+                <h2 id="p3-value-chain-unavailable-heading" class="text-xl font-bold text-gray-900 mb-4">資料限制</h2>
+                <div id="p3ValueChainUnavailable" class="space-y-2"></div>
             </section>
         </div>
 

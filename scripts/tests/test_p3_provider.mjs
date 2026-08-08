@@ -8,7 +8,10 @@ import {
 } from '../../js/p3-data-provider.js';
 import {
     filterP3Issues,
-    renderP3IssueTracker
+    renderP3IssueTracker,
+    getP3CustomerValueChainViewModel,
+    renderP3CustomerValueChain,
+    renderP3CustomerValueChainUnavailable
 } from '../../js/p3-renderers.js';
 
 const issue = (overrides = {}) => ({
@@ -66,6 +69,30 @@ const snapshot = (period, overrides = {}) => ({
         links: [],
         unavailable: false,
         unavailableLinks: ['recommendation_to_consent']
+    },
+    ...overrides
+});
+
+const valueChainSnapshot = (overrides = {}) => ({
+    period: '202605',
+    customerValueChain: {
+        status: 'complete',
+        stages: [
+            { key: 'recommendation_intention', label: '推薦意願', value: 8, unit: 'count', n: 10, sourceRefs: [{ month: '202605', path: 'p3#/stages/0' }] },
+            { key: 'long_feedback_sentiment', label: '長評情緒', value: 'positive', n: 7, sourceRefs: [{ month: '202605', path: 'p3#/stages/1' }] },
+            { key: 'member_status', label: '會員狀態', value: 'member', n: 6, sourceRefs: [{ month: '202605', path: 'p3#/stages/2' }] },
+            { key: 'message_consent', label: '訊息同意', value: 5, unit: 'count', n: 10, sourceRefs: [{ month: '202605', path: 'p3#/stages/3' }] },
+            { key: 'repeat_customer', label: '回訪客群', value: 3, unit: 'count', n: 10, sourceRefs: [{ month: '202605', path: 'p3#/stages/4' }] }
+        ],
+        links: [{
+            key: 'recommendation_to_member',
+            from: 'recommendation_intention',
+            to: 'member_status',
+            label: '推薦意願至會員狀態',
+            value: 4,
+            sourceRefs: [{ month: '202605', path: 'p3#/links/0' }]
+        }],
+        unavailable: []
     },
     ...overrides
 });
@@ -311,4 +338,117 @@ test('keeps P3 lifecycle work off the existing dashboard critical path', () => {
     assert.doesNotMatch(appSource, /await initializeP3Provider\(\)/);
     assert.doesNotMatch(appSource, /await refreshP3ForMonth\(monthKey\)/);
     assert.match(appSource, /P3State\.onUpdate/);
+});
+
+test('builds a complete customer value chain view model from observed stages and sourced links', () => {
+    const model = getP3CustomerValueChainViewModel(valueChainSnapshot());
+
+    assert.equal(model.status, 'complete');
+    assert.deepEqual(model.stages.map(stage => stage.key), [
+        'recommendation_intention', 'long_feedback_sentiment', 'member_status',
+        'message_consent', 'repeat_customer'
+    ]);
+    assert.equal(model.links.length, 1);
+    assert.match(model.stages.find(stage => stage.key === 'repeat_customer').label, /回訪客群/);
+    assert.doesNotMatch(JSON.stringify(model), /repeat_purchase/);
+
+    const container = fakeDocument.createElement('section');
+    const status = fakeDocument.createElement('p');
+    const stages = fakeDocument.createElement('div');
+    const links = fakeDocument.createElement('div');
+    const unavailable = fakeDocument.createElement('div');
+    container.querySelector = (selector) => ({
+        '#p3ValueChainStatus': status,
+        '#p3ValueChainStages': stages,
+        '#p3ValueChainLinks': links,
+        '#p3ValueChainUnavailable': unavailable
+    }[selector]);
+    global.document = fakeDocument;
+    renderP3CustomerValueChain(container, valueChainSnapshot());
+    assert.match(status.textContent, /完整/);
+    assert.equal(stages.children.length, 5);
+    assert.equal(links.children.length, 1);
+});
+
+test('preserves partial status and exact unavailable reasons without inventing links', () => {
+    const partialSnapshot = valueChainSnapshot({
+        customerValueChain: {
+            status: 'partial',
+            stages: [{ key: 'repeat_customer', label: '回訪客群', value: 3, sourceRefs: [] }],
+            links: [],
+            unavailable: ['consent_to_verified_future_repurchase: no joint source']
+        }
+    });
+    const model = getP3CustomerValueChainViewModel(partialSnapshot);
+
+    assert.equal(model.status, 'partial');
+    assert.deepEqual(model.links, []);
+    assert.deepEqual(model.unavailable, ['consent_to_verified_future_repurchase: no joint source']);
+
+    const container = fakeDocument.createElement('section');
+    const status = fakeDocument.createElement('p');
+    const stages = fakeDocument.createElement('div');
+    const links = fakeDocument.createElement('div');
+    const unavailable = fakeDocument.createElement('div');
+    container.querySelector = (selector) => ({
+        '#p3ValueChainStatus': status,
+        '#p3ValueChainStages': stages,
+        '#p3ValueChainLinks': links,
+        '#p3ValueChainUnavailable': unavailable
+    }[selector]);
+    global.document = fakeDocument;
+    renderP3CustomerValueChain(container, partialSnapshot);
+    assert.match(status.textContent, /部分完整/);
+    assert.match(JSON.stringify(unavailable), /consent_to_verified_future_repurchase/);
+});
+
+test('renders unavailable customer chain with no fabricated link', () => {
+    const container = fakeDocument.createElement('section');
+    const status = fakeDocument.createElement('p');
+    const stages = fakeDocument.createElement('div');
+    const links = fakeDocument.createElement('div');
+    const unavailable = fakeDocument.createElement('div');
+    container.querySelector = (selector) => ({
+        '#p3ValueChainStatus': status,
+        '#p3ValueChainStages': stages,
+        '#p3ValueChainLinks': links,
+        '#p3ValueChainUnavailable': unavailable
+    }[selector]);
+    global.document = fakeDocument;
+
+    renderP3CustomerValueChain(container, {
+        period: '202604',
+        customerValueChain: { status: 'unavailable', stages: [], links: [], unavailable: ['P3 snapshot missing'] }
+    });
+
+    assert.match(status.textContent, /unavailable|不可用/i);
+    assert.equal(links.children.length, 0);
+    assert.match(JSON.stringify(unavailable), /P3 snapshot missing/);
+});
+
+test('requires sourceRefs before a customer value chain link can render', () => {
+    const model = getP3CustomerValueChainViewModel(valueChainSnapshot({
+        customerValueChain: {
+            status: 'complete',
+            stages: [],
+            links: [{ key: 'unsupported', from: 'a', to: 'b', value: 9, sourceRefs: [] }],
+            unavailable: []
+        }
+    }));
+
+    assert.deepEqual(model.links, []);
+    assert.match(model.unavailable.join(' '), /sourceRefs|來源/);
+});
+
+test('explicit unavailable renderer keeps the value-chain tab isolated', () => {
+    const container = fakeDocument.createElement('section');
+    const status = fakeDocument.createElement('p');
+    const unavailable = fakeDocument.createElement('div');
+    container.querySelector = (selector) => selector === '#p3ValueChainStatus' ? status : unavailable;
+    global.document = fakeDocument;
+
+    renderP3CustomerValueChainUnavailable(container, '沒有 P3 snapshot');
+
+    assert.equal(status.textContent, '沒有 P3 snapshot');
+    assert.match(JSON.stringify(unavailable), /沒有 P3 snapshot/);
 });

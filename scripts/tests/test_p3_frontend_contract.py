@@ -65,6 +65,33 @@ class P3FrontendContractTests(unittest.TestCase):
         self.assertIn("path: [1]", manifest)
         self.assertNotIn("path: [2]", manifest)
 
+    def test_customer_value_chain_tab_has_standalone_contract(self) -> None:
+        for needle in (
+            'data-tab-id="p3_customer_value_chain"',
+            'id="p3_customer_value_chain"',
+            'id="p3ValueChainMonthSelector"',
+            'id="p3ValueChainStatus"',
+            'id="p3ValueChainStages"',
+            'id="p3ValueChainLinks"',
+            'id="p3ValueChainUnavailable"',
+            'getP3CustomerValueChainViewModel',
+            'renderP3CustomerValueChain',
+            'renderP3CustomerValueChainUnavailable',
+        ):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, self.index + self.app)
+
+    def test_customer_value_chain_uses_manifest_and_refreshes_on_p3_update(self) -> None:
+        self.assertIn('p3ValueChainMonthSelector', self.app)
+        self.assertIn('MonthCatalog.months', self.app)
+        self.assertIn("if (tabId === 'p3_customer_value_chain')", self.app)
+        self.assertIn('renderP3CustomerValueChainUnavailable', self.app)
+
+    def test_customer_value_chain_does_not_claim_repeat_purchase_without_source(self) -> None:
+        renderer = (ROOT / "js" / "p3-renderers.js").read_text(encoding="utf-8")
+        self.assertNotIn('repeat_purchase', renderer)
+        self.assertIn('sourceRefs', renderer)
+
     def test_provider_field_deltas_and_rank_fields_are_renderer_contract(self) -> None:
         renderer = (ROOT / "js" / "p3-renderers.js").read_text(encoding="utf-8")
         for needle in ("scoreDelta", "nDelta", "valueDelta", "rateDelta", "countDelta", "rankDelta"):
