@@ -54,6 +54,7 @@
         
         .tab-content { display: none; animation: fadeIn 0.4s ease-in-out; }
         .tab-content.active { display: block; }
+        body:not(.print-mode) .tab-content:not(.active) { display: none !important; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
         /* 移除強烈懸浮動畫，改為微弱陰影 */
@@ -1479,19 +1480,19 @@
                 <div class="flex flex-col lg:flex-row gap-4">
                     <div class="flex-1 min-w-0">
                         <label for="p3IssueCategoryFilter" class="block text-sm font-bold text-gray-800 mb-2">類別</label>
-                        <select id="p3IssueCategoryFilter" class="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded-lg px-3 py-2"></select>
+                        <select id="p3IssueCategoryFilter" aria-label="依營運問題類別篩選" class="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded-lg px-3 py-2"></select>
                     </div>
                     <div class="flex-1 min-w-0">
                         <label for="p3IssueDepartmentFilter" class="block text-sm font-bold text-gray-800 mb-2">負責部門</label>
-                        <select id="p3IssueDepartmentFilter" class="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded-lg px-3 py-2"></select>
+                        <select id="p3IssueDepartmentFilter" aria-label="依負責部門篩選營運問題" class="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded-lg px-3 py-2"></select>
                     </div>
                     <div class="flex-1 min-w-0">
                         <label for="p3IssueStatusFilter" class="block text-sm font-bold text-gray-800 mb-2">狀態</label>
-                        <select id="p3IssueStatusFilter" class="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded-lg px-3 py-2"></select>
+                        <select id="p3IssueStatusFilter" aria-label="依營運問題狀態篩選" class="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded-lg px-3 py-2"></select>
                     </div>
                     <div class="flex-1 min-w-0">
                         <label for="p3IssuePriorityFilter" class="block text-sm font-bold text-gray-800 mb-2">優先級</label>
-                        <select id="p3IssuePriorityFilter" class="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded-lg px-3 py-2"></select>
+                        <select id="p3IssuePriorityFilter" aria-label="依營運問題優先級篩選" class="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded-lg px-3 py-2"></select>
                     </div>
                 </div>
                 <p id="p3IssueStatus" class="mt-4 text-sm text-gray-600" aria-live="polite">正在載入營運問題 register…</p>

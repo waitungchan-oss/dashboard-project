@@ -35,6 +35,64 @@ class P3FrontendContractTests(unittest.TestCase):
         self.assertIn("renderP3Comparison", self.app)
         self.assertIn("p3_comparison:", self.app)
 
+    def test_p3_print_titles_and_manifest_cover_all_tabs(self) -> None:
+        expected = {
+            "p3_comparison": "月份比較",
+            "p3_issue_tracker": "營運問題追蹤",
+            "p3_customer_value_chain": "客戶價值鏈路",
+        }
+        for tab_id, title in expected.items():
+            with self.subTest(tab_id=tab_id):
+                self.assertIn(f'id="{tab_id}" class="tab-content', self.index)
+                self.assertIn(f'data-print-title="{title}"', self.index)
+                self.assertIn(f"{tab_id}: {{", self.app)
+                self.assertIn(f"title: '{title}'", self.app)
+
+    def test_p3_print_keeps_existing_print_page_flow(self) -> None:
+        for needle in (
+            "const PRINT_SECTION_MANIFEST = {",
+            "const makePrintPage = ({ title, monthLabel, pageNumber, blocks }) =>",
+            "const appendPrintSection = (container, section, monthLabel, pageCounter) =>",
+            "const buildPrintReport = () =>",
+            "page.className = 'print-page';",
+            "pageNumber = appendPrintSection(container, section, monthLabel, pageNumber);",
+        ):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, self.app)
+
+    def test_p3_selectors_have_direct_accessible_labels(self) -> None:
+        for selector_id in (
+            "p3BaseMonthSelector",
+            "p3CompareMonthSelector",
+            "p3ValueChainMonthSelector",
+            "p3IssueCategoryFilter",
+            "p3IssueDepartmentFilter",
+            "p3IssueStatusFilter",
+            "p3IssuePriorityFilter",
+        ):
+            with self.subTest(selector_id=selector_id):
+                selector = self.index[self.index.index(f'id="{selector_id}"'):]
+                selector = selector[:selector.index(">") + 1]
+                self.assertIn("aria-label=", selector)
+
+    def test_p3_inactive_tabs_are_isolated_on_screen(self) -> None:
+        self.assertIn(
+            "body:not(.print-mode) .tab-content:not(.active) {",
+            self.index,
+        )
+
+    def test_p3_status_regions_are_live_and_print_titles_are_present(self) -> None:
+        for status_id in (
+            "p3ComparisonStatus",
+            "p3IssueStatus",
+            "p3IssueResultCount",
+            "p3ValueChainStatus",
+        ):
+            with self.subTest(status_id=status_id):
+                status = self.index[self.index.index(f'id="{status_id}"'):]
+                status = status[:status.index(">") + 1]
+                self.assertIn('aria-live="polite"', status)
+
     def test_issue_tracker_tab_has_local_controls_and_renderer_wiring(self) -> None:
         for needle in (
             'data-tab-id="p3_issue_tracker"',
