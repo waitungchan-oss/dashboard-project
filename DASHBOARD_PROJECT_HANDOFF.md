@@ -120,18 +120,36 @@ data/202605.json
 - `202604` 是 legacy schema，保留歷史資料，不強制補齊所有 5 月後新增欄位。
 - `202605` 是 current schema，作為後續新增月份的標準參考。
 
-### 5. 目前沒有資料庫層
+### 5. P3 分析資料層
+
+P3 以獨立 derived layer 提供月份比較、營運問題追蹤與客戶價值鏈路：
+
+```text
+data/p3/monthly/YYYYMM.json
+data/p3/issues.json
+```
+
+既有 `data/YYYYMM.json` 仍是單月份 base dashboard data；P3 不把比較欄位硬塞入
+base JSON，也不改變 `202604` legacy 語義。`P3DataProvider` 依
+`data/months.json` 的 `p3.path`／`p3.status` 載入資料。`partial` 或 `unavailable`
+代表證據不足，unavailable 不等於 0；沒有聯合資料時不可由邊際比例推導轉化人數。
+跨月份 issue 必須沿用持久 issue ID。
+
+### 6. 目前沒有資料庫層
 
 目前專案沒有 database config，也沒有 `.db` / `.sqlite` / `.duckdb`。資料層仍是：
 
 ```text
 data/months.json
 data/YYYYMM.json
+data/p3/monthly/YYYYMM.json
+data/p3/issues.json
 ```
 
 這個設計符合目前「可攜式、本地展示、月份 JSON 更新」的使用場景。只有在需要跨月份查詢、資料量變大、多使用者、登入權限、近實時更新或 API 整合時，才需要重新評估 SQLite / API / PostgreSQL。
+P3 不引入 API、database 或正式 backend，仍是 portable JSON-only 架構。
 
-### 6. 目前可用的月更 SOP
+### 7. 目前可用的月更 SOP
 
 月更流程已整理在：
 
@@ -141,11 +159,20 @@ MONTHLY_DATA_IMPORT.md
 
 後續新增 2026 年 6 月、7 月等月份時，主要流程是：
 
-1. 建立備份。
-2. 新增 `data/YYYYMM.json`。
-3. 更新 `data/months.json`。
-4. 執行驗證腳本。
-5. 用 HTTP server 開啟 dashboard 驗收。
+1. 清理並核對來源資料，建立備份。
+2. 新增或更新 `data/YYYYMM.json`，不改 legacy semantics。
+3. 建立 `data/p3/monthly/YYYYMM.json`。
+4. Issue 出現或改變時更新 `data/p3/issues.json`，保留既有 issue ID。
+5. 更新 `data/months.json` 的 P3 path/status。
+6. 執行：
+
+```sh
+python3 scripts/validate_month_schema.py --all --strict-warnings
+python3 scripts/validate_p3.py --all --strict-warnings
+python3 scripts/check_month_consistency.py --all --strict-warnings
+```
+
+7. 執行 `python3 scripts/hermes_dashboard_check.py --json` 與 HTTP/UI 驗收，完成後停止 server。
 
 ## 重要規則
 

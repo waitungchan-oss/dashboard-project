@@ -1,6 +1,6 @@
 # 月份資料更新 SOP
 
-更新日期：2026-07-03
+更新日期：2026-08-08
 
 此專案以「每個月份一個純 JSON 檔」管理資料。儀表板會先讀取 `data/months.json` 產生月份選單，再按月份讀取 `data/YYYYMM.json`。
 
@@ -89,7 +89,41 @@ python3 -m json.tool data/YYYYMM.json >/dev/null
 分別檢查 current / legacy 月份，允許新增未知圖表與洞察欄位，不限制圖表顏色、排序或 layout。
 資料口徑與 count 一致性仍由 `check_month_consistency.py` 負責。
 
-## 5. 啟動與 HTTP 驗收
+## 5. P3 月度分析更新流程
+
+P3 是獨立的 derived analysis layer。既有 `data/YYYYMM.json` 是單月份 dashboard
+資料；`data/p3/monthly/YYYYMM.json` 是月份比較、營運問題追蹤與客戶價值鏈路的
+標準化快照；`data/p3/issues.json` 是跨月份 issue register。P3 由
+`P3DataProvider` 載入，不把 P3 交叉計算塞回 base monthly JSON。
+
+每月依下列順序更新：
+
+1. 清理並核對當月來源資料與樣本口徑，先建立備份。
+2. 新增或更新 `data/YYYYMM.json`；`202604` 等 legacy 月份保留原有語義，不為了 P3
+   補欄位或重建歷史資料。
+3. 依觀察到的來源欄位建立 `data/p3/monthly/YYYYMM.json`，補上 `sourceRefs`、月份、
+   樣本口徑與 calculation note。
+4. Issue 出現或內容改變時更新 `data/p3/issues.json`。既有 issue 的 `id` 必須持續
+   使用，不可因月份更新而重建 ID。
+5. 在 `data/months.json` 更新對應月份的 `p3.path` 與 `p3.status`；沒有可用證據時使用
+   `partial` 或 `unavailable`，不可用 0 代替未知值。
+6. 執行以下資料驗證：
+
+```sh
+python3 scripts/validate_month_schema.py --all --strict-warnings
+python3 scripts/validate_p3.py --all --strict-warnings
+python3 scripts/check_month_consistency.py --all --strict-warnings
+```
+
+7. 執行 `python3 scripts/hermes_dashboard_check.py --json`，再用 HTTP server 檢查
+   P3 JSON、月份切換、月份比較、營運問題追蹤與客戶價值鏈路；完成後停止 server，
+   確認沒有背景 process。
+
+P3 的 customer value chain 只呈現有來源支持的 stage/link。`partial` 與
+`unavailable` 是資料可得性狀態，不等於 0；沒有聯合觀察資料時不可由邊際比例推導
+轉化人數。P3 不引入 API 或 database，仍維持 portable JSON-only 架構。
+
+## 6. 啟動與 HTTP 驗收
 
 不要用 `file://` 開啟。使用：
 
@@ -116,7 +150,7 @@ http://127.0.0.1:8080/index.html
 - `/data/months.json`
 - `/data/YYYYMM.json`
 
-## 6. 瀏覽器驗收
+## 7. 瀏覽器驗收
 
 在瀏覽器檢查：
 
@@ -128,10 +162,12 @@ http://127.0.0.1:8080/index.html
 - 門市排行榜與門市長評正常。
 - 沒有 `failed to fetch` 或白屏。
 - 點擊「列印 PDF」後可產生列印頁面，圖表不空白，圓環圖不被壓扁。
+- P3 tab 可讀取 `data/p3/monthly/<manifest-month>.json` 與 `data/p3/issues.json`，
+  缺少證據時顯示 partial/unavailable，而不是 0。
 
 如看到舊畫面，使用 `Cmd + Shift + R` 強制重新整理。
 
-## 7. Schema 原則
+## 8. Schema 原則
 
 `202605.json` 是 current schema 參考。後續新月份應盡量補齊同級欄位，包括：
 
@@ -145,7 +181,7 @@ http://127.0.0.1:8080/index.html
 
 `202604.json` 屬 legacy schema，可保留現狀，不需要為了補齊欄位而重建舊資料。
 
-## 8. PDF 壓力測試月份
+## 9. PDF 壓力測試月份
 
 如果要測試 PDF 匯出在大量資料下是否穩定，可以使用暫時虛擬月份，但不要污染正式月份清單。
 

@@ -4,7 +4,7 @@
 
 > 核心原則：這是一個以本地 HTTP server 驅動的靜態前端 dashboard。正式驗收不可用 `file://`，必須使用 `http://127.0.0.1:<port>/index.html`。
 
-更新日期：2026-07-03
+更新日期：2026-08-08
 
 ---
 
@@ -50,7 +50,10 @@ flowchart LR
     HTML --> App["app.js\nES module entry / DashboardApp"]
     App --> Helpers["js/*.js\nDOM helpers / CSV export / dashboard utils"]
     App --> Manifest["data/months.json\n月份清單 / defaultMonth"]
-    App --> MonthData["data/YYYYMM.json\n純資料 monthly dataset"]
+    App --> MonthData["data/YYYYMM.json\n單月 base dataset"]
+    App --> P3Provider["P3DataProvider\nP3 derived analysis"]
+    P3Provider --> P3Monthly["data/p3/monthly/YYYYMM.json\ncomparison/value-chain snapshots"]
+    P3Provider --> P3Issues["data/p3/issues.json\npersistent issue register"]
     App --> ChartJS["Chart.js + DataLabels\n圖表渲染"]
     App --> DOM["DOM containers\nTables / Cards / Filters"]
     App --> PrintManifest["PRINT_SECTION_MANIFEST\nPDF 分頁 manifest"]
@@ -61,6 +64,8 @@ flowchart LR
     Manifest --> App
     Validator["scripts/validate_dashboard.py\n資料與 manifest 驗證"] -.驗證.-> Manifest
     Validator -.驗證.-> MonthData
+    P3Validator["scripts/validate_p3.py\nP3 contract validation"] -.驗證.-> P3Monthly
+    P3Validator -.驗證.-> P3Issues
     StaticChecks["scripts/check_*_static.py\nprint/screen contract checks"] -.驗證.-> HTML
     StaticChecks -.驗證.-> App
 ```
@@ -77,7 +82,11 @@ flowchart LR
 | `#printReport` | PDF/print 專用 DOM 容器；只在 `body.print-mode` 顯示 | 不應在一般 dashboard 模式中顯示 |
 | `data/months.json` | 管理可用月份、預設月份、schema 類型與狀態 | 不放圖表 formatter、不放互動邏輯 |
 | `data/YYYYMM.json` | 存放每月 dashboard 純資料 | 不放 `function`、`formatter`、`onClick`、`=>`、Chart.js config |
+| `data/p3/monthly/YYYYMM.json` | 存放月份比較、營運問題追蹤與客戶價值鏈路的 P3 derived snapshot | 不回寫 base monthly JSON，不把未知值當 0 |
+| `data/p3/issues.json` | 存放跨月份 issue register；issue ID 持續沿用 | 不因每月更新重建既有 issue ID，不放 UI runtime logic |
+| `P3DataProvider` | 依 manifest path 載入 P3 snapshot 與 issue register，提供比較資料 | 不引入 API/database，不修改 `DataStore` 的 base monthly 語義 |
 | `scripts/validate_dashboard.py` | 檢查 manifest、monthly JSON、禁用 token、schema 必要欄位與基本資料形狀 | 不啟動 dashboard、不做瀏覽器驗收 |
+| `scripts/validate_p3.py` | 檢查 P3 schema、manifest path、sourceRefs、算術與跨月份 issue 契約 | 不修改 JSON、不把 unavailable 修成 0 |
 | `scripts/check_print_report_static.py` | 檢查 PDF/print layout 的靜態契約 | 不取代瀏覽器列印驗收 |
 | `scripts/check_screen_layout_static.py` | 檢查一般畫面不被 print layout 污染 | 不取代人工 UI 檢查 |
 
@@ -106,6 +115,8 @@ flowchart LR
 
 - JSON manifest：`data/months.json`
 - JSON monthly dataset：`data/202604.json`、`data/202605.json`
+- P3 derived monthly snapshots：`data/p3/monthly/202604.json` 至 `data/p3/monthly/202607.json`
+- P3 issue register：`data/p3/issues.json`
 - CSV export：由 `app.js` 在瀏覽器端產生，包含 BOM 與 DDE injection 防護
 
 ### 目前仍依賴 CDN 的資源
@@ -121,6 +132,22 @@ flowchart LR
 因此，現階段不是完全離線版。若要斷網使用，需要先做 CDN assets 本地化。
 
 ---
+
+## 4A. P3 分析資料層與月更邊界
+
+`data/YYYYMM.json` 是單月份 base dashboard data，維持 current／legacy schema 語義；
+`data/p3/monthly/YYYYMM.json` 是獨立的比較、營運問題追蹤與客戶價值鏈路 derived
+layer。`data/months.json` 只提供 P3 的 `path` 與 `status`，由 `P3DataProvider`
+載入，不改變既有月份載入流程。
+
+資料不足時使用明確的 `partial` 或 `unavailable` 狀態與原因；unavailable 不等於
+zero，不能用獨立百分比推導未觀察的聯合轉化。跨月份 issue 使用持久 ID，更新只追加
+觀察或狀態，不因月份重建 ID。P3 維持 portable JSON-only，不新增 API、database 或
+正式 backend。
+
+月更執行順序與命令以 `MONTHLY_DATA_IMPORT.md` 為準：更新 base JSON、P3 snapshot、
+issue register 與 manifest 後，執行 `validate_month_schema.py`、`validate_p3.py`、
+`check_month_consistency.py`，再執行 Hermes 與 HTTP/UI 驗收。
 
 ## 4. 啟動與 HTTP serving 流程
 
