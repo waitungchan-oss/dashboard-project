@@ -133,7 +133,10 @@ const p3ComparisonState = {
     baseMonth: null,
     compareMonth: null,
     loading: false,
-    requestId: 0
+    requestId: 0,
+    latestGlobalMonth: DEFAULT_MONTH,
+    updateVersion: 0,
+    stale: true
 };
 
 const getP3ComparisonContainer = () => document.getElementById('p3_comparison');
@@ -155,7 +158,8 @@ const populateP3ComparisonSelectors = (baseMonth = currentMonthKey) => {
 
     const months = MonthCatalog.months.filter(month => month.status === 'ready');
     const selectedBase = months.some(month => month.key === baseMonth) ? baseMonth : months[0]?.key;
-    const selectedCompare = p3ComparisonState.compareMonth && months.some(month => month.key === p3ComparisonState.compareMonth)
+    const selectedCompare = p3ComparisonState.compareMonth && p3ComparisonState.compareMonth !== selectedBase
+        && months.some(month => month.key === p3ComparisonState.compareMonth)
         ? p3ComparisonState.compareMonth
         : getAlternativeMonth(selectedBase);
     const options = (selected) => months.map(month => `<option value="${escapeHTML(month.key)}"${month.key === selected ? ' selected' : ''}>${escapeHTML(month.label)}</option>`).join('');
@@ -175,13 +179,16 @@ const loadP3MonthComparison = async (baseMonth, compareMonth) => {
     }
     if (!P3State.provider) initializeP3Provider();
     const requestId = ++p3ComparisonState.requestId;
+    const updateVersion = p3ComparisonState.updateVersion;
     p3ComparisonState.loading = true;
+    p3ComparisonState.stale = true;
     setP3ComparisonStatus(`正在載入 ${formatMonthLabel(baseMonth)} 與 ${formatMonthLabel(compareMonth)} 的比較資料…`);
     try {
         const comparison = await P3State.provider.loadP3MonthComparison(baseMonth, compareMonth);
         if (requestId !== p3ComparisonState.requestId) return;
         renderP3Comparison(container, comparison);
         setP3ComparisonStatus(`已比較 ${formatMonthLabel(baseMonth)} 與 ${formatMonthLabel(compareMonth)}。`);
+        if (updateVersion === p3ComparisonState.updateVersion) p3ComparisonState.stale = false;
     } catch (error) {
         if (requestId !== p3ComparisonState.requestId) return;
         renderP3ComparisonUnavailable(container, error.message || '月份比較資料載入失敗。');
@@ -205,19 +212,28 @@ const handleP3SelectorChange = (kind, value) => {
     void loadP3MonthComparison(p3ComparisonState.baseMonth, p3ComparisonState.compareMonth);
 };
 
+const refreshP3ComparisonOnOpen = () => {
+    if (!p3ComparisonState.stale && p3ComparisonState.baseMonth && p3ComparisonState.compareMonth) return;
+    populateP3ComparisonSelectors(p3ComparisonState.latestGlobalMonth || currentMonthKey);
+    void loadP3MonthComparison(p3ComparisonState.baseMonth, p3ComparisonState.compareMonth);
+};
+
 const setupP3Comparison = () => {
     const container = getP3ComparisonContainer();
     const baseSelector = document.getElementById('p3BaseMonthSelector');
     const compareSelector = document.getElementById('p3CompareMonthSelector');
     if (!container || !baseSelector || !compareSelector) return;
+    p3ComparisonState.latestGlobalMonth = currentMonthKey;
     populateP3ComparisonSelectors(currentMonthKey);
     baseSelector.onchange = (event) => handleP3SelectorChange('base', event.target.value);
     compareSelector.onchange = (event) => handleP3SelectorChange('compare', event.target.value);
     P3State.onUpdate = (_, monthKey) => {
+        p3ComparisonState.latestGlobalMonth = monthKey || currentMonthKey;
+        p3ComparisonState.updateVersion += 1;
+        p3ComparisonState.stale = true;
         const section = getP3ComparisonContainer();
         if (!section?.classList.contains('active')) return;
-        populateP3ComparisonSelectors(monthKey);
-        void loadP3MonthComparison(p3ComparisonState.baseMonth, p3ComparisonState.compareMonth);
+        refreshP3ComparisonOnOpen();
     };
     void loadP3MonthComparison(p3ComparisonState.baseMonth, p3ComparisonState.compareMonth);
 };
@@ -1307,6 +1323,7 @@ const DashboardApp = (function() {
         },
 
         switchTab: function(tabId, btnElement) {
+            if (tabId === 'p3_comparison') refreshP3ComparisonOnOpen();
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             const target = document.getElementById(tabId);
             if (target) target.classList.add('active');

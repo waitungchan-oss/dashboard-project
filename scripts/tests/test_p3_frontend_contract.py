@@ -35,6 +35,22 @@ class P3FrontendContractTests(unittest.TestCase):
         self.assertIn("renderP3Comparison", self.app)
         self.assertIn("p3_comparison:", self.app)
 
+    def test_provider_field_deltas_and_rank_fields_are_renderer_contract(self) -> None:
+        renderer = (ROOT / "js" / "p3-renderers.js").read_text(encoding="utf-8")
+        for needle in ("scoreDelta", "nDelta", "valueDelta", "rateDelta", "countDelta", "rankDelta"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, renderer)
+        self.assertNotIn("row?.delta", renderer)
+
+    def test_inactive_p3_update_is_stale_and_reopen_refreshes(self) -> None:
+        self.assertIn("p3ComparisonState.stale = true", self.app)
+        self.assertIn("refreshP3ComparisonOnOpen", self.app)
+        self.assertIn("if (tabId === 'p3_comparison')", self.app)
+        hook = self.app[self.app.index("P3State.onUpdate"):]
+        self.assertLess(hook.index("p3ComparisonState.stale = true"), hook.index("if (!section?.classList.contains('active')) return;"))
+        switch = self.app[self.app.index("switchTab: function(tabId"):]
+        self.assertLess(switch.index("refreshP3ComparisonOnOpen()"), switch.index("document.querySelectorAll('.tab-content')"))
+
     def test_existing_tab_and_dom_contract_remains(self) -> None:
         for needle in (
             'id="globalMonthSelector"',

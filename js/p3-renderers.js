@@ -31,14 +31,14 @@ const makeStatusBadge = (status) => create(
     rowStatus({ status })
 );
 
-const makeComparisonCell = (row, field) => {
+const makeComparisonCell = (row, field, deltaField) => {
     const cell = create('td', 'px-3 py-3 align-top text-sm');
     const base = row?.base?.[field];
     const compare = row?.compare?.[field];
     append(cell,
         create('div', 'text-gray-700', `基準月：${formatValue(base)}`),
         create('div', 'text-gray-700', `比較月：${formatValue(compare)}`),
-        create('div', 'font-semibold text-gray-900', `Delta：${formatValue(row?.delta)}`)
+        create('div', 'font-semibold text-gray-900', `Delta：${formatValue(row?.[deltaField])}`)
     );
     return cell;
 };
@@ -85,17 +85,14 @@ const renderRows = (container, rows, kind) => {
     const config = kind === 'branch'
         ? {
             columns: ['狀態', '門市', '排名', '評分 / Delta', '樣本 N / Delta'],
-            field: 'score',
             row: (item) => {
                 const tr = create('tr', 'border-t border-gray-100');
-                const baseRank = item?.base?.rank;
-                const compareRank = item?.compare?.rank;
                 append(tr,
                     create('td', 'px-3 py-3 align-top', undefined),
                     create('td', 'px-3 py-3 align-top font-semibold text-gray-900 break-words', item?.key),
-                    create('td', 'px-3 py-3 align-top text-sm', `基準月：${formatValue(baseRank)}；比較月：${formatValue(compareRank)}；Delta：${formatValue(item?.base?.rankDelta ?? item?.compare?.rankDelta)}`),
-                    makeComparisonCell(item, 'score'),
-                    makeComparisonCell(item, 'n')
+                    create('td', 'px-3 py-3 align-top text-sm', `基準月：${formatValue(item?.baseRank)}；比較月：${formatValue(item?.compareRank)}；Delta：${formatValue(item?.rankDelta)}`),
+                    makeComparisonCell(item, 'score', 'scoreDelta'),
+                    makeComparisonCell(item, 'n', 'nDelta')
                 );
                 tr.children[0].appendChild(makeStatusBadge(item?.status));
                 return tr;
@@ -109,9 +106,9 @@ const renderRows = (container, rows, kind) => {
                     append(tr,
                         create('td', 'px-3 py-3 align-top', undefined),
                         create('td', 'px-3 py-3 align-top font-semibold text-gray-900 break-words', item?.key),
-                        create('td', 'px-3 py-3 align-top text-sm', `基準月：${formatValue(item?.base?.rank)}；比較月：${formatValue(item?.compare?.rank)}；Delta：${formatValue(item?.base?.rankDelta ?? item?.compare?.rankDelta)}`),
-                        makeComparisonCell(item, 'value'),
-                        makeComparisonCell(item, 'rate')
+                        create('td', 'px-3 py-3 align-top text-sm', `基準月：${formatValue(item?.baseRank)}；比較月：${formatValue(item?.compareRank)}；Delta：${formatValue(item?.rankDelta)}`),
+                        makeComparisonCell(item, 'value', 'valueDelta'),
+                        makeComparisonCell(item, 'rate', 'rateDelta')
                     );
                     tr.children[0].appendChild(makeStatusBadge(item?.status));
                     return tr;
@@ -125,8 +122,8 @@ const renderRows = (container, rows, kind) => {
                         create('td', 'px-3 py-3 align-top', undefined),
                         create('td', 'px-3 py-3 align-top font-semibold text-gray-900 break-words', item?.key || item?.base?.label || item?.compare?.label),
                         create('td', 'px-3 py-3 align-top text-sm', `基準月：${formatValue(item?.base?.total)}；比較月：${formatValue(item?.compare?.total)}`),
-                        makeComparisonCell(item, 'count'),
-                        makeComparisonCell(item, 'rate')
+                        makeComparisonCell(item, 'count', 'countDelta'),
+                        makeComparisonCell(item, 'rate', 'rateDelta')
                     );
                     tr.children[0].appendChild(makeStatusBadge(item?.status));
                     return tr;

@@ -106,12 +106,57 @@ test('builds metric deltas and stable-key row statuses', () => {
         ['alpha', 'both'], ['removed', 'removed'], ['added', 'added']
     ]);
     assert.equal(result.branchRanking[0].delta, 1);
+    assert.equal(result.branchRanking[0].scoreDelta, 1);
+    assert.equal(result.branchRanking[0].nDelta, 0);
+    assert.equal(result.branchRanking[0].baseRank, 1);
+    assert.equal(result.branchRanking[0].compareRank, 1);
+    assert.equal(result.branchRanking[0].rank, 1);
+    assert.equal(result.branchRanking[0].rankDelta, 0);
     assert.deepEqual(result.destinationDemand.map((row) => [row.key, row.status]), [
         ['japan', 'both'], ['old', 'removed'], ['new', 'added']
     ]);
+    assert.equal(result.destinationDemand[0].valueDelta, 4);
+    assert.equal(result.destinationDemand[0].rateDelta, null);
     assert.deepEqual(result.sentiment.map((row) => [row.key, row.status]), [
         ['positive', 'both'], ['negative', 'removed'], ['suggestion', 'added']
     ]);
+    assert.equal(result.sentiment[0].countDelta, 1);
+    assert.equal(result.sentiment[0].rateDelta, 0);
+});
+
+test('uses explicit source ranks and preserves unavailable field deltas', () => {
+    const result = buildP3Comparison(
+        snapshot('202605', {
+            branchRanking: [{ key: 'alpha', rank: 4, score: 4, n: 2 }],
+            destinationDemand: [{ key: 'japan', rank: 7, value: 10, rate: 0.5 }],
+            sentiment: [{ key: 'positive', count: 2 }]
+        }),
+        snapshot('202606', {
+            branchRanking: [{ key: 'alpha', rank: 2, score: 5, n: 3 }],
+            destinationDemand: [{ key: 'japan', rank: 3, value: 14 }],
+            sentiment: [{ key: 'positive', count: 3 }]
+        })
+    );
+
+    assert.deepEqual(result.branchRanking[0], {
+        key: 'alpha',
+        status: 'both',
+        base: result.branchRanking[0].base,
+        compare: result.branchRanking[0].compare,
+        delta: 1,
+        scoreDelta: 1,
+        nDelta: 1,
+        rank: 2,
+        baseRank: 4,
+        compareRank: 2,
+        rankDelta: -2
+    });
+    assert.equal(result.destinationDemand[0].baseRank, 7);
+    assert.equal(result.destinationDemand[0].compareRank, 3);
+    assert.equal(result.destinationDemand[0].rankDelta, -4);
+    assert.equal(result.destinationDemand[0].rateDelta, null);
+    assert.equal(result.sentiment[0].countDelta, 1);
+    assert.equal(result.sentiment[0].rateDelta, null);
 });
 
 test('omits percentage delta for zero base and preserves unavailable customer links', () => {
