@@ -112,6 +112,26 @@
       "missingPolicy": "info_if_absent"
     }
   ],
+  "approvedHistoricalExceptions": [
+    {
+      "id": "EXC-202605-NPS-PROMOTER-SUMMARY",
+      "month": "202605",
+      "ruleId": "METRIC-001",
+      "path": "$.dashboardSummary.nps.promoterCount",
+      "status": "approved_historical",
+      "reason": "保留 202605 原有 NPS 摘要口徑；promoterCount=141 與 npsDistData.values[0]=144 的歷史差異已批准保留。",
+      "denominator": "npsDistData.values"
+    },
+    {
+      "id": "EXC-202605-SOURCE-PERCENTAGE-DENOMINATOR",
+      "month": "202605",
+      "ruleId": "METRIC-002",
+      "pathPrefix": "$.sourceData.pcts",
+      "status": "approved_historical",
+      "reason": "保留 202605 原有資訊來源百分比以 sourceData.values 合計 209 為分母；新月份使用 surveyN。",
+      "denominator": "sum(sourceData.values)"
+    }
+  ],
   "relationships": [
     {
       "id": "nps_distribution_matches_survey_n",

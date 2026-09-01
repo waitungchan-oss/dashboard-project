@@ -4,6 +4,7 @@ import json
 import sys
 import tempfile
 import unittest
+from copy import deepcopy
 from pathlib import Path
 
 
@@ -19,9 +20,18 @@ from month_governance import (  # noqa: E402
     resolve_json_path,
 )
 from check_month_consistency import check_month_data  # noqa: E402
+from check_month_metrics import check_month_metrics  # noqa: E402
 
 
 class MonthGovernancePrimitivesTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.month_data = json.loads(
+            (ROOT / "data" / "202607.json").read_text(encoding="utf-8")
+        )
+        self.contract = load_metric_contract(
+            ROOT / "data" / "schema" / "monthly-metric-contract.json"
+        )
+
     def test_finding_serializes_evidence_without_losing_rule_context(self) -> None:
         finding = Finding(
             rule_id="MONTH-001",
@@ -104,6 +114,126 @@ class MonthGovernancePrimitivesTests(unittest.TestCase):
         report = check_month_data(data, "202608", "candidate-202608.json")
 
         self.assertFalse(any(finding.rule_id == "MONTH-001" for finding in report.findings))
+
+    def test_current_month_metrics_pass_against_202607_shape(self) -> None:
+        findings = check_month_metrics(
+            self.month_data,
+            "202607",
+            self.contract,
+            "data/202607.json",
+        )
+
+        self.assertFalse([finding for finding in findings if finding.severity == "ERROR"])
+
+    def test_nps_distribution_mismatch_is_reported(self) -> None:
+        data = deepcopy(self.month_data)
+        data["npsDistData"]["values"][0] = 102
+
+        findings = check_month_metrics(data, "202607", self.contract, "candidate")
+
+        self.assertTrue(any(finding.rule_id == "METRIC-001" for finding in findings))
+
+    def test_percentage_mismatch_includes_denominator_evidence(self) -> None:
+        data = deepcopy(self.month_data)
+        data["dashboardSummary"]["promoConsent"]["pct"] = "50.00%"
+
+        findings = check_month_metrics(data, "202607", self.contract, "candidate")
+        mismatch = next(finding for finding in findings if finding.rule_id == "METRIC-002")
+
+        self.assertEqual(mismatch.evidence["denominator"], 105)
+        self.assertEqual(mismatch.evidence["declared"], 50.0)
+
+    def test_one_decimal_percentage_rounding_is_not_a_metric_error(self) -> None:
+        data = json.loads(
+            (ROOT / "data" / "202604.json").read_text(encoding="utf-8")
+        )
+
+        findings = check_month_metrics(data, "202604", self.contract, "data/202604.json")
+
+        self.assertFalse(
+            [
+                finding
+                for finding in findings
+                if finding.rule_id == "METRIC-002"
+                and finding.path.startswith("$.channelData.pcts")
+            ]
+        )
+
+    def test_approved_historical_exception_preserves_202605_and_is_traceable(self) -> None:
+        data = json.loads(
+            (ROOT / "data" / "202605.json").read_text(encoding="utf-8")
+        )
+
+        findings = check_month_metrics(data, "202605", self.contract, "data/202605.json")
+
+        historical = [
+            finding
+            for finding in findings
+            if finding.path == "$.dashboardSummary.nps.promoterCount"
+            or finding.path.startswith("$.sourceData.pcts")
+        ]
+        self.assertTrue(historical)
+        self.assertTrue(all(finding.severity == "INFO" for finding in historical))
+        self.assertTrue(
+            all(finding.evidence.get("exceptionId") for finding in historical)
+        )
+        self.assertFalse(
+            [finding for finding in findings if finding.severity == "ERROR"]
+        )
+
+    def test_historical_exception_does_not_apply_to_a_new_month(self) -> None:
+        data = deepcopy(self.month_data)
+        data["dashboardSummary"]["nps"]["promoterCount"] = 102
+
+        findings = check_month_metrics(data, "202607", self.contract, "candidate")
+
+        self.assertTrue(
+            any(
+                finding.rule_id == "METRIC-001"
+                and finding.path == "$.dashboardSummary.nps.promoterCount"
+                and finding.severity == "ERROR"
+                for finding in findings
+            )
+        )
+
+    def test_parallel_array_mismatch_is_reported(self) -> None:
+        data = deepcopy(self.month_data)
+        data["sourceData"]["pcts"].pop()
+
+        findings = check_month_metrics(data, "202607", self.contract, "candidate")
+
+        self.assertTrue(any(finding.rule_id == "METRIC-003" for finding in findings))
+
+    def test_branch_total_without_semantic_is_reported(self) -> None:
+        contract = deepcopy(self.contract)
+        branch_metric = next(item for item in contract["metrics"] if item["id"] == "branch_samples")
+        branch_metric["totalSemantic"] = ""
+
+        findings = check_month_metrics(self.month_data, "202607", contract, "candidate")
+
+        self.assertTrue(any(finding.rule_id == "METRIC-004" for finding in findings))
+
+    def test_keyword_count_below_exact_occurrence_is_reported(self) -> None:
+        data = deepcopy(self.month_data)
+        keyword = data["feedbackKeywordCloud"][0]["text"]
+        data["feedbackKeywordCloud"][0]["count"] = 0
+
+        findings = check_month_metrics(data, "202607", self.contract, "candidate")
+
+        self.assertTrue(any(finding.rule_id == "METRIC-005" for finding in findings), keyword)
+
+    def test_p3_period_mismatch_is_reported(self) -> None:
+        p3_data = {"period": "202606", "status": "ready"}
+
+        findings = check_month_metrics(
+            self.month_data,
+            "202607",
+            self.contract,
+            "candidate",
+            p3_data=p3_data,
+        )
+
+        self.assertTrue(any(finding.rule_id == "METRIC-006" for finding in findings))
 
 
 if __name__ == "__main__":
