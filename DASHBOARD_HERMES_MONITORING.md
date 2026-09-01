@@ -1,6 +1,6 @@
 # Dashboard Hermes Monitoring / Validation System
 
-更新日期：2026-07-03
+更新日期：2026-09-01
 
 ## Purpose
 
@@ -48,6 +48,8 @@ http://127.0.0.1:8080/index.html
 | `data/202604.json` | legacy schema compatibility |
 | `data/schema/*.schema.json` | current / legacy month data structure profiles |
 | `scripts/validate_month_schema.py` | manifest-driven month schema validation |
+| `scripts/validate_month_governance.py` | unified schema / month / metric / numeric-display gate |
+| `data/schema/monthly-metric-contract.json` | metric paths、denominators、chart bindings、approved historical exceptions |
 | `scripts/validate_dashboard.py` | manifest / monthly JSON validation |
 | `scripts/check_print_report_static.py` | PDF / print static contract |
 | `scripts/check_screen_layout_static.py` | normal screen layout isolation |
@@ -69,6 +71,7 @@ git diff --stat
 python3 scripts/hermes_dashboard_check.py
 python3 scripts/hermes_dashboard_check.py --json
 python3 scripts/validate_month_schema.py --all --strict-warnings
+python3 scripts/validate_month_governance.py --all --strict
 python3 scripts/validate_dashboard.py
 python3 scripts/check_print_report_static.py
 python3 scripts/check_screen_layout_static.py
@@ -80,6 +83,10 @@ DASHBOARD_NO_BROWSER=1 python3 serve.py
 ```
 
 `hermes_dashboard_check.py` 會自動啟動 local HTTP server、檢查指定資源、然後停止 server。
+
+`validate_month_governance.py --all --strict` 是 monthly data governance 的統一 gate，
+依序檢查 schema、月份一致性、metric contracts 與 numeric/display contracts。命中的
+`approvedHistoricalExceptions` 只會出現在 report `evidence`，不會被當成新月份的通行條件。
 
 ## Forbidden actions
 
@@ -197,6 +204,7 @@ DASHBOARD_NO_BROWSER=1 python3 serve.py
 
 - Node.js 不存在，因此 `node --check app.js` 無法執行；需明確記錄，不可假裝通過。
 - legacy schema 缺 optional fields，但 validator 僅警告且符合專案政策。
+- 已批准歷史口徑例外以 `INFO` 記錄 declared / calculated / denominator，且只限指定 month/path。
 - CDN 仍存在，但本次任務不要求離線化。
 - Git working tree 有預期中的未提交 monitoring report 或文件更新。
 
@@ -211,6 +219,7 @@ DASHBOARD_NO_BROWSER=1 python3 serve.py
 - PDF / print contract 缺失。
 - DOM / JS contract 缺失。
 - 發現污染 `nbs_analytics` 或將 fixture 留在正式 manifest。
+- 新月份命中歷史例外或出現未登記的口徑差異。
 
 ## Report format
 

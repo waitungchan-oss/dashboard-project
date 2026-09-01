@@ -1,6 +1,6 @@
 # 月份資料更新 SOP
 
-更新日期：2026-08-08
+更新日期：2026-09-01
 
 此專案以「每個月份一個純 JSON 檔」管理資料。儀表板會先讀取 `data/months.json` 產生月份選單，再按月份讀取 `data/YYYYMM.json`。
 
@@ -87,7 +87,42 @@ python3 -m json.tool data/YYYYMM.json >/dev/null
 
 `data/schema/` 是可演進的結構驗證層。它依 `data/months.json` 的 `schema` profile
 分別檢查 current / legacy 月份，允許新增未知圖表與洞察欄位，不限制圖表顏色、排序或 layout。
-資料口徑與 count 一致性仍由 `check_month_consistency.py` 負責。
+資料口徑與 count 一致性由 `check_month_consistency.py` 與 `check_month_metrics.py` 負責；
+numeric / chart / frontend binding 則由 `check_numeric_display_contract.py` 負責。
+
+### 4.1 新月份正式加入前的 candidate preflight
+
+清洗後資料尚未加入 `data/months.json` 時，先以 candidate path 執行，不修改 manifest：
+
+```sh
+python3 scripts/validate_month_schema.py --candidate /path/to/202608.json --month 202608 --schema-profile current
+python3 scripts/check_month_consistency.py --month 202608 --candidate /path/to/202608.json
+python3 scripts/validate_month_governance.py \
+  --month 202608 \
+  --candidate /path/to/202608.json \
+  --schema-profile current \
+  --strict \
+  --report /tmp/dashboard-governance-202608.json
+```
+
+確認報告 `status=pass` 後，才把月份加入 manifest，再執行：
+
+```sh
+python3 scripts/validate_month_governance.py --all --strict
+python3 scripts/hermes_dashboard_check.py --json
+```
+
+治理檢查會特別阻擋：明確月份錯置、survey / answered / scored / mention / branch /
+feedback N 口徑不一致、百分比分母不一致、labels 與 data 長度不一致，以及非零數值在
+display contract 中被吞成空白、`—` 或 `0`。
+
+### 4.2 歷史口徑例外
+
+既有月份若經批准保留原始數據，不回寫該月份 JSON。例外登記在
+`data/schema/monthly-metric-contract.json` 的 `approvedHistoricalExceptions`，必須
+指定月份、rule id、path 或 path prefix、批准狀態、理由與分母說明。命中後只降為
+`INFO` 並保留 declared / calculated / denominator evidence；新月份不繼承例外，仍按新規則
+檢查。目前 202605 的 NPS promoter 摘要與資訊來源百分比分母差異屬此類批准例外。
 
 ## 5. P3 月度分析更新流程
 

@@ -1,6 +1,6 @@
 # 可攜式儀表板啟動器
 
-更新日期：2026-07-03
+更新日期：2026-09-01
 
 這個資料夾被設計成可以整包搬移到另一台電腦上使用。
 
@@ -64,8 +64,19 @@ body.print-mode
 修改資料或程式後，建議執行：
 
 ```sh
+python3 scripts/validate_month_governance.py --all --strict
 python3 scripts/validate_dashboard.py
+python3 scripts/check_month_consistency.py --all --strict-warnings
 python3 scripts/check_print_report_static.py
 python3 scripts/check_screen_layout_static.py
 node --check app.js
 ```
+
+新增月份尚未加入 manifest 時，先使用 candidate preflight：
+
+```sh
+python3 scripts/validate_month_governance.py --month YYYYMM --candidate /path/to/YYYYMM.json --strict
+```
+
+治理報告會檢查月份文字、N / count / percentage 口徑、圖表資料長度與 frontend binding；
+既有批准的歷史例外會以 `INFO` 留下證據，新月份不會繼承。

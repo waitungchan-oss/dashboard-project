@@ -1,6 +1,6 @@
 # Dashboard Project 後續對話交接說明
 
-更新日期：2026-07-03
+更新日期：2026-09-01
 
 ## 專案定位
 
@@ -149,6 +149,17 @@ data/p3/issues.json
 這個設計符合目前「可攜式、本地展示、月份 JSON 更新」的使用場景。只有在需要跨月份查詢、資料量變大、多使用者、登入權限、近實時更新或 API 整合時，才需要重新評估 SQLite / API / PostgreSQL。
 P3 不引入 API、database 或正式 backend，仍是 portable JSON-only 架構。
 
+### 6.1 月份資料治理 gate
+
+目前已建立 `data/schema/monthly-metric-contract.json`、`scripts/check_month_metrics.py`、
+`scripts/check_numeric_display_contract.py` 與 `scripts/validate_month_governance.py`。
+正式月更先做 candidate preflight，再以 `--all --strict` 檢查 manifest 全部月份；GitHub
+Actions 與 Hermes 都會執行同一個 unified gate。治理範圍包括月份錯置、N / count /
+percentage 分母、圖表 labels/data 長度、frontend binding 與非零數字顯示完整性。
+
+202605 的既有 NPS 摘要與資訊來源百分比分母差異已登記為批准的歷史口徑例外，原始
+`data/202605.json` 保留不變；例外只對指定 month/path 生效，202608 及後續月份仍按新規則檢查。
+
 ### 7. 目前可用的月更 SOP
 
 月更流程已整理在：
@@ -243,7 +254,9 @@ chmod +x start-dashboard.command start-dashboard.sh
 每次修改資料或程式後，建議執行：
 
 ```sh
+python3 scripts/validate_month_governance.py --all --strict
 python3 scripts/validate_dashboard.py
+python3 scripts/check_month_consistency.py --all --strict-warnings
 python3 scripts/check_print_report_static.py
 python3 scripts/check_screen_layout_static.py
 node --check app.js
