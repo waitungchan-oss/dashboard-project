@@ -55,6 +55,9 @@ jobs:
       - name: Run dashboard data validation
         run: python3 scripts/validate_dashboard.py
 
+      - name: Run monthly data governance
+        run: python3 scripts/validate_month_governance.py --all --strict
+
       - name: Run P3 analytics validation
         run: python3 scripts/validate_p3.py --all --strict-warnings
 

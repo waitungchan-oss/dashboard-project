@@ -34,6 +34,7 @@ BASE_COMMAND_CHECKS: list[tuple[str, list[str], bool]] = [
     ("validate_p3_all", ["python3", "scripts/validate_p3.py", "--all", "--strict-warnings"], False),
     ("validate_month_schema_all", ["python3", "scripts/validate_month_schema.py", "--all", "--strict-warnings"], False),
     ("validate_dashboard", ["python3", "scripts/validate_dashboard.py"], False),
+    ("validate_month_governance_all", ["python3", "scripts/validate_month_governance.py", "--all", "--strict"], False),
     ("check_month_consistency_all", ["python3", "scripts/check_month_consistency.py", "--all", "--strict-warnings"], False),
     ("check_print_report_static", ["python3", "scripts/check_print_report_static.py"], False),
     ("check_screen_layout_static", ["python3", "scripts/check_screen_layout_static.py"], False),

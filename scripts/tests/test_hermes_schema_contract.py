@@ -22,6 +22,21 @@ class HermesSchemaContractTests(unittest.TestCase):
         command = next(command for name, command, _optional in BASE_COMMAND_CHECKS if name == "validate_month_schema_all")
         self.assertEqual(command, ["python3", "scripts/validate_month_schema.py", "--all", "--strict-warnings"])
 
+    def test_hermes_runs_unified_monthly_governance(self) -> None:
+        names = [name for name, _command, _node_optional in BASE_COMMAND_CHECKS]
+        self.assertIn("validate_month_governance_all", names)
+
+        command = next(command for name, command, _optional in BASE_COMMAND_CHECKS if name == "validate_month_governance_all")
+        self.assertEqual(command, ["python3", "scripts/validate_month_governance.py", "--all", "--strict"])
+
+    def test_github_actions_has_independent_governance_step(self) -> None:
+        workflow = (SCRIPTS_DIR.parent / ".github" / "workflows" / "dashboard-validation.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("name: Run monthly data governance", workflow)
+        self.assertIn("python3 scripts/validate_month_governance.py --all --strict", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()

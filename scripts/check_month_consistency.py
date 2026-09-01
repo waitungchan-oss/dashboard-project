@@ -11,6 +11,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable
 
+from month_governance import Finding
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
@@ -31,9 +33,35 @@ class ConsistencyReport:
         self.errors: list[str] = []
         self.warnings: list[str] = []
         self.infos: list[str] = []
+        self.findings: list[Finding] = []
 
     def error(self, message: str) -> None:
         self.errors.append(message)
+
+    def add_finding(
+        self,
+        rule_id: str,
+        severity: str,
+        message: str,
+        path: str = "$.",
+        evidence: dict[str, Any] | None = None,
+    ) -> None:
+        self.findings.append(
+            Finding(
+                rule_id=rule_id,
+                severity=severity,
+                month=self.month,
+                path=path,
+                message=message,
+                evidence=evidence or {},
+            )
+        )
+        if severity == "ERROR":
+            self.errors.append(message)
+        elif severity == "WARN":
+            self.warnings.append(message)
+        else:
+            self.infos.append(message)
 
     def warn(self, message: str) -> None:
         self.warnings.append(message)
@@ -377,22 +405,48 @@ def check_wrong_month_text(data: dict[str, Any], month: str, report: Consistency
 
     if found:
         for item in found:
-            report.warn(f"possible residual wrong-month text: {item}")
+            path, _, detail = item.partition(": found")
+            report.add_finding(
+                "MONTH-001",
+                "ERROR",
+                f"explicit single-month text refers to a different month: {item}",
+                path=path,
+                evidence={"expectedMonth": month, "detail": detail.strip()},
+            )
     else:
         report.info("No same-year wrong-month text was found outside current month labels")
 
 
-def check_month(month: str) -> ConsistencyReport:
+def check_month_data(
+    data: dict[str, Any],
+    month: str,
+    source_label: str,
+) -> ConsistencyReport:
     report = ConsistencyReport(month)
-    data = load_month(month, report)
-    if not data:
-        return report
     check_raw_feedbacks(data, report)
     check_keyword_cloud(data, report)
     check_branch_feedbacks(data, report)
     check_branch_leaderboard_total(data, report)
     check_wrong_month_text(data, month, report)
     return report
+
+
+def check_month(month: str, month_path: Path | None = None) -> ConsistencyReport:
+    report = ConsistencyReport(month)
+    if month_path is None:
+        data = load_month(month, report)
+    else:
+        try:
+            value = json.loads(month_path.read_text(encoding="utf-8"))
+        except Exception as exc:  # noqa: BLE001 - CLI should show the exact parse failure.
+            report.error(f"{path_label(month_path)} cannot be parsed as JSON: {exc}")
+            return report
+        data = value if isinstance(value, dict) else {}
+        if not isinstance(value, dict):
+            report.error(f"{path_label(month_path)} must contain a JSON object")
+    if not data:
+        return report
+    return check_month_data(data, month, str(month_path or DATA_DIR / f"{month}.json"))
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -410,11 +464,29 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Return exit code 1 when warnings are present.",
     )
+    parser.add_argument("--candidate", type=Path, help="Check a candidate JSON without changing the manifest.")
+    parser.add_argument("--root", type=Path, default=ROOT, help=argparse.SUPPRESS)
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
+
+    global DATA_DIR, MANIFEST_PATH
+    DATA_DIR = args.root.resolve() / "data"
+    MANIFEST_PATH = DATA_DIR / "months.json"
+
+    if args.candidate is not None:
+        if args.all or not args.month:
+            print("ERROR: --candidate requires a month and cannot be combined with --all", file=sys.stderr)
+            return 2
+        report = check_month(args.month, args.candidate.resolve())
+        report.print()
+        if report.errors:
+            return 1
+        if args.strict_warnings and report.warnings:
+            return 1
+        return 0
 
     if args.all:
         manifest_report = ConsistencyReport("manifest")
