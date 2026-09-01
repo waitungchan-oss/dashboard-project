@@ -1,0 +1,159 @@
+{
+  "version": "1.0",
+  "metrics": [
+    {
+      "id": "survey_total",
+      "path": "dashboardSummary.totalRespondents",
+      "metricClass": "surveyN",
+      "valueType": "non_negative_integer",
+      "rule": "scalar"
+    },
+    {
+      "id": "promo_consent_count",
+      "path": "dashboardSummary.promoConsent.count",
+      "metricClass": "answeredN",
+      "denominatorPath": "dashboardSummary.totalRespondents",
+      "valueType": "non_negative_integer",
+      "rule": "percentage_pair",
+      "percentagePath": "dashboardSummary.promoConsent.pct",
+      "tolerance": 0.01,
+      "missingPolicy": "warn_if_legacy"
+    },
+    {
+      "id": "nps_promoter_count",
+      "path": "dashboardSummary.nps.promoterCount",
+      "metricClass": "answeredN",
+      "denominatorPath": "dashboardSummary.totalRespondents",
+      "valueType": "non_negative_integer",
+      "rule": "nps_pair"
+    },
+    {
+      "id": "nps_detractor_count",
+      "path": "dashboardSummary.nps.detractorCount",
+      "metricClass": "answeredN",
+      "denominatorPath": "dashboardSummary.totalRespondents",
+      "valueType": "non_negative_integer",
+      "rule": "nps_pair",
+      "missingPolicy": "warn_if_legacy"
+    },
+    {
+      "id": "store_signup_count",
+      "path": "dashboardSummary.storeSignup.count",
+      "metricClass": "answeredN",
+      "denominatorPath": "dashboardSummary.totalRespondents",
+      "valueType": "non_negative_integer",
+      "rule": "percentage_pair",
+      "percentagePath": "dashboardSummary.storeSignup.pct",
+      "tolerance": 0.01
+    },
+    {
+      "id": "source_mentions",
+      "path": "sourceData.values",
+      "metricClass": "mentionN",
+      "percentagePath": "sourceData.pcts",
+      "denominatorPath": "dashboardSummary.totalRespondents",
+      "valueType": "array_of_non_negative_integers",
+      "rule": "parallel_arrays"
+    },
+    {
+      "id": "channel_mentions",
+      "path": "channelData.values",
+      "metricClass": "mentionN",
+      "percentagePath": "channelData.pcts",
+      "denominatorPath": "dashboardSummary.totalRespondents",
+      "valueType": "array_of_non_negative_integers",
+      "rule": "parallel_arrays"
+    },
+    {
+      "id": "nps_distribution",
+      "path": "npsDistData.values",
+      "metricClass": "answeredN",
+      "denominatorPath": "dashboardSummary.totalRespondents",
+      "valueType": "array_of_non_negative_integers",
+      "rule": "sum_equals_denominator"
+    },
+    {
+      "id": "satisfaction_distribution",
+      "path": "satisfactionDistributionData.datasets",
+      "metricClass": "scoredN",
+      "denominatorPath": "dashboardSummary.totalRespondents",
+      "valueType": "chart_datasets",
+      "rule": "parallel_chart_series"
+    },
+    {
+      "id": "branch_samples",
+      "path": "branchLeaderboardData",
+      "metricClass": "branchN",
+      "valueType": "branch_rows",
+      "rule": "branch_total_contract",
+      "totalPath": "branchLeaderboardTotal",
+      "totalSemantic": "declared_by_manifest_or_contract"
+    },
+    {
+      "id": "raw_feedbacks",
+      "path": "rawFeedbacks",
+      "metricClass": "feedbackN",
+      "valueType": "feedback_rows",
+      "rule": "feedback_array"
+    },
+    {
+      "id": "branch_feedbacks",
+      "path": "branchRawFeedbacks",
+      "metricClass": "feedbackN",
+      "valueType": "feedback_rows",
+      "rule": "feedback_array"
+    },
+    {
+      "id": "keyword_counts",
+      "path": "feedbackKeywordCloud",
+      "metricClass": "feedbackN",
+      "valueType": "keyword_rows",
+      "rule": "keyword_occurrence_floor",
+      "missingPolicy": "info_if_absent"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "nps_distribution_matches_survey_n",
+      "kind": "sum_equals",
+      "paths": ["npsDistData.values"],
+      "expectedPath": "dashboardSummary.totalRespondents"
+    },
+    {
+      "id": "source_parallel_arrays",
+      "kind": "parallel_arrays",
+      "paths": ["sourceData.labels", "sourceData.values", "sourceData.pcts"]
+    },
+    {
+      "id": "channel_parallel_arrays",
+      "kind": "parallel_arrays",
+      "paths": ["channelData.labels", "channelData.values", "channelData.pcts"]
+    }
+  ],
+  "numericFields": [
+    "dashboardSummary.totalRespondents",
+    "dashboardSummary.promoConsent.count",
+    "dashboardSummary.nps.score",
+    "dashboardSummary.nps.promoterCount",
+    "dashboardSummary.nps.detractorCount",
+    "dashboardSummary.storeSignup.count",
+    "dashboardSummary.storeSignup.pureCount",
+    "branchLeaderboardTotal"
+  ],
+  "chartSeries": [
+    {"labelsPath": "npsDistData.labels", "dataPaths": ["npsDistData.values"]},
+    {"labelsPath": "npsScoreData.labels", "dataPaths": ["npsScoreData.values"]},
+    {"labelsPath": "sourceData.labels", "dataPaths": ["sourceData.values", "sourceData.pcts"]},
+    {"labelsPath": "channelData.labels", "dataPaths": ["channelData.values", "channelData.pcts"]},
+    {"labelsPath": "satisfactionDistributionData.labels", "dataPaths": ["satisfactionDistributionData.datasets[].data"]},
+    {"labelsPath": "destAgeCrossData.labels", "dataPaths": ["destAgeCrossData.datasets[].data"]},
+    {"labelsPath": "futureDestData.labels", "dataPaths": ["futureDestData.values"]}
+  ],
+  "frontendBindings": [
+    {"dataPath": "sourceData", "sourceTokens": ["DataStore.sourceData"]},
+    {"dataPath": "channelData", "sourceTokens": ["DataStore.channelData"]},
+    {"dataPath": "satisfactionDistributionData", "sourceTokens": ["DataStore.satisfactionDistributionData"]},
+    {"dataPath": "futureDestData", "sourceTokens": ["DataStore.futureDestData"]},
+    {"dataPath": "npsDistData", "sourceTokens": ["DataStore.npsDistData"]}
+  ]
+}
