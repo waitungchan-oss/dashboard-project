@@ -189,16 +189,23 @@ def schema_for_entry(entry: dict[str, Any], schema_dir: Path, report: Validation
     return load_schema(schema_dir, f"{profile}-month.schema.json", report), str(profile)
 
 
-def validate_month(root: Path, entry: dict[str, Any], common_schema: dict[str, Any], report: ValidationReport) -> None:
+def validate_month(
+    root: Path,
+    entry: dict[str, Any],
+    common_schema: dict[str, Any],
+    report: ValidationReport,
+    month_path: Path | None = None,
+) -> None:
     key = entry["key"]
     data_dir, schema_dir = project_paths(root)
-    month_path = data_dir / f"{key}.json"
-    month_data = load_json(month_path, report, f"data/{key}.json")
+    resolved_month_path = month_path or data_dir / f"{key}.json"
+    label = f"data/{key}.json" if month_path is None else str(resolved_month_path)
+    month_data = load_json(resolved_month_path, report, label)
     if not isinstance(month_data, dict):
         report.error(f"{key}: root value must be a JSON object")
         return
     report.checked_months.append(key)
-    check_forbidden_tokens(month_path, report, f"data/{key}.json")
+    check_forbidden_tokens(resolved_month_path, report, label)
     profile_schema, profile = schema_for_entry(entry, schema_dir, report)
     validate_value(month_data, common_schema, f"data/{key}.json", report)
     validate_value(month_data, profile_schema, f"data/{key}.json", report)
@@ -208,6 +215,35 @@ def validate_month(root: Path, entry: dict[str, Any], common_schema: dict[str, A
         for field_name in optional:
             if isinstance(field_name, str) and field_name not in month_data:
                 report.warning(f"{key}: legacy optional field is absent: {field_name}")
+
+
+def validate_candidate(
+    root: Path,
+    candidate_path: Path,
+    month: str,
+    schema_profile: str,
+    report: ValidationReport | None = None,
+) -> ValidationReport:
+    result = report or ValidationReport()
+    if not MONTH_KEY_RE.fullmatch(month):
+        result.error(f"month must be YYYYMM: {month!r}")
+        return result
+    if schema_profile not in {"current", "legacy"}:
+        result.error(f"schema profile must be current or legacy: {schema_profile!r}")
+        return result
+    _, schema_dir = project_paths(root)
+    common_schema = load_schema(schema_dir, "common-month.schema.json", result)
+    if not candidate_path.is_file():
+        result.error(f"candidate file does not exist: {candidate_path}")
+        return result
+    validate_month(
+        root,
+        {"key": month, "schema": schema_profile},
+        common_schema,
+        result,
+        month_path=candidate_path,
+    )
+    return result
 
 
 def select_entries(entries: list[dict[str, Any]], month: str | None, check_all: bool, report: ValidationReport) -> list[dict[str, Any]]:
@@ -232,6 +268,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--all", action="store_true", help="validate all months listed in data/months.json")
     parser.add_argument("--strict-warnings", action="store_true", help="return failure when warnings exist")
     parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    parser.add_argument("--candidate", type=Path, help="validate a JSON candidate before manifest registration")
+    parser.add_argument(
+        "--schema-profile",
+        choices=["current", "legacy"],
+        default="current",
+        help="schema profile for --candidate (default: current)",
+    )
     parser.add_argument("--root", type=Path, default=ROOT, help=argparse.SUPPRESS)
     return parser
 
@@ -247,9 +290,17 @@ def main(argv: list[str] | None = None) -> int:
     data_dir, schema_dir = project_paths(root)
     common_schema = load_schema(schema_dir, "common-month.schema.json", report)
     _, entries = validate_manifest(root, report)
-    selected = select_entries(entries, month, args.all, report)
-    for entry in selected:
-        validate_month(root, entry, common_schema, report)
+    if args.candidate is not None:
+        if args.all:
+            report.error("provide --candidate with --month, not --all")
+        elif month is None:
+            report.error("--candidate requires --month")
+        else:
+            validate_candidate(root, args.candidate.resolve(), month, args.schema_profile, report)
+    else:
+        selected = select_entries(entries, month, args.all, report)
+        for entry in selected:
+            validate_month(root, entry, common_schema, report)
 
     status = "fail" if report.errors or (args.strict_warnings and report.warnings) else ("warn" if report.warnings else "pass")
     payload = {

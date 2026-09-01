@@ -18,6 +18,7 @@ from month_governance import (  # noqa: E402
     parse_percentage,
     resolve_json_path,
 )
+from check_month_consistency import check_month_data  # noqa: E402
 
 
 class MonthGovernancePrimitivesTests(unittest.TestCase):
@@ -75,6 +76,34 @@ class MonthGovernancePrimitivesTests(unittest.TestCase):
         self.assertIsInstance(payload, dict)
         self.assertNotIn("function", contract_path.read_text(encoding="utf-8"))
         self.assertNotIn("onClick", contract_path.read_text(encoding="utf-8"))
+
+    def test_summary_with_previous_month_is_a_structured_error(self) -> None:
+        data = {
+            "dashboardSummary": {
+                "text": "根據 2026 年 7 月問卷數據整理。",
+            },
+            "rawFeedbacks": [],
+            "branchRawFeedbacks": [],
+        }
+
+        report = check_month_data(data, "202608", "candidate-202608.json")
+
+        self.assertTrue(report.errors)
+        self.assertTrue(any(finding.rule_id == "MONTH-001" for finding in report.findings))
+        self.assertTrue(any(finding.severity == "ERROR" for finding in report.findings))
+
+    def test_previous_month_inside_raw_feedback_is_not_a_month_error(self) -> None:
+        data = {
+            "dashboardSummary": {"text": "2026 年 8 月問卷數據。"},
+            "rawFeedbacks": [
+                {"type": "suggestion", "content": "旅客提到 7 月行程曾經太趕。"}
+            ],
+            "branchRawFeedbacks": [],
+        }
+
+        report = check_month_data(data, "202608", "candidate-202608.json")
+
+        self.assertFalse(any(finding.rule_id == "MONTH-001" for finding in report.findings))
 
 
 if __name__ == "__main__":

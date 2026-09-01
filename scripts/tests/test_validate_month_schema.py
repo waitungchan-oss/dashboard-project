@@ -114,6 +114,30 @@ class ValidateMonthSchemaTests(unittest.TestCase):
         finally:
             shutil.rmtree(project)
 
+    def test_candidate_month_can_be_checked_before_manifest_registration(self) -> None:
+        project = self.make_fixture()
+        try:
+            candidate_path = project / "candidate-202608.json"
+            shutil.copy(project / "data" / "202607.json", candidate_path)
+
+            result = self.run_validator(
+                project,
+                "--candidate",
+                str(candidate_path),
+                "--month",
+                "202608",
+                "--schema-profile",
+                "current",
+                "--strict-warnings",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("202608", result.stdout)
+            manifest = json.loads((project / "data" / "months.json").read_text(encoding="utf-8"))
+            self.assertNotIn("202608", {item["key"] for item in manifest["months"]})
+        finally:
+            shutil.rmtree(project)
+
 
 if __name__ == "__main__":
     unittest.main()
