@@ -21,6 +21,8 @@ from month_governance import (  # noqa: E402
 )
 from check_month_consistency import check_month_data  # noqa: E402
 from check_month_metrics import check_month_metrics  # noqa: E402
+from validate_month_governance import main as governance_main  # noqa: E402
+from validate_month_governance import run_governance  # noqa: E402
 
 
 class MonthGovernancePrimitivesTests(unittest.TestCase):
@@ -234,6 +236,89 @@ class MonthGovernancePrimitivesTests(unittest.TestCase):
         )
 
         self.assertTrue(any(finding.rule_id == "METRIC-006" for finding in findings))
+
+    def test_governance_all_returns_four_passed_check_statuses(self) -> None:
+        report = run_governance(ROOT, all_months=True)
+
+        self.assertEqual(report.status, "pass")
+        self.assertEqual(
+            report.checks,
+            {
+                "schema": "pass",
+                "monthConsistency": "pass",
+                "metricContracts": "pass",
+                "numericDisplayContracts": "pass",
+            },
+        )
+        self.assertEqual(set(report.checked_months), {"202604", "202605", "202606", "202607"})
+
+    def test_governance_candidate_does_not_change_manifest(self) -> None:
+        manifest_path = ROOT / "data" / "months.json"
+        original = manifest_path.read_text(encoding="utf-8")
+        with tempfile.NamedTemporaryFile(suffix=".json") as candidate:
+            candidate.write((ROOT / "data" / "202607.json").read_bytes())
+            candidate.flush()
+
+            report = run_governance(
+                ROOT,
+                month="202607",
+                candidate=Path(candidate.name),
+                schema_profile="current",
+            )
+
+        self.assertEqual(report.status, "pass")
+        self.assertEqual(report.checked_months, ["202607"])
+        self.assertEqual(manifest_path.read_text(encoding="utf-8"), original)
+
+    def test_governance_report_contains_json_contract_fields(self) -> None:
+        report = run_governance(ROOT, month="202607")
+        payload = report.to_dict()
+
+        self.assertEqual(payload["version"], "1.0")
+        self.assertIn("errors", payload)
+        self.assertIn("warnings", payload)
+        self.assertIn("evidence", payload)
+
+    def test_governance_cli_rejects_invalid_selection(self) -> None:
+        self.assertEqual(governance_main(["202607", "--all", "--root", str(ROOT)]), 2)
+
+    def test_governance_cli_strict_warning_is_blocking(self) -> None:
+        candidate_data = json.loads(
+            (ROOT / "data" / "202604.json").read_text(encoding="utf-8")
+        )
+        candidate_data.pop("recordsInsights", None)
+        with tempfile.NamedTemporaryFile(suffix=".json") as candidate:
+            candidate.write(json.dumps(candidate_data, ensure_ascii=False).encode("utf-8"))
+            candidate.flush()
+
+            non_strict = governance_main(
+                [
+                    "--month",
+                    "202604",
+                    "--candidate",
+                    candidate.name,
+                    "--schema-profile",
+                    "legacy",
+                    "--root",
+                    str(ROOT),
+                ]
+            )
+            strict = governance_main(
+                [
+                    "--month",
+                    "202604",
+                    "--candidate",
+                    candidate.name,
+                    "--schema-profile",
+                    "legacy",
+                    "--strict",
+                    "--root",
+                    str(ROOT),
+                ]
+            )
+
+        self.assertEqual(non_strict, 0)
+        self.assertEqual(strict, 1)
 
 
 if __name__ == "__main__":
