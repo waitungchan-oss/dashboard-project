@@ -1,0 +1,12 @@
+{
+  "numericValues": {
+    "$.dashboardSummary.totalRespondents": 105,
+    "$.dashboardSummary.promoConsent.count": 47,
+    "$.futureDestData.values[0]": 29
+  },
+  "rendered": {
+    "$.dashboardSummary.totalRespondents": "105",
+    "$.dashboardSummary.promoConsent.count": "47",
+    "$.futureDestData.values[0]": "29"
+  }
+}
