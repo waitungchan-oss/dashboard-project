@@ -10,6 +10,16 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-01-monthly-data-governance-design.md`
 
+## Execution Status
+
+- Task 1-7：completed，均以 failing test -> implementation -> focused verification -> commit 完成。
+- Task 8：completed for the available repository state；90 tests、全月份 data/schema/metric/
+  numeric-display/P3/static/Node/JSON gates 與 Hermes read-only acceptance 均通過。
+- 202608 真實 candidate 尚未提供；`--candidate /tmp/dashboard-candidate-202608.json`
+  的 preflight 已確認缺檔時 fail-closed，未建立、修改或註冊任何虛構業務資料。
+- 202605 原始資料保留不變；已批准的兩項歷史口徑例外只在指定 month/path 降為 `INFO`，
+  新月份不繼承。
+
 ## Global Constraints
 
 - 不引入 database、API 或正式 backend。
@@ -664,3 +674,5 @@
 - 若使用 Subagent-Driven，主 agent 在每個 task 後執行兩階段 review：先 correctness review，再執行測試與邊界 review；subagent 不得跨越當前 task 的檔案 allowlist。
 - 若使用 Inline Execution，依 task 順序批次執行，但每個 review checkpoint 仍必須保留。
 - 8 月真實資料尚未納入本 plan 檔；候選 dry-run 在資料提供後執行，不能用 sentinel fixture 冒充業務驗收。
+- 當 202608 清洗後 JSON 到位，直接以 `validate_month_governance.py --candidate` 重新執行
+  preflight；不得因本次缺檔而繞過 candidate gate。
